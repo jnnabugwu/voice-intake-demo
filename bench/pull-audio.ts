@@ -30,16 +30,32 @@ const storage = new StorageClient(`${SUPABASE_URL}/storage/v1`, {
 mkdirSync(outDir, { recursive: true });
 let pulled = 0;
 
-for (const { id } of refs.speakers) {
-  const { data, error } = await storage.from(BUCKET).list(id, { limit: 1000 });
-  if (error) throw error;
+const PAGE = 1000;
 
+/** Every object name in a speaker's folder; Storage lists at most PAGE per call. */
+async function listAll(folder: string): Promise<string[]> {
+  const names: string[] = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await storage.from(BUCKET).list(folder, { limit: PAGE, offset });
+    if (error) throw error;
+    names.push(...(data ?? []).map((o) => o.name));
+    if (!data || data.length < PAGE) return names;
+  }
+}
+
+for (const { id } of refs.speakers) {
   const newest = new Map<string, { file: string; ms: number; ext: string }>();
-  for (const obj of data ?? []) {
-    const m = NAME.exec(obj.name)?.groups;
+  for (const name of await listAll(id)) {
+    const m = NAME.exec(name)?.groups;
     if (!m) continue;
+    // Storage only checks the folder, so anyone with the anon key could drop
+    // es_cu/en_jn_01__….webm. Accept only files named for this folder's speaker.
+    if (!m.stem.startsWith(`${id}_`)) {
+      console.warn(`skipped ${id}/${name}: name doesn't match its speaker folder`);
+      continue;
+    }
     const ms = Number(m.ms);
-    if ((newest.get(m.stem)?.ms ?? -1) < ms) newest.set(m.stem, { file: obj.name, ms, ext: m.ext });
+    if ((newest.get(m.stem)?.ms ?? -1) < ms) newest.set(m.stem, { file: name, ms, ext: m.ext });
   }
 
   for (const [stem, { file, ext }] of [...newest].sort()) {

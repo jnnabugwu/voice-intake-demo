@@ -56,15 +56,13 @@ async function getStream(): Promise<MediaStream> {
   return stream;
 }
 
+// The mic is held only while a take is starting or recording, then released,
+// so the browser's mic indicator goes off during playback and upload (and
+// iOS doesn't route playback through the call-volume path).
 function releaseStream() {
   stream?.getTracks().forEach((t) => t.stop());
   stream = null;
 }
-
-// Free the mic when the tab is hidden so the indicator doesn't stay on.
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden" && !mediaRecorder) releaseStream();
-});
 
 function pickMime(): string | undefined {
   if (typeof MediaRecorder === "undefined") return undefined;
@@ -84,6 +82,8 @@ let items: Item[] = [];
 let done = new Set<string>();
 let idx = 0;
 let mediaRecorder: MediaRecorder | null = null;
+/** True while waiting for the mic, so a second tap can't start a second recorder. */
+let starting = false;
 let recStart = 0;
 let timer = 0;
 let blob: Blob | null = null;
@@ -107,7 +107,7 @@ function clearTake() {
 }
 
 function goTo(i: number) {
-  if (mediaRecorder || busy) return;
+  if (mediaRecorder || starting || busy) return;
   clearTake();
   setStatus("");
   idx = i;
@@ -126,22 +126,36 @@ function nextUndone(from: number): number {
 // ---------- actions ----------
 
 async function startRecording() {
+  if (starting || mediaRecorder || busy) return;
+  starting = true;
   clearTake();
-  setStatus("");
+  setStatus("Starting the microphone…");
+  render(); // disables Record until the take has started or failed
+  try {
+    await beginTake();
+  } catch (e) {
+    releaseStream();
+    setStatus((e as Error).message, true);
+  } finally {
+    starting = false;
+    render();
+  }
+}
+
+/** Acquires the mic and starts a MediaRecorder; throws a user-facing message on failure. */
+async function beginTake() {
   let s: MediaStream;
   try {
     s = await getStream();
   } catch (e) {
-    setStatus(`Microphone blocked: ${(e as Error).message}. Allow mic access and try again.`, true);
-    return render();
+    throw new Error(`Microphone blocked: ${(e as Error).message}. Allow mic access and try again.`);
   }
   const mime = pickMime();
   let rec: MediaRecorder;
   try {
     rec = mime ? new MediaRecorder(s, { mimeType: mime }) : new MediaRecorder(s);
   } catch (e) {
-    setStatus(`Recording isn't supported here: ${(e as Error).message}`, true);
-    return render();
+    throw new Error(`Recording isn't supported here: ${(e as Error).message}`);
   }
   const chunks: Blob[] = [];
   rec.ondataavailable = (ev) => {
@@ -149,6 +163,7 @@ async function startRecording() {
   };
   rec.onstop = () => {
     clearInterval(timer);
+    releaseStream();
     const type = rec.mimeType || mime || chunks[0]?.type || "audio/webm";
     blob = new Blob(chunks, { type });
     blobUrl = URL.createObjectURL(blob);
@@ -161,7 +176,6 @@ async function startRecording() {
   mediaRecorder = rec;
   recStart = Date.now();
   setStatus("Recording… 0s");
-  render();
   timer = window.setInterval(() => {
     const el = document.getElementById("status");
     if (el) el.textContent = `Recording… ${Math.floor((Date.now() - recStart) / 1000)}s`;
@@ -226,9 +240,9 @@ function render() {
     controls = `<button class="rec" data-act="stop">■ Stop</button>`;
   } else if (blob) {
     controls = `<button class="primary" data-act="upload" ${busy ? "disabled" : ""}>Upload</button>
-      <button data-act="record" ${busy ? "disabled" : ""}>Re-record</button>`;
+      <button data-act="record" ${busy || starting ? "disabled" : ""}>Re-record</button>`;
   } else {
-    controls = `<button class="rec" data-act="record">● ${done.has(item.key) ? "Record again" : "Record"}</button>`;
+    controls = `<button class="rec" data-act="record" ${starting ? "disabled" : ""}>● ${done.has(item.key) ? "Record again" : "Record"}</button>`;
   }
 
   app.innerHTML = `

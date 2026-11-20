@@ -28,7 +28,9 @@ npm run dev            # serves on your LAN too (--host), but phones need HTTPS 
 
 ## Deploy
 
-Vercel project `voice-intake-recorder` (jnnabugwu's projects). Run `vercel deploy --prod` from this folder. Env: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (production, type config, because the anon key is public by design).
+Vercel project `voice-intake-recorder` (jnnabugwu's projects) is connected to this GitHub repo with Root Directory `recorder`. Pushing to `main` deploys production, and PRs get preview builds. Env: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (production, type config, because the anon key is public by design). Preview builds have no Supabase env, so uploads only work on production.
+
+CI: `.circleci/config.yml` typechecks and builds the page, and fails if `public/references.json` has drifted from `bench/`.
 
 ## Teardown
 

@@ -45,4 +45,3 @@ Jordan runs `supabase login` and `vercel login` himself. After that, use the Sup
 4. `pull-audio` puts the clip in `audio/`.
 5. Jordan has the three links (`?s=en_jn`, `?s=es_cu`, `?s=es_mx`).
 
-**Teardown** after the bench runs: remove the Vercel deployment. Keep the bucket private, and delete the clips once the results are written.

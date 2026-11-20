@@ -8,7 +8,7 @@ Two readers judge this repo: a non-technical founder who opens a link in Chrome,
 
 ## Guardrails (product rules, enforced in code and prompt)
 
-- **The assistant gathers, the physician decides.** Replies acknowledge, ask one follow-up question at a time (how long, how bad, what else), and stop. Diagnosis, medication advice and doses belong to the physician tab.
+- **The assistant gathers, the physician decides.** Replies acknowledge, ask one follow-up question at a time (how long, how bad, what else), and stop. Diagnosis, medication advice and doses belong to the physician side.
 - **Red flags stop the chat.** Chest pain, trouble breathing, stroke signs, self-harm or suicide language (English or Spanish) → a full-screen card with 911 (emergencies) and 988 (crisis), in the conversation's language. Check with a keyword pass on the transcript *before* calling the model, and again on the model's summary flag.
 - **Approval gate.** The worker's "next step" stays locked until the physician taps Approve or edits it.
 - **Demo data only.** The UI says "Demo, don't enter real health information." Bench audio lives in the repo-root `audio/` and stays out of git.
@@ -24,11 +24,13 @@ bench/          repo root: references.json (scoring key), scorer, results.md
 audio/          repo root, gitignored: clips pulled from the recorder's bucket
 ```
 
+**Read `../ARCHITECTURE.md` before writing app or proxy code.** It fixes the two sides (worker and physician, one app, role-based), the side → feature → layer folders and their boundaries, typed `go_router` routes, the `shadcn_ui` design system (tokens, component map, accessibility), the layers, the one-Bloc-per-concern split, freezed conventions, `Result` + `@useResult`, concurrency transformers, the safety path, and the proxy wire contract. When code and that file disagree, fix the code or update the file in the same commit.
+
 ## Build blocks
 
 Each block ends on its check.
 
-1. **Mic.** Flutter web app with `speech_to_text`: mic button, live partial words, EN/ES toggle (`en-US`, `es-US`; fall back to whatever `locales()` offers).
+1. **Mic.** Flutter web app on `ShadApp.router` (pin `shadcn_ui` exactly; no Material) with `speech_to_text`: mic button, live partial words, EN/ES toggle (`en-US`, `es-US`; fall back to whatever `locales()` offers).
    *Check:* `flutter run -d chrome`; speak both languages; partial words appear while speaking.
 2. **Chat.** Chat UI with streamed assistant bubbles. **Demo mode** is the default when no `PROXY_URL` is set: scripted replies driven by keywords, so a clean clone runs with zero keys.
    *Check:* fresh clone + `flutter run -d chrome` runs a full intake with no keys.
@@ -37,7 +39,7 @@ Each block ends on its check.
    - `POST /api/summary` returns the structured summary (schema below).
    - Daily spend cap, per-IP rate limit, CORS allowlist for the deployed origin and localhost.
    *Check:* the app with `--dart-define=PROXY_URL=...` streams real replies; over the cap returns 429 and the app shows a friendly message.
-4. **Physician tab.** Summary card, full transcript, Approve / Edit; plus the red-flag card.
+4. **Physician side.** Summary card, full transcript, Approve / Edit; plus the red-flag card.
    *Check:* the chest-pain line (references.json line 20) triggers the card in both languages; Approve unlocks the worker's next step.
 5. **Ship.** `flutter build web`, deploy app and proxy, record the 60–90 s video.
    *Check:* the link works in a Chrome profile that has never visited it.
@@ -60,7 +62,7 @@ Summary schema: `chief_complaint`, `duration`, `severity` (1–10 or null), `sym
 `bench/references.json` is the source of truth: 21 lines × 3 speakers, key medical terms with accepted variants (`|`-separated), and the expected red-flag lines. Its `scoring` field defines normalization; implement it once in `bench/` and reuse it everywhere.
 
 - **Metrics:** WER (after normalization), **medical-term miss rate** (key term counts as found if any variant appears), and latency.
-- **Chrome Web Speech (live only):** a Bench tab in the app shows line *n*, Jordan reads it, the app records the transcript plus timestamps (mic on, first partial, final) and exports JSON. Score English this way.
+- **Chrome Web Speech (live only):** the bench page (`/bench`, internal, demo build only) shows line *n*, Jordan reads it, the app records the transcript plus timestamps (mic on, first partial, final) and exports JSON. Score English this way.
 - **Cloud engine on files:** start with AssemblyAI (`ASSEMBLYAI_API_KEY`; self-serve BAA, Spanish support). Run all three speakers from `audio/`. Add a second engine only if block 6 finishes early.
 - **Audio format:** clips come from the recorder as `.webm` (Chrome) or `.mp4` (iPhone Safari), not the `.m4a` names in references.json. Match files by the `{speaker}_{NN}` stem and accept any audio extension.
 - **Honest reporting:** live latency and batch processing time are different measures, so label them separately. Note the sample (21 lines, one speaker per accent, read speech). Publish scores, never the friends' audio.
@@ -73,5 +75,6 @@ Lead with what it does for a worker, then a "Use Chrome" line, the live link, th
 ## Working notes
 
 - Commit after each block with a message naming the block.
-- Run `flutter analyze` and `dart format` before each commit, and `tsc --noEmit` in `intake/proxy/`.
+- Run `flutter analyze`, `dart format`, `flutter test` and `tool/check_boundaries.sh` (see `ARCHITECTURE.md`) before each commit, and `tsc --noEmit` in `intake/proxy/`.
+- After changing any freezed, `json_serializable` or typed-route class, run `dart run build_runner build` and commit the generated files in the same commit.
 - The private plan and research (with sources) live outside this repo: `/Users/jordannnabugwu/Development/interview-coach-skill/interviews/atmos_clinic/voice_demo_plan.md`. Read it for context; keep its contents out of this public repo.

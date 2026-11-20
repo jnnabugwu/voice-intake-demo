@@ -5,7 +5,7 @@ Two separate projects in one repo, sharing one speech bench. Each project has it
 | Folder | Project | Read |
 |---|---|---|
 | `recorder/` | Throwaway page where friends record the bench lines and upload them to Supabase Storage | `recorder/CLAUDE.md` |
-| `intake/` | The voice intake demo: Flutter web app (`intake/app`) + Claude proxy (`intake/proxy`) | `intake/CLAUDE.md` |
+| `intake/` | The voice intake demo: Flutter web app (`intake/app`) + Claude proxy (`intake/proxy`) | `intake/CLAUDE.md`, then `ARCHITECTURE.md` |
 | `bench/` | Shared: `references.json` (the scoring key both projects read), the scorer, `pull-audio`, results | `intake/CLAUDE.md` § Bench |
 | `audio/` | Clips pulled from the bucket. Gitignored; friends' voices never get committed | |
 

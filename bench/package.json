@@ -1,0 +1,15 @@
+{
+  "name": "bench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pull-audio": "tsx pull-audio.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15"
+  },
+  "dependencies": {
+    "@supabase/storage-js": "^2.109.0"
+  }
+}

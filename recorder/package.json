@@ -1,0 +1,19 @@
+{
+  "name": "recorder",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/copy-refs.mjs",
+    "dev": "vite --host",
+    "prebuild": "node scripts/copy-refs.mjs",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.109.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}

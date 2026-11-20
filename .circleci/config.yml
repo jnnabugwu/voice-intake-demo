@@ -1,0 +1,30 @@
+version: 2.1
+
+jobs:
+  recorder-build:
+    docker:
+      - image: cimg/node:22.12
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - recorder-npm-{{ checksum "recorder/package-lock.json" }}
+      - run:
+          name: Install
+          command: cd recorder && npm ci
+      - save_cache:
+          key: recorder-npm-{{ checksum "recorder/package-lock.json" }}
+          paths:
+            - ~/.npm
+      - run:
+          name: Typecheck and build
+          command: cd recorder && npm run build
+      - run:
+          name: Committed references.json matches bench/
+          command: git diff --exit-code recorder/public/references.json
+
+workflows:
+  recorder:
+    jobs:
+      - recorder-build

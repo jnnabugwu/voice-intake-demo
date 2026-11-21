@@ -63,6 +63,29 @@ jobs:
           name: Test
           command: cd intake/app && flutter test
 
+  intake-proxy:
+    docker:
+      - image: cimg/node:22.12
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - intake-proxy-npm-{{ checksum "intake/proxy/package-lock.json" }}
+      - run:
+          name: Install
+          command: cd intake/proxy && npm ci
+      - save_cache:
+          key: intake-proxy-npm-{{ checksum "intake/proxy/package-lock.json" }}
+          paths:
+            - ~/.npm
+      - run:
+          name: Typecheck
+          command: cd intake/proxy && npx tsc --noEmit
+      - run:
+          name: Test
+          command: cd intake/proxy && npx vitest run
+
 workflows:
   recorder:
     jobs:
@@ -70,3 +93,4 @@ workflows:
   intake:
     jobs:
       - intake-app
+      - intake-proxy

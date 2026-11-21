@@ -1,0 +1,156 @@
+import { chatSystemPrompt } from "../prompts/chat.js";
+import { summarySystemPrompt } from "../prompts/summary.js";
+import type { IntakeSummary } from "../contract/summary.js";
+import type { ReplyStream, Summarize } from "./claude.js";
+import { clientIp, corsHeaders, isAllowedOrigin, RateLimiter, SpendMeter, type GuardConfig } from "./guards.js";
+import { ChatRequest, json, logRequest, SummaryRequest } from "./http.js";
+import { sseEvent, sseHeaders } from "./sse.js";
+
+export interface Deps {
+  config: GuardConfig;
+  limiter: RateLimiter;
+  meter: SpendMeter;
+  reply: ReplyStream;
+  summarize: Summarize;
+  now?: () => number;
+}
+
+/** Turns already answered, by conversation and turn ID, so a retry replays instead of paying twice. */
+class AnsweredTurns {
+  private readonly replies = new Map<string, string>();
+  get(key: string) {
+    return this.replies.get(key);
+  }
+  set(key: string, text: string) {
+    this.replies.set(key, text);
+    if (this.replies.size > 500) this.replies.delete(this.replies.keys().next().value!);
+  }
+}
+
+type Gate = { ok: true; cors: Record<string, string> } | { ok: false; response: Response };
+
+/** Origin, rate limit and spend cap, in that order. */
+function gate(request: Request, deps: Deps): Gate {
+  const origin = request.headers.get("origin");
+  const cors = corsHeaders(origin, deps.config);
+  // No Origin means a non-browser client (curl); CORS doesn't apply to it.
+  if (origin && !isAllowedOrigin(origin, deps.config)) {
+    return { ok: false, response: json(403, { code: "forbidden_origin" }) };
+  }
+  if (!deps.limiter.take(clientIp(request))) {
+    return { ok: false, response: json(429, { code: "rate_limited" }, cors) };
+  }
+  if (deps.meter.isOverCap()) {
+    return { ok: false, response: json(429, { code: "spend_cap" }, cors) };
+  }
+  return { ok: true, cors };
+}
+
+async function readJson(request: Request): Promise<unknown> {
+  try {
+    return await request.json();
+  } catch {
+    return undefined;
+  }
+}
+
+export function createChatHandler(deps: Deps) {
+  const answered = new AnsweredTurns();
+  const now = deps.now ?? Date.now;
+
+  return async function POST(request: Request): Promise<Response> {
+    const started = now();
+    const g = gate(request, deps);
+    if (!g.ok) {
+      logRequest({ route: "chat", status: g.response.status });
+      return g.response;
+    }
+    const parsed = ChatRequest.safeParse(await readJson(request));
+    if (!parsed.success) return json(400, { code: "bad_request" }, g.cors);
+    const body = parsed.data;
+    const key = `${body.conversationId}:${body.turnId}`;
+    const headers = { ...sseHeaders, ...g.cors };
+
+    const cached = answered.get(key);
+    if (cached !== undefined) {
+      logRequest({ route: "chat", status: 200, replayed: true });
+      return new Response(sseEvent("delta", { text: cached }) + sseEvent("done"), { headers });
+    }
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const send = (chunk: string) => controller.enqueue(encoder.encode(chunk));
+        let text = "";
+        let firstTokenMs: number | undefined;
+        try {
+          for await (const event of deps.reply({
+            system: chatSystemPrompt(body.language),
+            messages: body.messages,
+          })) {
+            if (event.type === "text") {
+              firstTokenMs ??= now() - started;
+              text += event.text;
+              send(sseEvent("delta", { text: event.text }));
+            } else {
+              deps.meter.record(event.usage);
+              if (event.refused) {
+                send(sseEvent("refusal"));
+              } else {
+                answered.set(key, text);
+                send(sseEvent("done"));
+              }
+              logRequest({
+                route: "chat",
+                status: 200,
+                refused: event.refused,
+                firstTokenMs: firstTokenMs ?? -1,
+                totalMs: now() - started,
+                inputTokens: event.usage.input,
+                outputTokens: event.usage.output,
+              });
+            }
+          }
+        } catch (error) {
+          send(sseEvent("error", { code: "upstream" }));
+          logRequest({ route: "chat", status: 502, error: error instanceof Error ? error.name : "unknown" });
+        } finally {
+          controller.close();
+        }
+      },
+    });
+    return new Response(stream, { headers });
+  };
+}
+
+export function createSummaryHandler(deps: Deps) {
+  const now = deps.now ?? Date.now;
+
+  return async function POST(request: Request): Promise<Response> {
+    const started = now();
+    const g = gate(request, deps);
+    if (!g.ok) {
+      logRequest({ route: "summary", status: g.response.status });
+      return g.response;
+    }
+    const parsed = SummaryRequest.safeParse(await readJson(request));
+    if (!parsed.success) return json(400, { code: "bad_request" }, g.cors);
+    const body = parsed.data;
+
+    try {
+      const result = await deps.summarize({ system: summarySystemPrompt, transcript: body.transcript });
+      deps.meter.record(result.usage);
+      const log = { route: "summary", totalMs: now() - started, inputTokens: result.usage.input, outputTokens: result.usage.output };
+      if (result.type === "refused") {
+        logRequest({ ...log, status: 502, refused: true });
+        return json(502, { code: "upstream" }, g.cors);
+      }
+      logRequest({ ...log, status: 200 });
+      const summary: IntakeSummary = { ...result.summary, language: body.language, transcript: body.transcript };
+      return json(200, summary, g.cors);
+    } catch (error) {
+      logRequest({ route: "summary", status: 502, error: error instanceof Error ? error.name : "unknown" });
+      return json(502, { code: "upstream" }, g.cors);
+    }
+  };
+}

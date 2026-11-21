@@ -1,0 +1,12 @@
+{
+  "chief_complaint": "Sore throat that hurts when swallowing",
+  "duration": "3 days",
+  "severity": 6,
+  "symptoms": ["sore throat", "pain when swallowing"],
+  "medications": ["ibuprofen"],
+  "allergies": ["penicillin"],
+  "red_flags": [],
+  "language": "en",
+  "open_questions": ["Any fever?", "Any trouble breathing or swallowing liquids?"],
+  "transcript": "Worker: Hi, I need to see a doctor today. My throat has been sore for three days, and it hurts to swallow.\nAssistant: Thanks for telling me. On a scale of 1 to 10, how bad is it right now?\nWorker: About a 6.\nAssistant: Got it. Do you take any medications, or have any allergies?\nWorker: I take ibuprofen, and I'm allergic to penicillin."
+}

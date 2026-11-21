@@ -78,7 +78,7 @@ class RedFlagDetector {
     // confused"), not "I'm confused about my bill"; and asking whether to go to
     // the ER, not mentioning a past ER visit. Same patterns as the proxy.
     RegExp(
-      r'\b(been|is|seems|became|got|getting|gets) (very |really |more |suddenly |so )?((tired|sleepy|weak|dizzy|drowsy) and )?(confused|disoriented)\b(?! (about|by|with|on|how|what|why|where|over))|\b(new|sudden) confusion|\bdisoriented\b(?! (about|by))',
+      r"\b(been|is|'s|seems|became|got|getting|gets) (very |really |more |suddenly |so )?((tired|sleepy|weak|dizzy|drowsy) and )?(confused|disoriented)\b(?! (about|by|with|on|how|what|why|where|over))|\b(new|sudden) confusion|\bdisoriented\b(?! (about|by))",
     ),
     RegExp(r'\b(go|going|take (her|him|them|me|my \w+)|bring (her|him|them|me)) to the (emergency room|er)\b'),
     RegExp(
@@ -91,7 +91,7 @@ class RedFlagDetector {
 
   static final _crisis = [
     RegExp(
-      r"kill myself|end my life|i'?m suicidal|i am suicidal|feel(ing)? suicidal|suicidal (ideation|thoughts)|(thinking|thoughts?) (about|of) (suicide|killing myself)|commit suicide|(attempted|tried) (suicide|to kill myself)|suicide attempt|want to die|(don'?t|do not) want to (be here|live|be alive)|(want|going|try(ing)?) to hurt myself|hurt myself on purpose|cutting myself|cut myself on purpose|self[- ]harm",
+      r"kill myself|end my life|i'?m suicidal|i am suicidal|feel(ing)? suicidal|suicidal (ideation|thoughts)|(thinking|thoughts?) (about|of) (suicide|killing myself)|commit suicide|(attempted|tried) (suicide|to kill myself)|suicide attempt|want to die|(don'?t|do not) want to (be here|live|be alive)|(want|going|try(ing)?) to (hurt|cut) myself|hurt myself on purpose|cutting myself|cut myself on purpose|self[- ]harm",
     ),
     RegExp(
       r'overdos|took (a|the) whole bottle|took too many (pills|tablets)|swallowed (a bunch of|all (my|the)) pills',

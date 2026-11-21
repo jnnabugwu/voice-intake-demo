@@ -170,4 +170,14 @@ void main() {
       expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
     }
   });
+
+  test("intent to cut, and \"she's confused\"", () {
+    for (final t in ['I want to cut myself', 'I am going to cut myself']) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+    for (final t in ["She's confused", "He's very confused"]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+    expect(detector.detect("She's confused about the bill"), isNull);
+  });
 }

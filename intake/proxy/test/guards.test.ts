@@ -31,6 +31,12 @@ describe("config", () => {
 });
 
 describe("RateLimiter", () => {
+  it("stays bounded under a flood of distinct IPs", () => {
+    const limiter = new RateLimiter(5, () => 0);
+    for (let i = 0; i < RateLimiter.maxTracked + 500; i++) limiter.take(`10.0.${i}`);
+    expect(limiter.tracked).toBeLessThanOrEqual(RateLimiter.maxTracked);
+  });
+
   it("allows N per minute per IP, then resets", () => {
     let t = 0;
     const limiter = new RateLimiter(2, () => t);
@@ -51,6 +57,12 @@ describe("SpendMeter", () => {
     expect(meter.isOverCap()).toBe(true);
     t = Date.parse("2026-11-21T00:00:01Z");
     expect(meter.isOverCap()).toBe(false);
+  });
+
+  it("prices the configured model, and an unknown one at the top rate", () => {
+    const u = { input: 1_000_000, output: 1_000_000, cacheWrite: 0, cacheRead: 0 };
+    expect(costUsd(u, "claude-opus-5")).toBeCloseTo(30);
+    expect(costUsd(u, "claude-someday-9")).toBeCloseTo(60);
   });
 
   it("a zero cap blocks everything", () => {

@@ -64,13 +64,17 @@ export class RateLimiter {
     private readonly now: () => number = Date.now,
   ) {}
 
+  static readonly maxTracked = 10_000;
+
   /** True if this request is allowed. */
   take(ip: string): boolean {
     const now = this.now();
     const window = this.windows.get(ip);
     if (!window || now - window.start >= 60_000) {
+      // Re-insert so the map stays ordered oldest window first.
+      this.windows.delete(ip);
       this.windows.set(ip, { start: now, count: 1 });
-      if (this.windows.size > 10_000) this.prune(now);
+      this.evictOldest(now);
       return true;
     }
     if (window.count >= this.perMinute) return false;
@@ -78,8 +82,16 @@ export class RateLimiter {
     return true;
   }
 
-  private prune(now: number) {
-    for (const [ip, w] of this.windows) if (now - w.start >= 60_000) this.windows.delete(ip);
+  /** Drops expired windows from the front, then the oldest beyond the bound. O(evicted). */
+  private evictOldest(now: number) {
+    for (const [ip, w] of this.windows) {
+      if (this.windows.size <= RateLimiter.maxTracked && now - w.start < 60_000) break;
+      this.windows.delete(ip);
+    }
+  }
+
+  get tracked(): number {
+    return this.windows.size;
   }
 }
 
@@ -91,13 +103,29 @@ export interface TokenUsage {
   cacheRead: number;
 }
 
+/** List prices, dollars per million input / output tokens. */
+const PRICES: Record<string, { input: number; output: number }> = {
+  "claude-opus-5-5": { input: 4, output: 20 },
+  "claude-opus-5": { input: 5, output: 25 },
+  "claude-opus-4-8": { input: 5, output: 25 },
+  "claude-sonnet-5-5": { input: 2, output: 10 },
+  "claude-haiku-5-5": { input: 0.1, output: 0.5 },
+};
+
+/** A model not in the table is priced as the most expensive one, so the cap errs safe. */
+const UNKNOWN = { input: 10, output: 50 };
+
 /**
- * Estimated dollars at Claude Opus 5.5's list prices ($4 / $20 per million
- * tokens, cache writes 1.25x input, cache reads $0.20). A fallback model may
- * cost less, so this errs high, which is the safe side for a cap.
+ * Estimated dollars for [model] (cache writes 1.25x input, reads 0.1x). Fallback
+ * attempts are priced as the primary model; the refusal fallbacks are the same
+ * price or cheaper, so this errs high, the safe side for a cap.
  */
-export function costUsd(usage: TokenUsage): number {
-  return (usage.input * 4 + usage.cacheWrite * 5 + usage.cacheRead * 0.2 + usage.output * 20) / 1_000_000;
+export function costUsd(usage: TokenUsage, model = "claude-opus-5-5"): number {
+  const p = PRICES[model] ?? UNKNOWN;
+  return (
+    (usage.input * p.input + usage.cacheWrite * p.input * 1.25 + usage.cacheRead * p.input * 0.1 + usage.output * p.output) /
+    1_000_000
+  );
 }
 
 /** Spend since midnight UTC, per instance. */
@@ -108,6 +136,7 @@ export class SpendMeter {
   constructor(
     private readonly capUsd: number,
     private readonly now: () => number = Date.now,
+    private readonly model: () => string = () => process.env.CLAUDE_MODEL || "claude-opus-5-5",
   ) {}
 
   private rollover() {
@@ -125,7 +154,7 @@ export class SpendMeter {
 
   record(usage: TokenUsage): void {
     this.rollover();
-    this.spentUsd += costUsd(usage);
+    this.spentUsd += costUsd(usage, this.model());
   }
 
   get spent(): number {

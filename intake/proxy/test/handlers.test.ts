@@ -67,6 +67,41 @@ describe("POST /api/chat", () => {
     expect(await res.text()).toMatch(/event: error\ndata: \{"code":"upstream"\}\n\n$/);
   });
 
+  it("a red flag answers with red_flag and never calls the model", async () => {
+    const reply = vi.fn(replyWith({ type: "end", refused: false, usage }));
+    const res = await createChatHandler(deps({ reply }))(
+      post({ ...chatBody, messages: [{ role: "user", text: "Tengo un dolor en el pecho y me falta el aire" }] }),
+    );
+    expect(await res.text()).toBe('event: red_flag\ndata: {"kind":"emergency"}\n\n');
+    expect(reply).not.toHaveBeenCalled();
+  });
+
+  it("a reply cut short by an upstream error still meters what it generated", async () => {
+    const meter = new SpendMeter(5);
+    const reply: ReplyStream = async function* ({ onUsage }) {
+      onUsage?.({ input: 1000, output: 500, cacheWrite: 0, cacheRead: 0 });
+      yield { type: "text", text: "Hi" };
+      throw new Error("overloaded");
+    };
+    await (await createChatHandler(deps({ reply, meter }))(post(chatBody))).text();
+    expect(meter.spent).toBeGreaterThan(0);
+  });
+
+  it("a client that disconnects aborts the upstream request", async () => {
+    let signal: AbortSignal | undefined;
+    const reply: ReplyStream = async function* (input) {
+      signal = input.signal;
+      yield { type: "text", text: "Hi" };
+      await new Promise((r) => setTimeout(r, 20));
+      yield { type: "end", refused: false, usage };
+    };
+    const res = await createChatHandler(deps({ reply }))(post(chatBody));
+    const reader = res.body!.getReader();
+    await reader.read();
+    await reader.cancel();
+    expect(signal?.aborted).toBe(true);
+  });
+
   it("an answered turn ID replays without calling the model again", async () => {
     const reply = vi.fn(replyWith({ type: "text", text: "Once" }, { type: "end", refused: false, usage }));
     const handler = createChatHandler(deps({ reply }));

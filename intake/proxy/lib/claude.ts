@@ -24,23 +24,39 @@ export type ReplyEvent =
   | { type: "text"; text: string }
   | { type: "end"; refused: boolean; usage: TokenUsage };
 
-export type ReplyStream = (input: { system: string; messages: ChatMessage[] }) => AsyncIterable<ReplyEvent>;
+export type ReplyStream = (input: {
+  system: string;
+  messages: ChatMessage[];
+  /** Running totals as the stream goes, so a reply cut short is still metered. */
+  onUsage?: (usage: TokenUsage) => void;
+  /** Aborts the upstream request, e.g. when the client disconnects. */
+  signal?: AbortSignal;
+}) => AsyncIterable<ReplyEvent>;
 
 /**
  * Streams one chat reply. Effort is `low`: a turn is a short acknowledgment and
  * one question, and latency matters more than depth.
  */
-export const streamReply: ReplyStream = async function* ({ system, messages }) {
-  const stream = anthropic().beta.messages.stream({
-    model: model(),
-    max_tokens: 4096,
-    ...FALLBACK,
-    output_config: { effort: "low" },
-    system,
-    messages: toApiMessages(messages),
-  });
+export const streamReply: ReplyStream = async function* ({ system, messages, onUsage, signal }) {
+  const stream = anthropic().beta.messages.stream(
+    {
+      model: model(),
+      max_tokens: 4096,
+      ...FALLBACK,
+      output_config: { effort: "low" },
+      system,
+      messages: toApiMessages(messages),
+    },
+    { signal },
+  );
+  let input = 0;
   for await (const event of stream) {
-    if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+    if (event.type === "message_start") {
+      input = event.message.usage.input_tokens;
+      onUsage?.({ input, output: event.message.usage.output_tokens, cacheWrite: 0, cacheRead: 0 });
+    } else if (event.type === "message_delta") {
+      onUsage?.({ input, output: event.usage.output_tokens, cacheWrite: 0, cacheRead: 0 });
+    } else if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
       yield { type: "text", text: event.delta.text };
     }
   }

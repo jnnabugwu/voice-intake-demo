@@ -569,13 +569,14 @@ The proxy logs metadata only (status, latency, token counts) and never the trans
   "messages": [{ "role": "user|assistant", "text": "…" }] }
 ```
 
-The response is `text/event-stream` with four event types. The app maps each to a `ChatChunk`.
+The response is `text/event-stream` with five event types. The app maps each to a `ChatChunk`.
 
 | SSE event | Data | `ChatChunk` |
 |---|---|---|
 | `delta` | `{ "text": "…" }` | `ChatChunk.delta` |
 | `done` | `{}` | `ChatChunk.done` |
 | `refusal` | `{}` | `ChatChunk.refused` |
+| `red_flag` | `{ "kind": "emergency" \| "crisis" }` | `ChatChunk.redFlag`: the proxy's own keyword pass on the newest message, before any model call (defense in depth behind the app's `RedFlagDetector`) |
 | `error` | `{ "code": "rate_limited" \| "spend_cap" \| "upstream" }` | `ChatChunk.failed` |
 
 `POST /api/summary` takes `{ conversationId, language, transcript }` and returns the summary: `chief_complaint`, `duration`, `severity` (1–10 or null), `symptoms[]`, `medications[]`, `allergies[]`, `red_flags[]`, `language`, `open_questions[]`, `transcript`. A field is null when the worker didn't say it. The model never infers one.

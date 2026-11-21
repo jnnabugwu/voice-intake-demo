@@ -4,6 +4,8 @@ import type { IntakeSummary } from "../contract/summary.js";
 import type { ReplyStream, Summarize } from "./claude.js";
 import { clientIp, corsHeaders, isAllowedOrigin, RateLimiter, SpendMeter, type GuardConfig } from "./guards.js";
 import { ChatRequest, json, logRequest, SummaryRequest } from "./http.js";
+import { detectRedFlag } from "./red_flags.js";
+import type { TokenUsage } from "./guards.js";
 import { sseEvent, sseHeaders } from "./sse.js";
 
 export interface Deps {
@@ -77,16 +79,30 @@ export function createChatHandler(deps: Deps) {
       return new Response(sseEvent("delta", { text: cached }) + sseEvent("done"), { headers });
     }
 
+    // Red flags stop the chat before any model call.
+    const flag = detectRedFlag(body.messages.at(-1)!.text);
+    if (flag) {
+      logRequest({ route: "chat", status: 200, redFlag: flag });
+      return new Response(sseEvent("red_flag", { kind: flag }), { headers });
+    }
+
     const encoder = new TextEncoder();
+    const upstream = new AbortController();
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
-        const send = (chunk: string) => controller.enqueue(encoder.encode(chunk));
+        const send = (chunk: string) => {
+          if (!upstream.signal.aborted) controller.enqueue(encoder.encode(chunk));
+        };
         let text = "";
         let firstTokenMs: number | undefined;
+        let partial: TokenUsage | undefined;
+        let metered = false;
         try {
           for await (const event of deps.reply({
             system: chatSystemPrompt(body.language),
             messages: body.messages,
+            onUsage: (u) => (partial = u),
+            signal: upstream.signal,
           })) {
             if (event.type === "text") {
               firstTokenMs ??= now() - started;
@@ -94,6 +110,7 @@ export function createChatHandler(deps: Deps) {
               send(sseEvent("delta", { text: event.text }));
             } else {
               deps.meter.record(event.usage);
+              metered = true;
               if (event.refused) {
                 send(sseEvent("refusal"));
               } else {
@@ -115,8 +132,13 @@ export function createChatHandler(deps: Deps) {
           send(sseEvent("error", { code: "upstream" }));
           logRequest({ route: "chat", status: 502, error: error instanceof Error ? error.name : "unknown" });
         } finally {
-          controller.close();
+          // A reply cut short (error or disconnect) still spent what it generated.
+          if (!metered && partial) deps.meter.record(partial);
+          if (!upstream.signal.aborted) controller.close();
         }
+      },
+      cancel() {
+        upstream.abort();
       },
     });
     return new Response(stream, { headers });

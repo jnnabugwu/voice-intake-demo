@@ -10,6 +10,8 @@ analyzer:
     - web/**
   errors:
     unused_result: error
+    # freezed + json_serializable put @JsonSerializable on the factory (freezed docs).
+    invalid_annotation_target: ignore
 
 linter:
   rules:

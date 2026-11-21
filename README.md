@@ -4,7 +4,7 @@ A worker who needs care opens a link, taps the mic and says what's wrong, in Eng
 
 **Use Chrome on a laptop.** Firefox, Brave and some in-app browsers (Gmail, LinkedIn) don't support browser speech recognition. The page says so and offers typing instead.
 
-- **Live demo:** _link coming with block 5 (#13)_
+- **Live demo:** https://voice-intake-chi.vercel.app (live mode: Claude through the proxy at `voice-intake-proxy.vercel.app`)
 - **Video (60–90 s):** _coming with block 5 (#13)_
 
 > Demo data only. Chrome's default speech recognition sends audio to Google, so this demo isn't for real patient information. A production build would use a speech engine covered by a BAA, or on-device recognition. See [the bench](#speech-bench) for how engines compare.
@@ -46,6 +46,29 @@ flutter run -d chrome --dart-define=PROXY_URL=http://localhost:3000
 | `DAILY_SPEND_CAP_USD` | `5` | Per server instance, best effort. Vercel can run several instances, so the hard ceiling is the Console workspace limit |
 | `RATE_LIMIT_PER_MIN` | `20` | Per IP, per server instance, best effort |
 | `ALLOWED_ORIGINS` | | The deployed app's origin(s); localhost is always allowed |
+
+### Deploy
+
+The app and the proxy are two separate Vercel projects. Deploy each one from its own folder, and never from the repo root, which is linked to the recorder.
+
+```sh
+# 1. Proxy (Vercel project voice-intake-proxy)
+cd intake/proxy
+vercel env add ANTHROPIC_API_KEY production
+vercel deploy --prod
+
+# 2. App: a static build that has the proxy URL compiled in (Vercel project voice-intake)
+cd ../app
+flutter build web --release --dart-define=PROXY_URL=https://voice-intake-proxy.vercel.app
+vercel deploy build/web --prod
+
+# 3. Allow the app's origin, then redeploy the proxy so the setting takes effect
+cd ../proxy
+vercel env add ALLOWED_ORIGINS production    # https://voice-intake-chi.vercel.app
+vercel deploy --prod
+```
+
+Git auto-deploy is off on purpose. Vercel's builders have no Flutter, and a proxy build from the repo root would replace the proxy with the wrong files. Redeploy by hand after a change.
 
 ## How it's built
 

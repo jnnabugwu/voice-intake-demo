@@ -1,6 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intake/internal/features/bench/domain/bench.dart';
+import 'package:intake/internal/features/bench/presentation/bench_bloc.dart';
 import 'package:intake/internal/features/bench/presentation/bench_page.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 
 part 'routes.g.dart';
 
@@ -18,5 +22,13 @@ class BenchRoute extends GoRouteData with $BenchRoute {
   int get startLine => (line ?? 1).clamp(1, benchLineCount);
 
   @override
-  Widget build(BuildContext context, GoRouterState state) => BenchPage(startLine: startLine);
+  Widget build(BuildContext context, GoRouterState state) => BlocProvider(
+    create: (context) => BenchBloc(
+      context.read<SpeechEngine>(),
+      context.read<BenchScriptRepository>(),
+      context.read<BenchExporter>(),
+      startLine: startLine,
+    )..add(const BenchOpened()),
+    child: const BenchPage(),
+  );
 }

@@ -5,4 +5,5 @@ library;
 export 'package:shadcn_ui/shadcn_ui.dart' show LucideIcons;
 
 export 'package:intake/shared/ui/components.dart';
+export 'package:intake/shared/ui/status_badge.dart';
 export 'package:intake/shared/ui/theme.dart';

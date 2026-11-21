@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intake/shared/core/failure.dart';
-import 'package:intake/worker/features/speech/domain/speech_engine.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 
 import 'package:intake/worker/features/conversation/data/demo_chat_repository.dart';
 
@@ -104,5 +104,93 @@ void main() {
     await tester.tap(find.text('Finish'), warnIfMissed: false);
     await tester.pump(const Duration(milliseconds: 100)); // the live mic pulses, so it never settles
     expect(find.text('Done. A clinician is reviewing what you shared.'), findsNothing);
+  });
+
+  testWidgets('approval gate: the next step stays locked until the physician approves', (tester) async {
+    await pumpApp(tester);
+    await tester.enterText(find.byType(EditableText), 'My throat has been sore for three days');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Finish'));
+    await tester.tap(find.text('Finish'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Waiting for a clinician'), findsOneWidget);
+    expect(find.textContaining('Video visit'), findsNothing);
+
+    // Physician side: the case is there with its summary; edit the step and approve.
+    await tester.tap(find.text('Physician'));
+    await tester.pumpAndSettle();
+    expect(find.text('My throat has been sore for three days'), findsWidgets);
+    await tester.enterText(find.byType(EditableText), 'Video visit at 3 pm today.');
+    await tester.pump();
+
+    // A draft is not an approval: the worker is still locked.
+    await tester.tap(find.text('Worker'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Waiting for a clinician'), findsOneWidget);
+    expect(find.textContaining('Video visit'), findsNothing);
+    await tester.tap(find.text('Physician'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Approve'));
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+
+    // Worker side: unlocked, showing exactly what the physician approved.
+    await tester.tap(find.text('Worker'));
+    await tester.pumpAndSettle();
+    expect(find.text('Approved by a clinician'), findsOneWidget);
+    expect(find.text('Video visit at 3 pm today.'), findsOneWidget);
+    expect(find.textContaining('Waiting for a clinician'), findsNothing);
+  });
+
+  for (final (lang, text, call) in [
+    ('EN', "I have chest pain that goes down my left arm, and I'm short of breath.", 'Call 911'),
+    ('ES', 'Tengo un dolor en el pecho que me baja por el brazo izquierdo, y me falta el aire.', 'Llamar al 911'),
+  ]) {
+    testWidgets('bench line 20 ($lang) stops the chat with the 911 card, which switching sides cannot dismiss', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      if (lang == 'ES') {
+        await tester.tap(find.text('ES'));
+        await tester.pumpAndSettle();
+      }
+      await tester.enterText(find.byType(EditableText), text);
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pumpAndSettle();
+      expect(find.text(call), findsOneWidget);
+      expect(find.byType(EditableText), findsNothing);
+
+      await tester.tap(find.text('Physician'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Escalated: emergency'), findsOneWidget);
+      await tester.tap(find.text('Worker'));
+      await tester.pumpAndSettle();
+      expect(find.text(call), findsOneWidget);
+    });
+  }
+
+  testWidgets('after a red flag, an approved next step replaces the card and keeps the help lines', (tester) async {
+    await pumpApp(tester);
+    await tester.enterText(find.byType(EditableText), "I have chest pain and I'm short of breath");
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+    expect(find.text('Call 911'), findsOneWidget);
+
+    await tester.tap(find.text('Physician'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText), 'We are calling you now.');
+    await tester.pump();
+    await tester.ensureVisible(find.text('Approve'));
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Escalated: emergency'), findsOneWidget); // the record stays
+
+    await tester.tap(find.text('Worker'));
+    await tester.pumpAndSettle();
+    expect(find.text('Call 911'), findsNothing);
+    expect(find.text('We are calling you now.'), findsOneWidget);
+    expect(find.text('Emergency: 911'), findsOneWidget);
   });
 }

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:intake/worker/features/speech/domain/speech_engine.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 
 /// A [SpeechEngine] the test drives by hand.
 class FakeSpeechEngine implements SpeechEngine {

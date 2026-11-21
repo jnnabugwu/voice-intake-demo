@@ -252,4 +252,18 @@ void main() {
     expect(DemoSummaryRepository.summarizeText("Worker: I didn't have diarrhea", Language.en).symptoms, isEmpty);
     expect(DemoSummaryRepository.summarizeText('Worker: ningún escalofrío', Language.es).symptoms, isEmpty);
   });
+
+  test('"six out of ten" is a six', () {
+    for (final (answer, lang) in [
+      ('six out of ten', Language.en),
+      ('6/10', Language.en),
+      ('seis de diez', Language.es),
+    ]) {
+      final s = DemoSummaryRepository.summarizeText(
+        'Worker: my back hurts\nAssistant: On a scale of 1 to 10, del 1 al 10, how bad is it?\nWorker: $answer',
+        lang,
+      );
+      expect(s.severity, 6, reason: answer);
+    }
+  });
 }

@@ -108,7 +108,12 @@ class DemoSummaryRepository implements SummaryRepository {
         asked = _scaleQuestion.hasMatch(line);
       } else if (line.startsWith('Worker: ') && asked) {
         answered = true;
-        final words = line.substring('Worker: '.length).toLowerCase().split(RegExp(r'[^a-z0-9áéíóúñ]+'));
+        // "six out of ten": the scale's top isn't the answer, so drop it first.
+        final answer = line
+            .substring('Worker: '.length)
+            .toLowerCase()
+            .replaceAll(RegExp(r'\s*(/|out of|de|sobre)\s*(10|ten|diez)\b'), ' ');
+        final words = answer.split(RegExp(r'[^a-z0-9áéíóúñ]+'));
         final numbers = [
           for (final w in words)
             if (int.tryParse(w) case final n? when n >= 1 && n <= 10) n else ?_numberWords[w],

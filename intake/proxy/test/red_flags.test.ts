@@ -27,6 +27,7 @@ describe("detectRedFlag over the bench script", () => {
     }
     expect(detectRedFlag("No chest pain, but I can't breathe")).toBe("emergency");
     expect(detectRedFlag("I have no fever and can't breathe")).toBe("emergency");
+    expect(detectRedFlag("Sin embargo me duele el pecho")).toBe("emergency");
     expect(detectRedFlag("No tengo fiebre y me falta el aire")).toBe("emergency");
   });
 
@@ -35,6 +36,13 @@ describe("detectRedFlag over the bench script", () => {
       expect(detectRedFlag(t), t).toBe("emergency");
     }
     expect(detectRedFlag("no quiero estar aqui")).toBe("crisis");
+  });
+
+  it("talking about someone else's suicide is not a crisis; intent is", () => {
+    expect(detectRedFlag("My sister died by suicide last year")).toBeNull();
+    for (const t of ["I'm suicidal", "I've been thinking about suicide", "Pienso en suicidarme", "Tengo ideas suicidas"]) {
+      expect(detectRedFlag(t), t).toBe("crisis");
+    }
   });
 
   it("overdose is a crisis; an accidental injury is not", () => {

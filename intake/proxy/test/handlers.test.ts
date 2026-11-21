@@ -119,6 +119,26 @@ describe("POST /api/chat", () => {
     expect(await res.text()).toContain("event: red_flag");
   });
 
+  it("a duplicate of a turn still streaming doesn't call the model again", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const reply = vi.fn(async function* () {
+      yield { type: "text" as const, text: "Hi" };
+      await gate;
+      yield { type: "end" as const, refused: false, usage };
+    });
+    const handler = createChatHandler(deps({ reply }));
+    const first = await handler(post(chatBody));
+    const reader = first.body!.getReader();
+    await reader.read();
+    const second = await handler(post(chatBody));
+    expect(second.status).toBe(429);
+    expect(reply).toHaveBeenCalledTimes(1);
+    release();
+    while (!(await reader.read()).done) {}
+    expect(await (await handler(post(chatBody))).text()).toContain("event: done");
+  });
+
   it("an answered turn still replays after the cap closes", async () => {
     const meter = new SpendMeter(0.0001);
     const handler = createChatHandler(deps({ meter }));

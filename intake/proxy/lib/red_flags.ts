@@ -31,9 +31,9 @@ const EMERGENCY = [
 ];
 
 const CRISIS = [
-  /kill myself|end my life|suicid|want to die|(don'?t|do not) want to (be here|live|be alive)|(want|going|try(ing)?) to hurt myself|hurt myself on purpose|cut(ting)? myself|self[- ]harm/,
+  /kill myself|end my life|i'?m suicidal|i am suicidal|feel(ing)? suicidal|(thinking|thought) (about|of) (suicide|killing myself)|commit suicide|want to die|(don'?t|do not) want to (be here|live|be alive)|(want|going|try(ing)?) to hurt myself|hurt myself on purpose|cut(ting)? myself|self[- ]harm/,
   /overdos|took (a|the) whole bottle|took too many (pills|tablets)|swallowed (a bunch of|all (my|the)) pills/,
-  /matarme|me (quiero|voy a) matar|quitarme la vida|suicid|quiero morir(me)?|no quiero (estar aqui|vivir|seguir viviendo)|(quiero|voy a) hacerme dano|cortarme/,
+  /matarme|me (quiero|voy a) matar|quitarme la vida|suicidarme|ideas suicidas|pensamientos suicidas|pienso en el suicidio|quiero morir(me)?|no quiero (estar aqui|vivir|seguir viviendo)|(quiero|voy a) hacerme dano|cortarme/,
   /sobredosis|me tome (todo el frasco|todas las pastillas|demasiadas pastillas)/,
 ];
 
@@ -45,7 +45,7 @@ const CRISIS = [
 function negated(text: string, start: number): boolean {
   // Only the clause the match is in ("no fever and can't breathe" is two clauses),
   // and only the few words right before it ("no", "don't have", "no tengo").
-  const clause = text.slice(Math.max(0, start - 40), start).split(/[.,;!?]|\b(?:but|and|or|pero|y|o)\b/).pop() ?? "";
+  const clause = text.slice(Math.max(0, start - 40), start).split(/[.,;!?]|\b(?:but|and|or|pero|y|o|sin embargo)\b/).pop() ?? "";
   const words = clause.trim().split(/\s+/).filter(Boolean).slice(-3);
   return words.some((w) => /^(no|not|never|without|don'?t|doesn'?t|didn'?t|haven'?t|sin|nunca|tampoco|ningun[oa]?)$/.test(w));
 }

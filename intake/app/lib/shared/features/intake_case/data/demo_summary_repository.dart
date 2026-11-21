@@ -246,7 +246,10 @@ class DemoSummaryRepository implements SummaryRepository {
     final clause = before.split(RegExp(r'[.,;!?\n]|\b(?:but|and|or|pero|y|o|sin embargo)\b')).last;
     final words = clause.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
     final near = words.length > 3 ? words.sublist(words.length - 3) : words;
-    return near.any(RegExp(r"^(no|not|never|without|don'?t|doesn'?t|haven'?t|sin|nunca|tampoco)$").hasMatch);
+    return near.any(
+      RegExp(r"^(no|not|never|without|don'?t|doesn'?t|didn'?t|haven'?t|sin|nunca|tampoco|ningún|ninguna|ningun)$")
+          .hasMatch,
+    );
   }
 
   static final _symptoms = <(RegExp, String)>[
@@ -264,7 +267,7 @@ class DemoSummaryRepository implements SummaryRepository {
     (RegExp(r'diarrh|diarrea'), 'diarrhea'),
     (RegExp(r'\bchills\b|escalofr'), 'chills'),
     (RegExp(r'\bear\b|earache|oído|oreja'), 'ear pain'),
-    (RegExp(r'body ache|aches all over|me duele todo el cuerpo|dolor de cuerpo'), 'body aches'),
+    (RegExp(r'body ache|aches all over|me duele (todo )?el cuerpo|dolor de cuerpo'), 'body aches'),
     (RegExp(r'tired|fatigue|exhausted|\bcansad'), 'fatigue'),
     (RegExp(r'chest pain|dolor en el pecho'), 'chest pain'),
     (RegExp(r'short of breath|trouble breathing|falta el aire|me cuesta respirar'), 'shortness of breath'),

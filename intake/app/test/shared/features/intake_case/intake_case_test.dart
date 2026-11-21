@@ -241,4 +241,15 @@ void main() {
       'Soy alérgica a la penicilina',
     );
   });
+
+  test('the last number in the answer wins; "me duele el cuerpo"; "didn\'t" and "ningún" deny', () {
+    final s = DemoSummaryRepository.summarizeText(
+      'Worker: my back hurts\nAssistant: On a scale of 1 to 10, how bad is it right now?\nWorker: six, no, seven',
+      Language.en,
+    );
+    expect(s.severity, 7);
+    expect(DemoSummaryRepository.summarizeText('Worker: me duele el cuerpo', Language.es).symptoms, ['body aches']);
+    expect(DemoSummaryRepository.summarizeText("Worker: I didn't have diarrhea", Language.en).symptoms, isEmpty);
+    expect(DemoSummaryRepository.summarizeText('Worker: ningún escalofrío', Language.es).symptoms, isEmpty);
+  });
 }

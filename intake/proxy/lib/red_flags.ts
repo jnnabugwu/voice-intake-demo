@@ -49,7 +49,7 @@ const CRISIS = [
 function negated(text: string, start: number): boolean {
   // Only the clause the match is in ("no fever and can't breathe" is two clauses),
   // and only the few words right before it ("no", "don't have", "no tengo").
-  const clause = text.slice(Math.max(0, start - 40), start).split(/[.,;!?]|\b(?:but|and|or|pero|y|o|sin embargo)\b/).pop() ?? "";
+  const clause = text.slice(Math.max(0, start - 40), start).split(/[.,;!?\n]|\b(?:but|and|or|pero|y|o|sin embargo)\b/).pop() ?? "";
   const words = clause.trim().split(/\s+/).filter(Boolean).slice(-3);
   return words.some((w) => /^(no|not|never|without|don'?t|doesn'?t|didn'?t|haven'?t|sin|nunca|tampoco|ningun[oa]?)$/.test(w));
 }

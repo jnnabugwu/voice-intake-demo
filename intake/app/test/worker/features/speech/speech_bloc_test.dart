@@ -75,7 +75,42 @@ void main() {
   );
 
   blocTest<SpeechBloc, SpeechState>(
-    'an empty final keeps the last partial; nothing heard leaves no utterance',
+    'an empty final keeps the last partial',
+    build: build,
+    act: (bloc) async {
+      bloc.add(const SpeechStarted());
+      await Future<void>.delayed(Duration.zero);
+      engine.emit(const SpeechResult.partial('swollen ankles'));
+      await engine.end(const SpeechResult.completed(''));
+    },
+    skip: 2,
+    expect: () => const [
+      SpeechState(
+        lastUtterance: Utterance(id: 'u_1', text: 'swollen ankles', language: Language.en),
+      ),
+    ],
+  );
+
+  blocTest<SpeechBloc, SpeechState>(
+    'a failure after partials keeps what was heard',
+    build: build,
+    act: (bloc) async {
+      bloc.add(const SpeechStarted());
+      await Future<void>.delayed(Duration.zero);
+      engine.emit(const SpeechResult.partial('chest pain'));
+      await engine.end(const SpeechResult.failed(NetworkFailure()));
+    },
+    skip: 2,
+    expect: () => const [
+      SpeechState(
+        lastUtterance: Utterance(id: 'u_1', text: 'chest pain', language: Language.en),
+        phase: SpeechPhase.unavailable(failure: NetworkFailure()),
+      ),
+    ],
+  );
+
+  blocTest<SpeechBloc, SpeechState>(
+    'nothing heard leaves no utterance',
     build: build,
     act: (bloc) async {
       bloc.add(const SpeechStarted());

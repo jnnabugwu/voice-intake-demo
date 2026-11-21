@@ -9,50 +9,58 @@ import 'package:speech_to_text/speech_to_text.dart';
 /// [SpeechEngine] over `speech_to_text`, which on web is Chrome's Web Speech
 /// API. Chrome's default recognition sends audio to Google, so this engine is
 /// for demo data only.
+///
+/// How a session ends, on web: the plugin reports only partial results. After
+/// [stop], its own final timeout ([_finalTimeout]) promotes the last partial
+/// to a final result, then reports `done`. When Chrome ends the session by
+/// itself after partials, the plugin holds back `done`, so a fallback timer
+/// after `notListening` ends the session with what was heard.
 class WebSpeechEngine implements SpeechEngine {
   WebSpeechEngine([SpeechToText? speech]) : _speech = speech ?? SpeechToText();
 
   final SpeechToText _speech;
-  void Function(SpeechResult)? _finishActive;
+  _Session? _active;
 
-  /// How long to wait after the recognizer says "done" for its final result.
-  static const _finalGrace = Duration(milliseconds: 400);
+  /// The plugin's wait, after a stop, before it turns the last partial final.
+  static const _finalTimeout = Duration(milliseconds: 700);
+
+  /// How long to wait for a final result once the recognizer has stopped
+  /// listening, before ending with what was heard. Longer than [_finalTimeout].
+  static const fallback = Duration(milliseconds: 1500);
 
   @override
   Stream<SpeechResult> listen({required String localeId}) {
     final controller = StreamController<SpeechResult>();
-    var heard = '';
-
-    void finish(SpeechResult result) {
-      if (controller.isClosed) return;
-      controller.add(result);
-      unawaited(controller.close());
-      if (identical(_finishActive, finish)) _finishActive = null;
-    }
-
-    // A new session ends any older one first.
-    _finishActive?.call(SpeechResult.completed(heard));
-    _finishActive = finish;
+    final session = _Session(controller);
+    // A new session ends any older one first, with what that one heard.
+    _active?.finish();
+    _active = session;
 
     controller.onListen = () async {
       try {
-        _speech.errorListener = (error) => finish(_resultForError(error, heard));
+        _speech.errorListener = (error) => session.finish(_resultForError(error, session.heard));
         _speech.statusListener = (status) {
-          if (status == SpeechToText.doneStatus || status == 'doneNoResult') {
-            Timer(_finalGrace, () => finish(SpeechResult.completed(heard)));
+          if (status == SpeechToText.doneStatus) {
+            session.finish();
+          } else if (status == SpeechToText.notListeningStatus) {
+            session.armFallback(fallback);
           }
         };
-        final available = await _speech.initialize(onError: _speech.errorListener, onStatus: _speech.statusListener);
-        if (!available) return finish(const SpeechResult.failed(SpeechUnavailableFailure()));
-        if (controller.isClosed) return;
+        final available = await _speech.initialize(
+          onError: _speech.errorListener,
+          onStatus: _speech.statusListener,
+          finalTimeout: _finalTimeout,
+        );
+        if (!available) return session.finish(const SpeechResult.failed(SpeechUnavailableFailure()));
+        // Stopped, replaced or abandoned while the mic was starting: don't open it.
+        if (session.ended || session.stopRequested || !controller.hasListener) return session.finish();
 
         await _speech.listen(
           onResult: (SpeechRecognitionResult result) {
-            heard = result.recognizedWords;
             if (result.finalResult) {
-              finish(SpeechResult.completed(heard));
-            } else if (!controller.isClosed) {
-              controller.add(SpeechResult.partial(heard));
+              session.finish(SpeechResult.completed(result.recognizedWords));
+            } else {
+              session.partial(result.recognizedWords);
             }
           },
           listenOptions: SpeechListenOptions(
@@ -62,22 +70,28 @@ class WebSpeechEngine implements SpeechEngine {
           ),
         );
       } catch (error) {
-        finish(SpeechResult.failed(UnknownFailure('$error')));
+        session.finish(SpeechResult.failed(UnknownFailure('$error')));
       }
     };
     controller.onCancel = () async {
       // The listener went away mid-session (the screen closed).
-      if (!controller.isClosed) await _speech.cancel();
+      if (session.ended) return;
+      session.finish();
+      await _speech.cancel();
     };
     return controller.stream;
   }
 
   @override
   Future<void> stop() async {
+    final session = _active;
+    session?.stopRequested = true;
+    // If the plugin never reports back, the session still ends.
+    session?.armFallback(_finalTimeout + fallback);
     try {
       await _speech.stop();
     } catch (_) {
-      // Stopping is best effort; the session still ends through the status or timeout.
+      // Best effort; the fallback ends the session.
     }
   }
 
@@ -110,5 +124,38 @@ class WebSpeechEngine implements SpeechEngine {
       'speech_not_supported' => const SpeechResult.failed(SpeechUnavailableFailure()),
       final code => SpeechResult.failed(UnknownFailure(code)),
     };
+  }
+}
+
+/// One listening session: its own transcript, its own end.
+class _Session {
+  _Session(this._controller);
+
+  final StreamController<SpeechResult> _controller;
+  String heard = '';
+  bool stopRequested = false;
+  Timer? _fallback;
+
+  bool get ended => _controller.isClosed;
+
+  void partial(String text) {
+    if (ended) return;
+    heard = text;
+    _controller.add(SpeechResult.partial(text));
+  }
+
+  /// Ends the session once; later calls do nothing. Without [result], it ends
+  /// with what was heard.
+  void finish([SpeechResult? result]) {
+    if (ended) return;
+    _fallback?.cancel();
+    _controller.add(result ?? SpeechResult.completed(heard));
+    unawaited(_controller.close());
+  }
+
+  void armFallback(Duration after) {
+    if (ended) return;
+    _fallback?.cancel();
+    _fallback = Timer(after, finish);
   }
 }

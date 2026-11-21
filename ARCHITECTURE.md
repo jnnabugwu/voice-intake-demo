@@ -422,18 +422,18 @@ The kit has no published accessibility audit, so the app owns accessibility and 
 
   ```dart
   @freezed
-  sealed class SpeechState with _$SpeechState {
-    const factory SpeechState.idle() = SpeechIdle;
-    const factory SpeechState.starting() = SpeechStarting;
-    const factory SpeechState.listening({required String partial}) = SpeechListening;
-    const factory SpeechState.unavailable({required Failure failure}) = SpeechUnavailable;
+  sealed class SpeechPhase with _$SpeechPhase {
+    const factory SpeechPhase.idle() = SpeechIdle;
+    const factory SpeechPhase.starting() = SpeechStarting;
+    const factory SpeechPhase.listening({required String partial}) = SpeechListening;
+    const factory SpeechPhase.unavailable({required Failure failure}) = SpeechUnavailable;
   }
   ```
 
-  The UI switches on the state, and the compiler requires every variant to be handled:
+  The UI switches on the phase, and the compiler requires every variant to be handled. (`SpeechState` holds `language` and `lastUtterance` beside this `phase`; see the next point.)
 
   ```dart
-  return switch (state) {
+  return switch (state.phase) {
     SpeechIdle() => MicButton.idle(onTap: start),
     SpeechStarting() => const MicButton.starting(),
     SpeechListening(:final partial) => LiveTranscript(partial: partial),

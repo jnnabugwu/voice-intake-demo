@@ -39,7 +39,8 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
             return _finished(text.trim().isEmpty ? heard : text, language);
           case SpeechFailed(:final failure):
             ended = true;
-            return state.copyWith(phase: SpeechPhase.unavailable(failure: failure));
+            // Words heard before the failure still count.
+            return _finished(heard, language).copyWith(phase: SpeechPhase.unavailable(failure: failure));
         }
       },
     );

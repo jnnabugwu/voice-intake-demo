@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:intake/shared/core/failure.dart';
-import 'package:intake/worker/features/speech/domain/speech_engine.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';

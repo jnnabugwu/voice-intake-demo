@@ -71,8 +71,7 @@ intake/app/lib/
     worker_screen.dart         composes this side's features + the escalation card
     features/
       speech/
-        domain/                SpeechEngine, SpeechResult
-        data/                  WebSpeechEngine
+        domain/                Utterance
         presentation/          SpeechBloc, MicButton, LiveTranscript
       conversation/
         domain/                Turn, ChatChunk, ChatRepository, SubmitIntake
@@ -92,13 +91,16 @@ intake/app/lib/
       intake_case/
         domain/                IntakeCase, CaseStatus, IntakeSummary, CaseRepository, SummaryRepository
         data/                  InMemoryCaseRepository, Demo/ProxySummaryRepository, IntakeSummaryDto
+      speech/                  shared since the bench uses it too
+        domain/                SpeechEngine, SpeechResult
+        data/                  WebSpeechEngine
       safety/
         domain/                RedFlag, RedFlagDetector
         presentation/          EscalationCard (stateless)
   internal/
     routes.dart                typed route for /bench (+ routes.g.dart)
     features/
-      bench/                   BenchBloc, BenchPage, JSON export
+      bench/                   BenchScript (a build-time copy of bench/references.json), BenchBloc, BenchPage, JSON export
 test/                          mirrors lib/: test/worker/..., test/physician/..., test/shared/...
 ```
 
@@ -109,7 +111,7 @@ test/                          mirrors lib/: test/worker/..., test/physician/...
 3. **Features share domain types only.** A feature may import another feature's `domain/`, including shared ones. For example, `conversation` uses `shared/features/safety/domain` for `RedFlagDetector` and `shared/features/intake_case/domain` for `CaseRepository`. A feature never imports another feature's `data/` or `presentation/`.
 4. **Each side composes its own screens.** A screen that belongs to one feature lives in that feature (`ReviewPage`, `BenchPage`). A screen that combines features lives at the side's root. `worker/worker_screen.dart` is the main one: mic, chat, next-step card and escalation card on one page, with the one `BlocListener` that hands speech to the conversation.
 5. **Features don't know URLs.** Feature widgets take callbacks (`onCaseOpened`) and never import the router. Each side's `routes.dart` connects those callbacks to typed routes, so a feature can move to another app with different navigation without changing.
-6. **`shared/` is earned.** Code moves there only once both sides use it. The repo has no catch-all `widgets/`, `utils/` or `models/` folder.
+6. **`shared/` is earned.** Code moves there only once two of `worker/`, `physician/` and `internal/` use it. The speech engine is the example: the worker side and the internal bench both use `SpeechEngine`. The repo has no catch-all `widgets/`, `utils/` or `models/` folder.
 
 ### Layers inside a feature
 

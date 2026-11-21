@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intake/app/app.dart';
 import 'package:intake/app/app_mode.dart';
 import 'package:intake/app/router.dart';
+import 'package:intake/internal/features/bench/data/asset_bench_script.dart';
+import 'package:intake/internal/features/bench/data/bench_exporter.dart';
+import 'package:intake/internal/features/bench/domain/bench.dart';
 import 'package:intake/shared/core/ids.dart';
 import 'package:intake/shared/features/intake_case/data/demo_summary_repository.dart';
 import 'package:intake/shared/features/intake_case/data/in_memory_case_repository.dart';
@@ -12,8 +15,8 @@ import 'package:intake/shared/features/intake_case/domain/summary_repository.dar
 import 'package:intake/worker/features/conversation/data/demo_chat_repository.dart';
 import 'package:intake/worker/features/conversation/data/proxy_chat_repository.dart';
 import 'package:intake/worker/features/conversation/domain/chat_repository.dart';
-import 'package:intake/worker/features/speech/data/web_speech_engine.dart';
-import 'package:intake/worker/features/speech/domain/speech_engine.dart';
+import 'package:intake/shared/features/speech/data/web_speech_engine.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 
 /// The composition root, and the only file that imports `data/`. It picks the
 /// repositories once, from `PROXY_URL`, and hands them down.
@@ -40,6 +43,9 @@ void bootstrap() {
             AppMode.live => ProxySummaryRepository(baseUrl: proxyUrl),
           },
         ),
+        // The internal speech bench (/bench).
+        RepositoryProvider<BenchScriptRepository>(create: (_) => const AssetBenchScriptRepository()),
+        RepositoryProvider<BenchExporter>(create: (_) => DownloadBenchExporter()),
         // Both sides read this one store, in both modes.
         RepositoryProvider<CaseRepository>(create: (_) => InMemoryCaseRepository()),
       ],

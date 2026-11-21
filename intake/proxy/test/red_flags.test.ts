@@ -45,6 +45,27 @@ describe("detectRedFlag over the bench script", () => {
     }
   });
 
+  it("confusion needs to be a symptom, and the ER a question about going", () => {
+    for (const t of [
+      "I'm confused about my bill",
+      "I'm confused about how this works",
+      "She is confused by the form",
+      "Estoy confundida con mi factura",
+      "I went to the emergency room last month, how do I get reimbursed?",
+    ]) {
+      expect(detectRedFlag(t), t).toBeNull();
+    }
+    for (const t of [
+      "My dad has been confused since this morning",
+      "She seems very confused and sleepy",
+      "Mi mamá está muy confundida",
+      "Should I take him to the ER?",
+      "¿Lo llevo a urgencias?",
+    ]) {
+      expect(detectRedFlag(t), t).toBe("emergency");
+    }
+  });
+
   it("overdose is a crisis; an accidental injury is not", () => {
     for (const t of ["I took a whole bottle of pills", "I think I overdosed", "Me tomé todas las pastillas", "sobredosis"]) {
       expect(detectRedFlag(t), t).toBe("crisis");

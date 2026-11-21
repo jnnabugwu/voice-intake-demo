@@ -73,6 +73,7 @@ void main() {
     }
     expect(detector.detect("No chest pain, but I can't breathe")?.kind, RedFlagKind.emergency);
     expect(detector.detect("I have no fever and can't breathe")?.kind, RedFlagKind.emergency);
+    expect(detector.detect('Sin embargo me duele el pecho')?.kind, RedFlagKind.emergency);
     expect(detector.detect('No tengo fiebre y me falta el aire')?.kind, RedFlagKind.emergency);
   });
 
@@ -108,5 +109,75 @@ void main() {
     for (final t in ['I do not want to live', 'I do not want to be alive']) {
       expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
     }
+  });
+
+  test("talking about someone else's suicide is not a crisis; intent is", () {
+    expect(detector.detect('My sister died by suicide last year'), isNull);
+    for (final t in [
+      "I'm suicidal",
+      "I've been thinking about suicide",
+      'Pienso en suicidarme',
+      'Tengo ideas suicidas',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+  });
+
+  test('confusion needs to be a symptom, and the ER a question about going', () {
+    for (final t in [
+      "I'm confused about my bill",
+      "I'm confused about how this works",
+      'She is confused by the form',
+      'Estoy confundida con mi factura',
+      'I went to the emergency room last month, how do I get reimbursed?',
+    ]) {
+      expect(detector.detect(t), isNull, reason: t);
+    }
+    for (final t in [
+      'My dad has been confused since this morning',
+      'She seems very confused and sleepy',
+      'Mi mamá está muy confundida',
+      'Tengo confusión',
+      'Should I take him to the ER?',
+      '¿Lo llevo a urgencias?',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+  });
+
+  test('explicit suicide wording; spills and shaving cuts are not red flags', () {
+    for (final t in [
+      'I have thoughts of suicide',
+      'I attempted suicide last year',
+      'Tuve un intento de suicidio',
+      'Tengo ideación suicida',
+      'pensamientos de suicidio',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+    for (final t in ['Me derramé el café', 'I cut myself shaving']) {
+      expect(detector.detect(t), isNull, reason: t);
+    }
+    expect(detector.detect('Creo que tuvo un derrame')?.kind, RedFlagKind.emergency);
+  });
+
+  test('haircuts and billing confusion are not red flags; Spanish ER trips are', () {
+    for (final t in ['Quiero cortarme el pelo', 'Tengo mucha confusión con mi factura']) {
+      expect(detector.detect(t), isNull, reason: t);
+    }
+    expect(detector.detect('Quiero cortarme')?.kind, RedFlagKind.crisis);
+    for (final t in ['¿Debo llevar a mi mamá a urgencias?', '¿Tengo que ir a urgencias?']) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+  });
+
+  test("intent to cut, and \"she's confused\"", () {
+    for (final t in ['I want to cut myself', 'I am going to cut myself']) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+    for (final t in ["She's confused", "He's very confused"]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+    expect(detector.detect("She's confused about the bill"), isNull);
   });
 }

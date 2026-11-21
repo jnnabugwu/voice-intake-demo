@@ -5,7 +5,8 @@
   "scripts": {
     "pull-audio": "tsx pull-audio.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "bench": "tsx --env-file-if-exists=.env bench.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

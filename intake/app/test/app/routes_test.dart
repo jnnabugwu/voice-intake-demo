@@ -1,22 +1,12 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:intake/app/app.dart';
-import 'package:intake/app/app_mode.dart';
-import 'package:intake/app/router.dart';
 import 'package:intake/internal/routes.dart';
 import 'package:intake/physician/features/case_review/presentation/review_page.dart';
 import 'package:intake/physician/routes.dart';
 import 'package:intake/worker/routes.dart';
 
-Future<void> pumpAt(WidgetTester tester, String location) async {
-  await tester.pumpWidget(
-    RepositoryProvider<AppMode>.value(
-      value: AppMode.demo,
-      child: IntakeApp(router: createRouter(initialLocation: location)),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
+import '../helpers/pump_app.dart';
+
+Future<void> pumpAt(WidgetTester tester, String location) => pumpApp(tester, location: location);
 
 void main() {
   group('route locations', () {
@@ -38,7 +28,8 @@ void main() {
   group('router', () {
     testWidgets('/ redirects to the worker side', (tester) async {
       await pumpAt(tester, '/');
-      expect(find.text('Worker'), findsWidgets);
+      expect(find.text('Start listening'), findsNothing); // label is semantic only
+      expect(find.text('Tap the mic and speak'), findsOneWidget);
       expect(find.text("Demo, don't enter real health information."), findsOneWidget);
     });
 
@@ -67,7 +58,7 @@ void main() {
       await pumpAt(tester, '/worker');
       await tester.tap(find.text('Physician').first);
       await tester.pumpAndSettle();
-      expect(find.text('Physician'), findsNWidgets(2)); // switch label + page
+      expect(find.text('Physician'), findsNWidgets(2)); // switch label + placeholder page
     });
   });
 }

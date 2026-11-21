@@ -32,7 +32,7 @@ The product has two kinds of user, and the code is split the same way.
 
 **Workers come through their employer.** Employers offer the app to their workers, so every worker and every case belongs to an employer, and the backend scopes access by it. Employers have no side in the app; the employer is a field on the account and the case, not a screen.
 
-Both sides depend on `shared/`: the case entities and repository contracts, the safety detector, `Result` and `Failure`, and the design system. The sides never import each other. The case is the only thing they exchange, and they exchange it through `CaseRepository`: the worker side submits it, and the physician side approves it. A third folder, `internal/`, holds the speech bench. It ships in the demo build only.
+Both sides depend on `shared/`: the case entities and repository contracts, the safety detector, `Result` and `Failure`, and the design system. The sides never import each other. The case is the only thing they exchange, and they exchange it through `CaseRepository`: the worker side submits it, and the physician side approves it. A third folder, `internal/`, holds the speech bench. It ships in the demo build only. ("Demo build" means this demo app, as opposed to a production build. It is not demo *mode*: the deployed demo runs in live mode and keeps the bench and the side switch.)
 
 To decide where code goes, ask: if the physician side were deleted, would this code go dead? If yes, it belongs to the physician side. If it would still be used, it belongs to the worker side or to `shared/`.
 
@@ -139,8 +139,8 @@ grep -rlE "package:intake/(worker|physician)/" lib/internal
 grep -rlE "package:intake/(worker|physician|internal|app)/" lib/shared
 
 # Layers
-grep -rl "/data/" lib/*/features/*/presentation             # presentation never imports data
-grep -rl "package:flutter" lib/*/features/*/domain           # domain is pure Dart
+grep -rl "/data/" lib/*/features/*/presentation 2>/dev/null # presentation never imports data
+grep -rl "package:flutter" lib/*/features/*/domain 2>/dev/null   # domain is pure Dart
 
 # Features: none reaches into another's data/ or presentation/
 for dir in lib/*/features/*/; do
@@ -157,7 +157,13 @@ grep -rnE "context\.(go|push|pushReplacement|replace)\(" lib --include='*.dart' 
 grep -rlE "package:(flutter/material|flutter/cupertino|material_ui|cupertino_ui)" lib   # no Material or Cupertino
 grep -rl "package:shadcn_ui" lib | grep -vE "^lib/(shared/ui|app)/"                  # the kit stays behind shared/ui
 grep -rnE "Color\(0x|Colors\.|TextStyle\(" lib --include='*.dart' | grep -v "^lib/shared/ui/"   # colors and type come from the theme
+
+# Data: only the composition root imports data/
+grep -rlE "package:intake/[a-z_]+/features/[a-z_]+/data/" lib --include='*.dart' \
+  | grep -vE "^lib/bootstrap\.dart$|^lib/[a-z_]+/features/[a-z_]+/data/"
 ```
+
+CI runs the script and fails on any output (`.circleci/config.yml`, job `intake-app`).
 
 ## Features and Blocs
 
@@ -360,7 +366,9 @@ Screens use the app's own components from `shared/ui/ui.dart` and never import `
 
 | App component (`shared/ui`) | Built on | API |
 |---|---|---|
-| `AppButton` | `ShadButton` variants | `.primary`, `.secondary`, `.quiet`, `.danger` |
+| `AppButton` | `ShadButton` variants | `.primary`, `.secondary`, `.outline`, `.quiet`, `.danger`; 48 dp tall |
+| `AppIconButton` | `ShadButton` (round) | icon plus a spoken label; the 72 dp mic |
+| `AppBadge` | `ShadBadge` | word plus optional icon and token color; `.outline`, `.danger` |
 | `AppCard` | `ShadCard` | title, description, child, footer |
 | `StatusBadge` | `ShadBadge` | takes a `CaseStatus`: picks the token, icon and word itself |
 | `AppAlert` | `ShadAlert` | `.info`, `.danger` |

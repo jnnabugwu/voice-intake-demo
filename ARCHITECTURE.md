@@ -111,7 +111,7 @@ test/                          mirrors lib/: test/worker/..., test/physician/...
 3. **Features share domain types only.** A feature may import another feature's `domain/`, including shared ones. For example, `conversation` uses `shared/features/safety/domain` for `RedFlagDetector` and `shared/features/intake_case/domain` for `CaseRepository`. A feature never imports another feature's `data/` or `presentation/`.
 4. **Each side composes its own screens.** A screen that belongs to one feature lives in that feature (`ReviewPage`, `BenchPage`). A screen that combines features lives at the side's root. `worker/worker_screen.dart` is the main one: mic, chat, next-step card and escalation card on one page, with the one `BlocListener` that hands speech to the conversation.
 5. **Features don't know URLs.** Feature widgets take callbacks (`onCaseOpened`) and never import the router. Each side's `routes.dart` connects those callbacks to typed routes, so a feature can move to another app with different navigation without changing.
-6. **`shared/` is earned.** Code moves there only once both sides use it. The repo has no catch-all `widgets/`, `utils/` or `models/` folder.
+6. **`shared/` is earned.** Code moves there only once two of `worker/`, `physician/` and `internal/` use it. The speech engine is the example: the worker side and the internal bench both use `SpeechEngine`. The repo has no catch-all `widgets/`, `utils/` or `models/` folder.
 
 ### Layers inside a feature
 

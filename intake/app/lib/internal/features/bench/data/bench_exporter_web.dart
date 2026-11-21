@@ -16,6 +16,8 @@ class DownloadBenchExporter implements BenchExporter {
       ..href = url
       ..download = filename;
     anchor.click();
+    // Revoke later: the browser may still be starting the download.
+    await Future<void>.delayed(const Duration(seconds: 30));
     web.URL.revokeObjectURL(url);
   }
 }

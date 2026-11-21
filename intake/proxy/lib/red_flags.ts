@@ -41,8 +41,11 @@ const CRISIS = [
  * their own "no" ("no quiero vivir") start at the "no", so they aren't denied.
  */
 function negated(text: string, start: number): boolean {
-  const clause = text.slice(Math.max(0, start - 30), start).split(/[.,;!?]|\bbut\b|\bpero\b/).pop() ?? "";
-  return /\b(no|not|never|without|don'?t|doesn'?t|didn'?t|haven'?t|sin|nunca|tampoco|ningun[oa]?)\b/.test(clause);
+  // Only the clause the match is in ("no fever and can't breathe" is two clauses),
+  // and only the few words right before it ("no", "don't have", "no tengo").
+  const clause = text.slice(Math.max(0, start - 40), start).split(/[.,;!?]|\b(?:but|and|or|pero|y|o)\b/).pop() ?? "";
+  const words = clause.trim().split(/\s+/).filter(Boolean).slice(-3);
+  return words.some((w) => /^(no|not|never|without|don'?t|doesn'?t|didn'?t|haven'?t|sin|nunca|tampoco|ningun[oa]?)$/.test(w));
 }
 
 function firstHit(patterns: RegExp[], text: string): boolean {

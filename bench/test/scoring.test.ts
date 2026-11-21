@@ -70,13 +70,13 @@ describe("key terms", () => {
 describe("clips", () => {
   it("matches by stem with any audio extension, newest naming from the recorder", () => {
     const dir = mkdtempSync(join(tmpdir(), "clips-"));
-    for (const f of ["es_mx_01.webm", "en_jn_02.mp4", "es_cu_03.m4a", "notes.txt", "es_mx_01_noise.webm"]) {
+    for (const f of ["es_mx_01.webm", "en_jn_02.mp4", "es_cu_03.m4a", "notes.txt", "notes.mp3", "es_mx_01_noise.webm"]) {
       writeFileSync(join(dir, f), "");
     }
     const clips = findClips(dir);
     expect(clips.get(stem("es_mx", 1))).toBe(join(dir, "es_mx_01.webm"));
     expect(clips.get(stem("en_jn", 2))).toBe(join(dir, "en_jn_02.mp4"));
-    expect(clips.has("notes")).toBe(false);
+    expect(clips.has("notes")).toBe(false); // .mp3 too: not a {speaker}_{NN} stem
     expect(clips.has("es_mx_01_noise")).toBe(true);
     expect(findClips(join(dir, "missing")).size).toBe(0);
   });

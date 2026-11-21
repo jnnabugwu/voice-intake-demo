@@ -8,7 +8,7 @@ import 'package:intake/worker/features/conversation/domain/submit_intake.dart';
 import 'package:intake/worker/features/next_step/presentation/next_step_bloc.dart';
 import 'package:intake/worker/features/conversation/domain/chat_repository.dart';
 import 'package:intake/worker/features/conversation/presentation/conversation_bloc.dart';
-import 'package:intake/worker/features/speech/domain/speech_engine.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 import 'package:intake/worker/features/speech/presentation/speech_bloc.dart';
 import 'package:intake/worker/worker_screen.dart';
 

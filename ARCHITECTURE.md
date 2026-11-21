@@ -71,8 +71,7 @@ intake/app/lib/
     worker_screen.dart         composes this side's features + the escalation card
     features/
       speech/
-        domain/                SpeechEngine, SpeechResult
-        data/                  WebSpeechEngine
+        domain/                Utterance
         presentation/          SpeechBloc, MicButton, LiveTranscript
       conversation/
         domain/                Turn, ChatChunk, ChatRepository, SubmitIntake
@@ -92,13 +91,16 @@ intake/app/lib/
       intake_case/
         domain/                IntakeCase, CaseStatus, IntakeSummary, CaseRepository, SummaryRepository
         data/                  InMemoryCaseRepository, Demo/ProxySummaryRepository, IntakeSummaryDto
+      speech/                  shared since the bench uses it too
+        domain/                SpeechEngine, SpeechResult
+        data/                  WebSpeechEngine
       safety/
         domain/                RedFlag, RedFlagDetector
         presentation/          EscalationCard (stateless)
   internal/
     routes.dart                typed route for /bench (+ routes.g.dart)
     features/
-      bench/                   BenchBloc, BenchPage, JSON export
+      bench/                   BenchScript (a build-time copy of bench/references.json), BenchBloc, BenchPage, JSON export
 test/                          mirrors lib/: test/worker/..., test/physician/..., test/shared/...
 ```
 

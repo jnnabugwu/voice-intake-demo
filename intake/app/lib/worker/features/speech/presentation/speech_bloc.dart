@@ -2,7 +2,7 @@ import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intake/shared/core/ids.dart';
 import 'package:intake/shared/core/language.dart';
-import 'package:intake/worker/features/speech/domain/speech_engine.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 import 'package:intake/worker/features/speech/domain/utterance.dart';
 import 'package:intake/worker/features/speech/presentation/speech_event.dart';
 import 'package:intake/worker/features/speech/presentation/speech_state.dart';

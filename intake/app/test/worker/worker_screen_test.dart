@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intake/shared/core/failure.dart';
-import 'package:intake/worker/features/speech/domain/speech_engine.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 
 import 'package:intake/worker/features/conversation/data/demo_chat_repository.dart';
 

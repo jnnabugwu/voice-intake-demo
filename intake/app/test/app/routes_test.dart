@@ -41,12 +41,12 @@ void main() {
 
     testWidgets('/bench?line=abc falls back to line 1', (tester) async {
       await pumpAt(tester, '/bench?line=abc');
-      expect(find.text('Bench, line 1'), findsOneWidget);
+      expect(find.text('Line 1 of 21 · 0 read'), findsOneWidget);
     });
 
     testWidgets('/bench?line=99 opens the last line', (tester) async {
       await pumpAt(tester, '/bench?line=99');
-      expect(find.text('Bench, line $benchLineCount'), findsOneWidget);
+      expect(find.text('Line $benchLineCount of 21 · 0 read'), findsOneWidget);
     });
 
     testWidgets('an unknown path shows the error page', (tester) async {

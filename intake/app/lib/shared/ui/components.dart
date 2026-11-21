@@ -285,22 +285,26 @@ class AppSegmented<T> extends StatelessWidget {
     return Semantics(
       label: semanticLabel,
       container: true,
-      child: ShadToggleGroup<T>(
-        // A new key per selection keeps the kit's internal value in step with ours.
-        key: ValueKey(selected),
-        initialValue: selected,
-        allowDeselection: false,
-        enabled: enabled,
-        onChanged: (value) {
-          if (value != null && value != selected) onChanged(value);
-        },
-        items: [
-          for (final (value, label) in options)
-            ShadToggleGroupItem<T>(
-              value: value,
-              child: Semantics(selected: value == selected, child: Text(label)),
-            ),
-        ],
+      // Scrolls sideways rather than overflow on a narrow phone.
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ShadToggleGroup<T>(
+          // A new key per selection keeps the kit's internal value in step with ours.
+          key: ValueKey(selected),
+          initialValue: selected,
+          allowDeselection: false,
+          enabled: enabled,
+          onChanged: (value) {
+            if (value != null && value != selected) onChanged(value);
+          },
+          items: [
+            for (final (value, label) in options)
+              ShadToggleGroupItem<T>(
+                value: value,
+                child: Semantics(selected: value == selected, child: Text(label)),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -326,4 +330,14 @@ void showAppToast(BuildContext context, String message, {String? retryLabel, Voi
             ),
     ),
   );
+}
+
+/// How far along something is, 0 to 1.
+class AppProgress extends StatelessWidget {
+  const AppProgress({super.key, required this.value});
+
+  final double value;
+
+  @override
+  Widget build(BuildContext context) => ShadProgress(value: value.clamp(0, 1));
 }

@@ -31,6 +31,18 @@ class WorkerScreen extends StatelessWidget {
             );
           },
         ),
+        // Speech that finished while a reply streamed waits, then goes in once
+        // the conversation takes input again. Already-answered IDs are ignored.
+        BlocListener<ConversationBloc, ConversationState>(
+          listenWhen: (previous, current) => previous.phase is Streaming && current.phase is! Streaming,
+          listener: (context, state) {
+            final utterance = context.read<SpeechBloc>().state.lastUtterance;
+            if (utterance == null || state.turns.any((t) => t.id == utterance.id)) return;
+            context.read<ConversationBloc>().add(
+              UtteranceSubmitted(utteranceId: utterance.id, text: utterance.text, language: utterance.language),
+            );
+          },
+        ),
         BlocListener<ConversationBloc, ConversationState>(
           listenWhen: (previous, current) => previous.phase != current.phase && current.phase is ReplyFailed,
           listener: (context, state) {
@@ -63,13 +75,14 @@ class _WorkerBody extends StatelessWidget {
     final language = speech.language;
     final strings = ConversationStrings.of(language);
     final phase = conversation.phase;
-    final canSend = phase is Gathering || phase is ReplyFailed;
+    final spendCapped = phase is ReplyFailed && phase.failure is SpendCapFailure;
+    final canSend = phase is Gathering || (phase is ReplyFailed && !spendCapped);
+    final micLive = speech.phase is SpeechStarting || speech.phase is SpeechListening;
     final finished = phase is Finished;
     final speechFailure = switch (speech.phase) {
       SpeechUnavailable(:final failure) => failure,
       _ => null,
     };
-    final spendCapped = phase is ReplyFailed && phase.failure is SpendCapFailure;
 
     return Align(
       alignment: Alignment.topCenter,
@@ -120,7 +133,9 @@ class _WorkerBody extends StatelessWidget {
                   label: strings.finish,
                   icon: LucideIcons.check,
                   expand: true,
-                  onPressed: phase is Gathering ? () => conversationBloc.add(const FinishRequested()) : null,
+                  onPressed: phase is Gathering && !micLive
+                      ? () => conversationBloc.add(const FinishRequested())
+                      : null,
                 ),
               ],
             ],

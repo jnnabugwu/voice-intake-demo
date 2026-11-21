@@ -21,7 +21,7 @@ class MicButton extends StatefulWidget {
   final VoidCallback onStart;
   final VoidCallback onStop;
 
-  /// False while a reply streams.
+  /// False while a reply streams. Gates starting only: a live mic can always be stopped.
   final bool enabled;
 
   @override
@@ -89,7 +89,7 @@ class _MicButtonState extends State<MicButton> with SingleTickerProviderStateMix
         icon: icon,
         semanticLabel: label,
         highlighted: live,
-        onPressed: widget.enabled ? onPressed : null,
+        onPressed: widget.enabled || widget.phase is SpeechListening ? onPressed : null,
       ),
     );
   }

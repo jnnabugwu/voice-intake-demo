@@ -43,4 +43,24 @@ void main() {
     expect(chunks.last, const ChatChunk.done());
     expect(chunks.whereType<ChatDelta>().length, greaterThan(3));
   });
+
+  test('"a few days" and "unos días" count as a duration', () {
+    for (final (text, lang) in [
+      ('It started a few days ago', Language.en),
+      ('For a couple of weeks', Language.en),
+      ('Desde hace unos días', Language.es),
+    ]) {
+      final reply = DemoChatRepository.replyFor([w(text, lang)], lang);
+      expect(reply, isNot(contains(lang == Language.en ? 'How long' : 'cuánto tiempo')), reason: text);
+    }
+  });
+
+  test('a topic asked in English is not asked again after switching to Spanish', () {
+    final turns = [
+      w('My throat hurts'),
+      a(DemoChatRepository.replyFor([w('My throat hurts')], Language.en)),
+      w('7', Language.es),
+    ];
+    expect(DemoChatRepository.replyFor(turns, Language.es), isNot(contains('cuánto tiempo')));
+  });
 }

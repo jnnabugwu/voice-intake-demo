@@ -19,8 +19,8 @@ class ConversationStrings {
   String get retry => _es ? 'Reintentar' : 'Retry';
   String get spendCapTitle => _es ? 'La demo en vivo está en pausa por hoy' : 'The live demo is paused for today';
   String get spendCapBody => _es
-      ? 'Llegó al límite diario. Pruebe el modo demo (ejecute sin PROXY_URL) o vuelva mañana.'
-      : 'It reached its daily limit. Try demo mode (run without PROXY_URL), or come back tomorrow.';
+      ? 'Llegó a su límite diario. Vuelva mañana, por favor.'
+      : 'It reached its daily limit. Please come back tomorrow.';
 
   /// For a toast; the worker can retry these.
   String failureToast(Failure failure) => switch (failure) {

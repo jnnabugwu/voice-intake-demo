@@ -39,7 +39,8 @@ class DemoChatRepository implements ChatRepository {
 
     for (final topic in _Topic.values) {
       final question = script.questions[topic]!;
-      if (asked.contains(question)) continue;
+      // Asked already, in either language (the worker may have switched).
+      if (_scripts.values.any((s) => asked.contains(s.questions[topic]!))) continue;
       if (_patterns[topic]!.hasMatch(said)) continue;
       return '${isFirst ? script.firstAck : script.ack} $question';
     }
@@ -48,7 +49,7 @@ class DemoChatRepository implements ChatRepository {
 
   static final _patterns = {
     _Topic.duration: RegExp(
-      r'\b(\d+|one|two|three|four|five|six|seven|a|un|una|dos|tres|cuatro|cinco)\s+(hours?|days?|weeks?|months?|horas?|d[ií]as?|semanas?|mes(es)?)\b'
+      r'\b(\d+|one|two|three|four|five|six|seven|a|few|couple|several|some|un|una|unos|unas|dos|tres|cuatro|cinco|varios|varias|pocos|pocas)\s+(of\s+)?(hours?|days?|weeks?|months?|horas?|d[ií]as?|semanas?|mes(es)?)\b'
       r'|\b(yesterday|since|last night|this morning|ayer|desde|anoche|esta mañana)\b',
     ),
     _Topic.severity: RegExp(

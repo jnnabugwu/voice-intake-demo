@@ -129,4 +129,23 @@ void main() {
     expect(bloc.state.phase, const ConversationPhase.finished());
     await bloc.close();
   });
+
+  test('a second retry tap while retrying is ignored and the retry completes', () async {
+    final chat = FakeChatRepository([
+      [const ChatChunk.failed(NetworkFailure())],
+      [const ChatChunk.delta('How long?'), const ChatChunk.done()],
+      [const ChatChunk.done()],
+    ]);
+    final bloc = ConversationBloc(chat, SequentialIds());
+    bloc.add(const TypedMessageSubmitted(text: 'sore throat', language: Language.en));
+    await pumpEventQueue();
+    bloc
+      ..add(const ReplyRetryRequested())
+      ..add(const ReplyRetryRequested());
+    await pumpEventQueue();
+    expect(chat.calls, hasLength(2));
+    expect(bloc.state.phase, const ConversationPhase.gathering());
+    expect(bloc.state.turns.last.text, 'How long?');
+    await bloc.close();
+  });
 }

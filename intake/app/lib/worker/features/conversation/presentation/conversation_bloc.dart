@@ -23,7 +23,8 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
       (e, emit) => _onWorkerText(_ids.next('u'), e.text, e.language, emit),
       transformer: droppable(),
     );
-    on<ReplyRetryRequested>(_onRetry, transformer: restartable());
+    // Droppable, not restartable: a second tap must not cancel the retry in flight.
+    on<ReplyRetryRequested>(_onRetry, transformer: droppable());
     on<FinishRequested>(_onFinish);
   }
 

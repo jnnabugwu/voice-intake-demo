@@ -1,5 +1,6 @@
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intake/shared/core/failure.dart';
 import 'package:intake/shared/core/ids.dart';
 import 'package:intake/shared/core/language.dart';
 import 'package:intake/worker/features/conversation/domain/chat_chunk.dart';
@@ -83,7 +84,14 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
         }
       },
     );
-    if (!ended && !isClosed) emit(_withAssistant(turnId, reply, language));
+    // A stream that closed without saying how it ended is a failure the worker can retry.
+    if (!ended && !isClosed) {
+      emit(
+        state.copyWith(
+          phase: ConversationPhase.replyFailed(turnId: turnId, failure: const UnknownFailure('stream_ended_early')),
+        ),
+      );
+    }
   }
 
   ConversationState _withAssistant(String turnId, String text, Language language) => state.copyWith(

@@ -12,14 +12,11 @@ abstract class TranscriptLine with _$TranscriptLine {
   const factory TranscriptLine({required TranscriptSpeaker speaker, required String text}) = _TranscriptLine;
 }
 
-/// Where a case stands. The worker's next step exists only once approved.
+/// Where the review stands. The worker's next step exists only once approved.
 @freezed
 sealed class CaseStatus with _$CaseStatus {
   const factory CaseStatus.awaitingReview() = AwaitingReview;
   const factory CaseStatus.approved({required String nextStep}) = Approved;
-
-  /// The worker was shown 911 / 988. The physician still sees the case.
-  const factory CaseStatus.escalated({required RedFlag flag}) = Escalated;
 }
 
 /// One worker's request for care: the only thing the two sides exchange.
@@ -33,6 +30,10 @@ abstract class IntakeCase with _$IntakeCase {
     /// Null when the summary couldn't be built; the physician still has the transcript.
     IntakeSummary? summary,
     @Default(CaseStatus.awaitingReview()) CaseStatus status,
+
+    /// Set when the chat stopped on a red flag and the worker was shown
+    /// 911 / 988. A record of what happened, so approving the case keeps it.
+    RedFlag? redFlag,
   }) = _IntakeCase;
 }
 

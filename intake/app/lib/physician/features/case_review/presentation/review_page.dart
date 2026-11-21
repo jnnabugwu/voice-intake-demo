@@ -67,20 +67,21 @@ class _Ready extends StatelessWidget {
       onDraftChanged: (text) => bloc.add(NextStepDraftChanged(text)),
       onApprove: () => bloc.add(const ApproveRequested()),
     );
-    final escalation = switch (intakeCase.status) {
-      Escalated(:final flag) => AppAlert.danger(
-        title: 'The chat stopped on a red flag',
-        description:
-            'The worker was shown ${flag.kind == RedFlagKind.crisis ? '988 and 911' : '911 and 988'}. Trigger: "${flag.reason}". Follow up directly.',
-      ),
-      _ => null,
-    };
+    final flag = intakeCase.redFlag;
+    final escalation = flag == null
+        ? null
+        : AppAlert.danger(
+            title: 'The chat stopped on a red flag',
+            description:
+                'The worker was shown ${flag.kind == RedFlagKind.crisis ? '988 and 911' : '911 and 988'}. Trigger: "${flag.reason}". Follow up directly.',
+          );
     final header = Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 12,
       runSpacing: 8,
       children: [
         Text('Intake review', style: context.type.h3),
+        if (flag != null) EscalationBadge(flag: flag),
         StatusBadge(status: intakeCase.status),
       ],
     );

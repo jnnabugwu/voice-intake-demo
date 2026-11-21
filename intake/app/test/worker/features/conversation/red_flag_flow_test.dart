@@ -16,13 +16,16 @@ import '../../../helpers/fake_chat_repository.dart';
 import '../../../helpers/sequential_ids.dart';
 
 class _FlaggingSummaries implements SummaryRepository {
+  _FlaggingSummaries(this.flags);
+
+  final List<String> flags;
+
   @override
   Future<Result<IntakeSummary>> summarize({
     required String conversationId,
     required Language language,
     required String transcript,
-  }) async =>
-      Ok(IntakeSummary(language: language, transcript: transcript, redFlags: const ['sudden weakness on one side']));
+  }) async => Ok(IntakeSummary(language: language, transcript: transcript, redFlags: flags));
 }
 
 void main() {
@@ -40,8 +43,36 @@ void main() {
     expect(chat.calls, isEmpty);
     expect(bloc.state.phase, isA<RedFlagRaised>());
     final submitted = await cases.watchCurrent().first;
-    expect(submitted!.status, isA<Escalated>());
-    expect((submitted.status as Escalated).flag.kind, RedFlagKind.emergency);
+    expect(submitted!.redFlag?.kind, RedFlagKind.emergency);
+    expect(submitted.status, const CaseStatus.awaitingReview());
+    await bloc.close();
+  });
+
+  test('approving an escalated case keeps the escalation record', () async {
+    final cases = InMemoryCaseRepository();
+    const flag = RedFlag(kind: RedFlagKind.crisis, reason: 'no quiero vivir');
+    final _ = await cases.submit(const IntakeCase(id: 'c_1', language: Language.es, transcript: [], redFlag: flag));
+    final approved = await cases.approve('c_1', nextStep: 'A clinician will call you now.');
+    expect(approved, const Ok<void>(null));
+    final c = (await cases.watchCurrent().first)!;
+    expect(c.status, const CaseStatus.approved(nextStep: 'A clinician will call you now.'));
+    expect(c.redFlag, flag);
+  });
+
+  test('chunks after a red_flag event are ignored', () async {
+    final cases = InMemoryCaseRepository();
+    final bloc = ConversationBloc(
+      FakeChatRepository([
+        [const ChatChunk.redFlag(RedFlagKind.emergency), const ChatChunk.delta('late'), const ChatChunk.done()],
+      ]),
+      SequentialIds(),
+      SubmitIntake(const DemoSummaryRepository(), cases),
+    );
+    bloc.add(const TypedMessageSubmitted(text: 'something the app missed', language: Language.en));
+    await pumpEventQueue();
+    expect(bloc.state.phase, isA<RedFlagRaised>());
+    expect(bloc.state.turns.where((t) => t.speaker == Speaker.assistant), isEmpty);
+    expect((await cases.watchCurrent().first)!.redFlag?.kind, RedFlagKind.emergency);
     await bloc.close();
   });
 
@@ -57,7 +88,7 @@ void main() {
     bloc.add(const TypedMessageSubmitted(text: 'something the app missed', language: Language.en));
     await pumpEventQueue();
     expect(bloc.state.phase, isA<RedFlagRaised>());
-    expect((await cases.watchCurrent().first)!.status, isA<Escalated>());
+    expect((await cases.watchCurrent().first)!.redFlag?.kind, RedFlagKind.crisis);
     await bloc.close();
   });
 
@@ -76,20 +107,19 @@ void main() {
     await bloc.close();
   });
 
-  test('a red flag in the summary escalates the case', () async {
-    final cases = InMemoryCaseRepository();
-    final result = await SubmitIntake(_FlaggingSummaries(), cases)(
-      conversationId: 'c_1',
-      language: Language.en,
-      turns: const [Turn(id: 'u', speaker: Speaker.worker, text: 'my arm feels weird', language: Language.en)],
-    );
-    expect(result, const Ok<void>(null));
-    final status = (await cases.watchCurrent().first)!.status;
-    expect(
-      status,
-      const CaseStatus.escalated(
-        flag: RedFlag(kind: RedFlagKind.emergency, reason: 'sudden weakness on one side'),
-      ),
-    );
-  });
+  for (final (flags, kind) in [
+    (['sudden weakness on one side'], RedFlagKind.emergency),
+    (['passive suicidal ideation'], RedFlagKind.crisis),
+  ]) {
+    test('a red flag in the summary escalates the case (${kind.name})', () async {
+      final cases = InMemoryCaseRepository();
+      final result = await SubmitIntake(_FlaggingSummaries(flags), cases)(
+        conversationId: 'c_1',
+        language: Language.en,
+        turns: const [Turn(id: 'u', speaker: Speaker.worker, text: 'my arm feels weird', language: Language.en)],
+      );
+      expect(result, const Ok<void>(null));
+      expect((await cases.watchCurrent().first)!.redFlag, RedFlag(kind: kind, reason: flags.first));
+    });
+  }
 }

@@ -72,6 +72,8 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     await emit.forEach<ChatChunk>(
       _chat.reply(conversationId: state.conversationId, turnId: turnId, language: language, turns: state.turns),
       onData: (chunk) {
+        // The first terminal chunk decides how the reply ended; anything after it is ignored.
+        if (ended) return state;
         switch (chunk) {
           case ChatDelta(:final text):
             reply += text;
@@ -90,7 +92,9 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
             ).copyWith(clinicianOffered: true);
           case ChatRedFlag(:final kind):
             ended = true;
-            final flag = RedFlag(kind: kind, reason: 'flagged by the proxy');
+            // The proxy checked the newest message; that message is the trigger.
+            final said = state.turns.lastWhere((t) => t.speaker == Speaker.worker).text;
+            final flag = RedFlag(kind: kind, reason: said);
             return state.copyWith(phase: ConversationPhase.redFlagRaised(flag: flag));
           case ChatFailed(:final failure):
             ended = true;

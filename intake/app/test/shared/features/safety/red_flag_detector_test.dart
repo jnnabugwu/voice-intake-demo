@@ -42,4 +42,22 @@ void main() {
       expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
     }
   });
+
+  test('Spanish matches with or without accents, and with possessives', () {
+    for (final t in ['No quiero estar aqui', 'no quiero estar aquí', 'Quiero hacerme dano']) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+    for (final t in [
+      'Tengo dolor en mi pecho',
+      'me duele mi pecho',
+      'siento presion en el pecho',
+      'Siento presión en mi pecho',
+      'No puedo mover mi brazo',
+      'no puedo mover la pierna',
+      'tengo la cara caida',
+      'Está muy confundido',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+  });
 }

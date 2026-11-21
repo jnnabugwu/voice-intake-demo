@@ -170,4 +170,27 @@ void main() {
       expect(find.text(call), findsOneWidget);
     });
   }
+
+  testWidgets('after a red flag, an approved next step replaces the card and keeps the help lines', (tester) async {
+    await pumpApp(tester);
+    await tester.enterText(find.byType(EditableText), "I have chest pain and I'm short of breath");
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+    expect(find.text('Call 911'), findsOneWidget);
+
+    await tester.tap(find.text('Physician'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText), 'We are calling you now.');
+    await tester.pump();
+    await tester.ensureVisible(find.text('Approve'));
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Escalated: emergency'), findsOneWidget); // the record stays
+
+    await tester.tap(find.text('Worker'));
+    await tester.pumpAndSettle();
+    expect(find.text('Call 911'), findsNothing);
+    expect(find.text('We are calling you now.'), findsOneWidget);
+    expect(find.text('Emergency: 911'), findsOneWidget);
+  });
 }

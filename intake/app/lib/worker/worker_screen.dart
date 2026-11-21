@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intake/shared/core/failure.dart';
+import 'package:intake/shared/core/language.dart';
 import 'package:intake/shared/features/safety/presentation/escalation_card.dart';
 import 'package:intake/shared/ui/ui.dart';
 import 'package:intake/worker/features/conversation/presentation/chat_list.dart';
@@ -86,14 +87,18 @@ class _WorkerBody extends StatelessWidget {
     final spendCapped = phase is ReplyFailed && phase.failure is SpendCapFailure;
     final canSend = phase is Gathering || (phase is ReplyFailed && !spendCapped);
     final micLive = speech.phase is SpeechStarting || speech.phase is SpeechListening;
-    final finished = phase is Finished;
+    final nextStep = context.watch<NextStepBloc>().state;
+    // An approved next step replaces the red-flag card; the help lines stay under it.
+    final approved = nextStep is NextStepUnlocked;
+    final finished = phase is Finished || (phase is RedFlagRaised && approved);
     final speechFailure = switch (speech.phase) {
       SpeechUnavailable(:final failure) => failure,
       _ => null,
     };
 
     // Safety is state, not a route: nothing on this page can dismiss the card.
-    final flag = switch ((phase, context.watch<NextStepBloc>().state)) {
+    final flag = switch ((phase, nextStep)) {
+      (_, NextStepUnlocked()) => null,
       (RedFlagRaised(:final flag), _) => flag,
       (_, NextStepEscalated(:final flag)) => flag,
       _ => null,
@@ -135,7 +140,16 @@ class _WorkerBody extends StatelessWidget {
             ] else if (finished) ...[
               AppAlert.info(icon: LucideIcons.send, title: strings.finished),
               const SizedBox(height: 16),
-              NextStepCard(state: context.watch<NextStepBloc>().state, language: language),
+              NextStepCard(state: nextStep, language: language),
+              if (nextStep case NextStepUnlocked(flag: _?)) ...[
+                const SizedBox(height: 16),
+                Text(
+                  language == Language.es ? '¿Necesita ayuda ahora mismo?' : 'Still need help right now?',
+                  style: context.type.small,
+                ),
+                const SizedBox(height: 8),
+                HelpLines(language: language),
+              ],
             ] else ...[
               LiveTranscript(phase: speech.phase, language: language),
               const SizedBox(height: 16),

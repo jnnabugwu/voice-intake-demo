@@ -465,7 +465,7 @@ The kit has no published accessibility audit, so the app owns accessibility and 
   | Bloc | State shape |
   |---|---|
   | `SpeechBloc` | `language` and `lastUtterance` plus a sealed `phase`: idle, starting, listening(partial), unavailable(failure) |
-  | `NextStepBloc` | Sealed: none (nothing submitted yet), locked, unlocked(nextStep), escalated(flag) |
+  | `NextStepBloc` | Sealed: none (nothing submitted yet), locked, unlocked(nextStep), escalated(flag), where escalated wins whenever the case has a red flag |
   | `ReviewBloc` | Sealed: loading, noCase, ready(case, draft, approving, approveFailure) |
   | `ConversationBloc` | `turns` plus a sealed `phase` |
   | `BenchBloc` | One class: line index and timestamps, with no exclusive phases |
@@ -483,7 +483,6 @@ The kit has no published accessibility audit, so the app owns accessibility and 
   sealed class CaseStatus with _$CaseStatus {
     const factory CaseStatus.awaitingReview() = AwaitingReview;
     const factory CaseStatus.approved({required String nextStep}) = Approved;
-    const factory CaseStatus.escalated({required RedFlag flag}) = Escalated;
   }
   ```
 - **Events are plain sealed classes**, hand-written with no codegen. They are named after what happened (`UtteranceSubmitted`, `ApproveRequested`), one class per event, so the event vocabulary is greppable. Bloc never compares events, so they don't need generated equality the way states do.
@@ -529,7 +528,7 @@ Bloc processes events of the same type concurrently by default. Every handler th
 3. **A refusal** from the model (`ChatChunk.refused`) shows "Let me connect you with a clinician" and offers the 911 and 988 lines as buttons (`HelpLines`). The chat continues; a refusal isn't an emergency.
 4. **The proxy checks again.** It runs the same EN/ES patterns on the newest message before calling the model and answers with a `red_flag` event (`ChatChunk.redFlag`), which escalates like step 1. This covers any client that skips the app's check.
 
-An escalated case reaches the physician at once with `CaseStatus.escalated(flag)`, and the review page says what the worker was shown. Both pattern lists are tested against every line of `bench/references.json` in both languages: lines 20 (chest pain) and 21 (new confusion in an older adult with diabetes, asking about the ER) escalate, and 1–19 don't.
+An escalated case reaches the physician at once with `IntakeCase.redFlag` set, and the review page says what the worker was shown and what triggered it. The flag is a record, separate from `status`, so approving a follow-up keeps it, and the worker's card stays up. Both pattern lists are tested against every line of `bench/references.json` in both languages: lines 20 (chest pain) and 21 (new confusion in an older adult with diabetes, asking about the ER) escalate, and 1–19 don't.
 
 `RedFlagDetector` is pure Dart with English and Spanish phrase lists, checked in both languages on every message because workers mix them. It has no network and no model, so it works in demo mode and offline.
 

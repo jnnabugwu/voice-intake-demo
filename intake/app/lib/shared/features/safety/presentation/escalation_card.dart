@@ -32,13 +32,19 @@ class EscalationCard extends StatelessWidget {
       label: es ? 'Llamar al 911' : 'Call 911',
       icon: LucideIcons.phone,
       expand: true,
-      onPressed: () => launchUrl(Uri.parse('tel:911')),
+      onPressed: () => openHelpLine(context, 'tel:911', language),
     );
-    final label988 = es ? 'Llamar o enviar texto al 988' : 'Call or text 988';
-    void open988() => launchUrl(Uri.parse('tel:988'));
+    final label988 = es ? 'Llamar al 988' : 'Call 988';
+    void call988Now() => openHelpLine(context, 'tel:988', language);
     final call988 = crisis
-        ? AppButton.danger(label: label988, icon: LucideIcons.messageCircle, expand: true, onPressed: open988)
-        : AppButton.outline(label: label988, icon: LucideIcons.messageCircle, expand: true, onPressed: open988);
+        ? AppButton.danger(label: label988, icon: LucideIcons.phone, expand: true, onPressed: call988Now)
+        : AppButton.outline(label: label988, icon: LucideIcons.phone, expand: true, onPressed: call988Now);
+    final text988 = AppButton.outline(
+      label: es ? 'Enviar texto al 988' : 'Text 988',
+      icon: LucideIcons.messageCircle,
+      expand: true,
+      onPressed: () => openHelpLine(context, 'sms:988', language),
+    );
     return Semantics(
       container: true,
       liveRegion: true,
@@ -66,11 +72,15 @@ class EscalationCard extends StatelessWidget {
                 if (crisis) ...[
                   call988,
                   const SizedBox(height: 12),
+                  text988,
+                  const SizedBox(height: 12),
                   call911,
                 ] else ...[
                   call911,
                   const SizedBox(height: 12),
                   call988,
+                  const SizedBox(height: 12),
+                  text988,
                 ],
                 const SizedBox(height: 24),
                 Text(
@@ -104,14 +114,33 @@ class HelpLines extends StatelessWidget {
         AppButton.outline(
           label: es ? 'Emergencia: 911' : 'Emergency: 911',
           icon: LucideIcons.phone,
-          onPressed: () => launchUrl(Uri.parse('tel:911')),
+          onPressed: () => openHelpLine(context, 'tel:911', language),
         ),
         AppButton.outline(
           label: es ? 'Crisis: 988' : 'Crisis: 988',
           icon: LucideIcons.messageCircle,
-          onPressed: () => launchUrl(Uri.parse('tel:988')),
+          onPressed: () => openHelpLine(context, 'tel:988', language),
         ),
       ],
     );
   }
+}
+
+/// Opens a `tel:` or `sms:` link. A laptop browser may have no app for it,
+/// so a failed launch says which number to dial instead of doing nothing.
+Future<void> openHelpLine(BuildContext context, String link, Language language) async {
+  final uri = Uri.parse(link);
+  var opened = false;
+  try {
+    opened = await launchUrl(uri);
+  } on Object {
+    opened = false;
+  }
+  if (opened || !context.mounted) return;
+  final number = uri.path;
+  final es = language == Language.es;
+  final verb = uri.scheme == 'sms'
+      ? (es ? 'Envíe un texto al $number' : 'Text $number')
+      : (es ? 'Llame al $number' : 'Call $number');
+  showAppToast(context, es ? '$verb desde su teléfono.' : '$verb from your phone.');
 }

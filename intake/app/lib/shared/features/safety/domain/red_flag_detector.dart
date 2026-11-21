@@ -10,7 +10,7 @@ class RedFlagDetector {
 
   /// Both languages are always checked: workers mix them.
   RedFlag? detect(String text, {Language? language}) {
-    final t = text.toLowerCase().replaceAll(RegExp('[’`]'), "'");
+    final t = fold(text);
     for (final p in _crisis) {
       final m = p.firstMatch(t);
       if (m != null) return RedFlag(kind: RedFlagKind.crisis, reason: m.group(0)!);
@@ -22,6 +22,20 @@ class RedFlagDetector {
     return null;
   }
 
+  /// Lowercase, curly quotes to straight, accents dropped: speech engines and
+  /// typed input don't reliably add Spanish accents, so the patterns below are
+  /// written without them.
+  static String fold(String text) {
+    var t = text.toLowerCase().replaceAll(RegExp('[’`]'), "'");
+    _accents.forEach((from, to) => t = t.replaceAll(from, to));
+    return t;
+  }
+
+  static const _accents = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'};
+
+  // Spanish possessives: "el pecho", "mi pecho", "su pecho", or none.
+  static const _det = '(?:el |la |mi |su )?';
+
   static final _emergency = [
     RegExp(
       r"chest pain|pain in (my|the) chest|chest (hurts|is tight|tightness)|pressure in (my|the) chest|heart attack",
@@ -32,12 +46,14 @@ class RedFlagDetector {
     RegExp(
       r"face (is )?droop|slurred speech|can'?t (move|feel) (my )?(arm|leg|face)|one side of my (face|body)|stroke",
     ),
-    RegExp(r'dolor (en|de)( el)? pecho|me duele el pecho|presión en el pecho|ataque (al|del) corazón|infarto'),
+    RegExp(
+      'dolor (?:en|de) ${_det}pecho|me duele ${_det}pecho|presion en ${_det}pecho|ataque (?:al|del) corazon|infarto',
+    ),
     RegExp(r'me falta el aire|falta de aire|no puedo respirar|me cuesta respirar|dificultad para respirar'),
-    RegExp(r'cara caída|no puedo mover (el brazo|la pierna)|derrame|habla arrastrada'),
+    RegExp('cara caida|no puedo mover $_det(?:brazo|pierna)|derrame|habla arrastrada'),
     // New confusion (bench line 21) and anyone asking about the ER.
     RegExp(r'\bconfused\b|\bconfusion\b|disoriented|emergency room|\bthe er\b'),
-    RegExp(r'confundid[oa]|confusión|desorientad[oa]|sala de emergencias?'),
+    RegExp(r'confundid[oa]|confusion|desorientad[oa]|sala de emergencias?'),
   ];
 
   static final _crisis = [
@@ -45,7 +61,7 @@ class RedFlagDetector {
       r"kill myself|end my life|suicid|want to die|don'?t want to (be here|live|be alive)|hurt myself|self[- ]harm",
     ),
     RegExp(
-      r'matarme|me (quiero|voy a) matar|quitarme la vida|suicid|quiero morir(me)?|no quiero (estar aquí|vivir|seguir viviendo)|hacerme daño',
+      r'matarme|me (quiero|voy a) matar|quitarme la vida|suicid|quiero morir(me)?|no quiero (estar aqui|vivir|seguir viviendo)|hacerme dano',
     ),
   ];
 }

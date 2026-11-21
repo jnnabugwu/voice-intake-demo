@@ -122,4 +122,26 @@ void main() {
       expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
     }
   });
+
+  test('confusion needs to be a symptom, and the ER a question about going', () {
+    for (final t in [
+      "I'm confused about my bill",
+      "I'm confused about how this works",
+      'She is confused by the form',
+      'Estoy confundida con mi factura',
+      'I went to the emergency room last month, how do I get reimbursed?',
+    ]) {
+      expect(detector.detect(t), isNull, reason: t);
+    }
+    for (final t in [
+      'My dad has been confused since this morning',
+      'She seems very confused and sleepy',
+      'Mi mamá está muy confundida',
+      'Tengo confusión',
+      'Should I take him to the ER?',
+      '¿Lo llevo a urgencias?',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+  });
 }

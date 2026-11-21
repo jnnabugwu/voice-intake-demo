@@ -72,9 +72,19 @@ class RedFlagDetector {
     ),
     RegExp(r'me falta el aire|falta de aire|no puedo respirar|me cuesta respirar|dificultad para respirar'),
     RegExp('cara caida|no puedo mover $_det(?:brazo|pierna)|derrame|habla arrastrada|entumecid[oa]|adormecid[oa]'),
-    // New confusion (bench line 21) and anyone asking about the ER.
-    RegExp(r'\bconfused\b|\bconfusion\b|disoriented|emergency room|\bthe er\b'),
-    RegExp(r'confundid[oa]|confusion|desorientad[oa]|sala de emergencias?'),
+    // New confusion, as a symptom (bench line 21: "she's been very tired and
+    // confused"), not "I'm confused about my bill"; and asking whether to go to
+    // the ER, not mentioning a past ER visit. Same patterns as the proxy.
+    RegExp(
+      r'\b(been|is|seems|became|got|getting|gets) (very |really |more |suddenly |so )?((tired|sleepy|weak|dizzy|drowsy) and )?(confused|disoriented)\b(?! (about|by|with|on|how|what|why|where|over))|\b(new|sudden) confusion|\bdisoriented\b(?! (about|by))',
+    ),
+    RegExp(r'\b(go|going|take (her|him|them|me|my \w+)|bring (her|him|them|me)) to the (emergency room|er)\b'),
+    RegExp(
+      r'\b(esta|anda|se ve|ha estado|se puso) (muy |mas |tan )?((cansad[oa]|debil|maread[oa]|somnolient[oa]) y )?(confundid[oa]|desorientad[oa])\b(?! (con|sobre|de|por))|confusion (repentina|nueva)|\btengo (mucha )?confusion\b',
+    ),
+    RegExp(
+      r'\b(la|lo|los|las|me) (llevo|llevamos|llevar) a (la sala de )?(emergencias|urgencias)|\bir a (la sala de )?emergencias',
+    ),
   ];
 
   static final _crisis = [

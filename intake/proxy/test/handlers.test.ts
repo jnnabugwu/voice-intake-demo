@@ -137,6 +137,14 @@ describe("POST /api/chat", () => {
     expect(await res.json()).toEqual({ code: "rate_limited" });
   });
 
+  it("a red flag is answered even when the IP is rate limited", async () => {
+    const handler = createChatHandler(deps({ limiter: new RateLimiter(1) }));
+    await (await handler(post(chatBody))).text();
+    const res = await handler(post({ ...chatBody, turnId: "t_9", messages: [{ role: "user", text: "chest pain" }] }));
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("event: red_flag");
+  });
+
   it("a red flag is answered even after the spend cap closes", async () => {
     const res = await createChatHandler(deps({ meter: new SpendMeter(0) }))(
       post({ ...chatBody, messages: [{ role: "user", text: "I have chest pain" }] }),

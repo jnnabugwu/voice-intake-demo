@@ -19,9 +19,9 @@ export function fold(text: string): string {
 const DET = "(?:el |la |mi |su )?";
 
 const EMERGENCY = [
-  /chest pain|pain in (my|the) chest|chest (hurts|is tight|tightness)|pressure in (my|the) chest|heart attack/,
+  /chest (pain|pressure|tightness|discomfort|hurts|is tight)|(pain|pressure|tightness) in (my |the )?chest|heart attack/,
   /short(ness)? of breath|can'?t breathe|cannot breathe|trouble breathing|hard to breathe|difficulty breathing/,
-  /face (is )?droop|drooping face|droopy face|slurred speech|slurring|numb(ness)? (in|on) (my )?(arm|leg|face)|can'?t (move|feel|lift) (my )?(arm|leg|face)|one side of my (face|body)|stroke/,
+  /face (is )?droop|facial droop|drooping face|droopy face|slurred speech|slurring|numb(ness)? (in|on) (my )?(arm|leg|face)|(arm|leg|face) (is |feels |went )?numb|can'?t (move|feel|lift) (my )?(arm|leg|face)|one side of my (face|body)|stroke/,
   new RegExp(`dolor (?:en|de) ${DET}pecho|me duele ${DET}pecho|presion en ${DET}pecho|ataque (?:al|del) corazon|infarto`),
   /me falta el aire|falta de aire|no puedo respirar|me cuesta respirar|dificultad para respirar/,
   new RegExp(`cara caida|no puedo mover ${DET}(?:brazo|pierna)|derrame|habla arrastrada|entumecid[oa]|adormecid[oa]`),
@@ -31,8 +31,10 @@ const EMERGENCY = [
 ];
 
 const CRISIS = [
-  /kill myself|end my life|suicid|want to die|don'?t want to (be here|live|be alive)|hurt myself|self[- ]harm/,
-  /matarme|me (quiero|voy a) matar|quitarme la vida|suicid|quiero morir(me)?|no quiero (estar aqui|vivir|seguir viviendo)|hacerme dano/,
+  /kill myself|end my life|suicid|want to die|(don'?t|do not) want to (be here|live|be alive)|(want|going|try(ing)?) to hurt myself|hurt myself on purpose|cut(ting)? myself|self[- ]harm/,
+  /overdos|took (a|the) whole bottle|took too many (pills|tablets)|swallowed (a bunch of|all (my|the)) pills/,
+  /matarme|me (quiero|voy a) matar|quitarme la vida|suicid|quiero morir(me)?|no quiero (estar aqui|vivir|seguir viviendo)|(quiero|voy a) hacerme dano|cortarme/,
+  /sobredosis|me tome (todo el frasco|todas las pastillas|demasiadas pastillas)/,
 ];
 
 /**

@@ -81,4 +81,13 @@ void main() {
     expect(readies.last.draft, 'Video visit');
     await bloc.close();
   });
+
+  test('a Spanish case starts from a Spanish draft', () async {
+    final repo = InMemoryCaseRepository();
+    await repo.submit(const IntakeCase(id: 'c_es', language: Language.es, transcript: []));
+    final bloc = ReviewBloc(repo)..add(const ReviewOpened());
+    await pumpEventQueue();
+    expect((bloc.state as ReviewReady).draft, ReviewBloc.defaultNextStepFor(Language.es));
+    await bloc.close();
+  });
 }

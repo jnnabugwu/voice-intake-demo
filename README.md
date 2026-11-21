@@ -24,13 +24,17 @@ Flutter 3.47 or later. "Viewing as: Worker | Physician" at the top switches side
 
 The proxy in `intake/proxy` holds the Claude key and streams replies. The app only knows its URL.
 
+Before using a real key, set a monthly **spend limit** and a usage alert on its Claude Console workspace. That is the only hard ceiling; the proxy's own limits are best effort.
+
 ```sh
+# Terminal 1: the proxy (stays running)
 cd intake/proxy
 npm ci
 cp .env.example .env        # ANTHROPIC_API_KEY=...
-npm run dev                 # vercel dev, needs the Vercel CLI
+npm run dev                 # vercel dev on :3000, needs the Vercel CLI
 
-cd ../app
+# Terminal 2: the app
+cd intake/app
 flutter run -d chrome --dart-define=PROXY_URL=http://localhost:3000
 ```
 
@@ -38,8 +42,8 @@ flutter run -d chrome --dart-define=PROXY_URL=http://localhost:3000
 |---|---|---|
 | `ANTHROPIC_API_KEY` | | Required. Keep it in Vercel env vars or `.env`, never in the app |
 | `CLAUDE_MODEL` | `claude-opus-5-5` | |
-| `DAILY_SPEND_CAP_USD` | `5` | Per instance, best effort. The hard ceiling is the Console workspace limit |
-| `RATE_LIMIT_PER_MIN` | `20` | Per IP |
+| `DAILY_SPEND_CAP_USD` | `5` | Per server instance, best effort. Vercel can run several instances, so the hard ceiling is the Console workspace limit |
+| `RATE_LIMIT_PER_MIN` | `20` | Per IP, per server instance, best effort |
 | `ALLOWED_ORIGINS` | | The deployed app's origin(s); localhost is always allowed |
 
 ## How it's built

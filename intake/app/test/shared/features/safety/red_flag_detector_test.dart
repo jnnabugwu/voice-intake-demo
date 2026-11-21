@@ -110,4 +110,16 @@ void main() {
       expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
     }
   });
+
+  test("talking about someone else's suicide is not a crisis; intent is", () {
+    expect(detector.detect('My sister died by suicide last year'), isNull);
+    for (final t in [
+      "I'm suicidal",
+      "I've been thinking about suicide",
+      'Pienso en suicidarme',
+      'Tengo ideas suicidas',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+  });
 }

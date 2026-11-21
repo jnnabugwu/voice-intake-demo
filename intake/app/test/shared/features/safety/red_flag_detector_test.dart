@@ -144,4 +144,20 @@ void main() {
       expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
     }
   });
+
+  test('explicit suicide wording; spills and shaving cuts are not red flags', () {
+    for (final t in [
+      'I have thoughts of suicide',
+      'I attempted suicide last year',
+      'Tuve un intento de suicidio',
+      'Tengo ideación suicida',
+      'pensamientos de suicidio',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+    for (final t in ['Me derramé el café', 'I cut myself shaving']) {
+      expect(detector.detect(t), isNull, reason: t);
+    }
+    expect(detector.detect('Creo que tuvo un derrame')?.kind, RedFlagKind.emergency);
+  });
 }

@@ -105,7 +105,9 @@ export function renderResults(refs: References, rows: Row[], notes: string[], da
     "",
     "## Missed medical terms",
     "",
-    ...(rows.every((r) => r.missed.length === 0)
+    ...(rows.length === 0
+      ? ["No engine produced transcripts yet."]
+      : rows.every((r) => r.missed.length === 0)
       ? ["None."]
       : rows.flatMap((r) =>
           r.missed.length === 0

@@ -29,6 +29,10 @@ describe("score + renderResults", () => {
     expect(rows[1]!.medianFirstWordMs).toBe(400);
   });
 
+  it("an empty run doesn't read as 'no terms missed'", () => {
+    expect(renderResults(refs, [], [], "2026-11-20")).toContain("No engine produced transcripts yet.");
+  });
+
   it("the report labels live and batch latency separately and states the sample", () => {
     const md = renderResults(refs, rows, ["AssemblyAI didn't run: test."], "2026-11-20");
     expect(md).toContain("| Fake (batch) | en_jn (en-US) | 2 |");
@@ -81,20 +85,23 @@ describe("AssemblyAI", () => {
     const dir = mkdtempSync(join(tmpdir(), "aai-"));
     const clip = join(dir, "c.webm");
     writeFileSync(clip, "x");
-    const failing = async () => new Response("nope", { status: 401 });
-    await expect(new AssemblyAI("bad", failing, Date.now, 0).transcribe(clip, "en")).rejects.toThrow("401");
+    const failing = async () => new Response(JSON.stringify({ error: "Invalid API key" }), { status: 401 });
+    await expect(new AssemblyAI("bad", failing, Date.now, 0).transcribe(clip, "en")).rejects.toThrow("401 on /v2/upload: Invalid API key");
   });
 });
 
 describe("Chrome exports", () => {
   it("recognizes a /bench export", () => {
-    expect(isChromeExport({ engine: "chrome-web-speech", speaker: "en_jn", lines: [] })).toBe(true);
+    const meta = { locale: "en-US", browser: "Chrome", date: "2026-11-20" };
+    expect(isChromeExport({ engine: "chrome-web-speech", speaker: "en_jn", ...meta, lines: [] })).toBe(true);
+    expect(isChromeExport({ engine: "chrome-web-speech", speaker: "en_jn", lines: [] })).toBe(false);
     expect(isChromeExport({ engine: "other" })).toBe(false);
-    expect(isChromeExport({ engine: "chrome-web-speech", speaker: "en_jn", lines: [null] })).toBe(false);
+    expect(isChromeExport({ engine: "chrome-web-speech", speaker: "en_jn", ...meta, lines: [null] })).toBe(false);
     expect(
       isChromeExport({
         engine: "chrome-web-speech",
         speaker: "en_jn",
+        ...meta,
         lines: [{ n: 1, transcript: "hi", micOnMs: 0, firstPartialMs: null, finalMs: 900 }],
       }),
     ).toBe(true);

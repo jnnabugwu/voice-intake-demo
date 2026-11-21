@@ -2,6 +2,32 @@
 
 _Updated at the end of each session. Newest session first._
 
+## 2026-11-21: shipping it (block 5)
+
+### Where it ended
+
+- Live: the app at https://voice-intake-chi.vercel.app and the proxy at https://voice-intake-proxy.vercel.app, two separate Vercel projects in `jnnabugwus-projects`. An end-to-end check in a fresh Chrome profile passed: Claude's replies stream, the physician sees the summary, approval unlocks the next step, and a red flag shows the card and the escalation.
+- #32 made demo mode read answers the way speech recognition writes them. "seven seven just a seven" and "six out of ten" become a severity; symptoms are added; the worker's name stays out of the complaint. #33 linked the live demo in the README and documented the deploy.
+- Left for block 5: the 60–90 s video. Block 6 still needs clips and an AssemblyAI key.
+
+### What went wrong, and the fix
+
+| Problem | Root cause | Fix / rule |
+|---|---|---|
+| The first "proxy" deploy redeployed the recorder | `vercel link` was run from the repo root and the recorder project was picked, so `intake/proxy` got the same link | One Vercel project per folder. Run `vercel` only from `intake/proxy` or `intake/app`, and check `.vercel/project.json` before `--prod` |
+| The Anthropic key sat in `recorder/.env` | It was pasted into the first `.env` that was open | Each key goes in the `.env` of the project that uses it. Moved to `intake/proxy/.env`; the recorder never needed it |
+| Commands ran that nobody meant to run | Deploy output pasted back into zsh ran its "Next steps" lines (`vercel git connect`, `vercel redeploy`) | Never paste CLI output into a shell. Here `git connect` linked GitHub to the proxy with Root Directory `.`, so the next push to main would have deployed the repo root over it. Disconnected |
+| The live app returned 404 after a redeploy | `vercel deploy --prod` inside `intake/app` uploaded the Flutter source, not the build | The app is static: always `vercel deploy build/web --prod`. Git auto-deploy stays off because Vercel's builders have no Flutter |
+| The app URL got a random `-chi` suffix | `voice-intake.vercel.app` belongs to someone else | Use the alias Vercel prints. The README and `ALLOWED_ORIGINS` use the `-chi` address |
+| `ALLOWED_ORIGINS` was set but the app still got 403 | Env vars only reach new deployments, and the redeploy that followed went to the app, not the proxy | After changing proxy env vars, redeploy from `intake/proxy`. Check with an `Origin`-header curl and an empty body (400 = allowed, 403 = blocked), which never calls Claude |
+| The agent created an empty Gmail draft | It called a mail tool with no parameters by mistake, and its delete was blocked | Nothing was sent; the draft is deleted by hand. Don't call tools the task doesn't need |
+
+### Rules that came out of it
+
+- Probe a deployed proxy without spending money: an empty body from an allowed origin returns 400 before any model call.
+- Set the spend limit in the Console workspace before the key reaches Vercel. The proxy's caps are per instance.
+- A production deploy is the human's command. The agent prepares env vars and verifies the result.
+
 ## 2026-11-20 (evening): the cloud hand-off, cubic's review rounds, blocks 3–6
 
 ### Where it ended

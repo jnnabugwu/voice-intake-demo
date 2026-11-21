@@ -1,3 +1,4 @@
+import 'package:intake/shared/core/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intake/physician/features/case_review/presentation/review_bloc.dart';
 import 'package:intake/shared/core/language.dart';
@@ -5,6 +6,16 @@ import 'package:intake/shared/features/intake_case/data/in_memory_case_repositor
 import 'package:intake/shared/features/intake_case/domain/intake_case.dart';
 
 const _case = IntakeCase(id: 'c_1', language: Language.en, transcript: []);
+
+class _CountingCases extends InMemoryCaseRepository {
+  int approvals = 0;
+
+  @override
+  Future<Result<void>> approve(String caseId, {required String nextStep}) {
+    approvals++;
+    return super.approve(caseId, nextStep: nextStep);
+  }
+}
 
 void main() {
   test('no case, then the submitted case with the default draft', () async {
@@ -19,7 +30,7 @@ void main() {
   });
 
   test('approve writes the edited step to the repository; a double tap approves once', () async {
-    final repo = InMemoryCaseRepository();
+    final repo = _CountingCases();
     await repo.submit(_case);
     final bloc = ReviewBloc(repo)..add(const ReviewOpened('c_1'));
     await pumpEventQueue();
@@ -30,6 +41,7 @@ void main() {
     await pumpEventQueue();
     final approved = _case.copyWith(status: const CaseStatus.approved(nextStep: 'Video visit at 3 pm'));
     expect(await repo.watch('c_1').first, approved);
+    expect(repo.approvals, 1);
     expect(bloc.state, ReviewState.ready(intakeCase: approved, draft: 'Video visit at 3 pm'));
     await bloc.close();
   });

@@ -35,11 +35,11 @@ class DemoSummaryRepository implements SummaryRepository {
     ];
     final medications = [
       for (final m in _medication.allMatches(lower))
-        if (!_negated(lower, m.start)) m.group(2)!.trim(),
+        if (!_negated(lower, m.start)) ..._items(m.group(2)!),
     ];
     final allergies = [
       for (final m in _allergy.allMatches(lower))
-        if (!_negated(lower, m.start)) m.group(2)!.trim(),
+        if (!_negated(lower, m.start)) ..._items(m.group(2)!),
     ];
 
     return IntakeSummary(
@@ -83,12 +83,22 @@ class DemoSummaryRepository implements SummaryRepository {
     return null;
   }
 
+  /// A list ends at a sentence end, the next worker line, or a new clause
+  /// ("and I'm allergic…", "y soy alérgica…"); "aspirin and ibuprofen" stays one list.
+  static const _listEnd =
+      r"(?=[.;!?]| \n |,?\s+(?:and|but)\s+(?:i|i'm|my)\b|,?\s+(?:y|pero)\s+(?:yo|soy|tengo|me|mi)\b|$)";
+
   static final _medication = RegExp(
-    r"\b(i take|i'm taking|i am taking|taking|tomo|estoy tomando)\s+([a-záéíóúñ0-9 ]+?)(?=[,.;]| and | y |$)",
+    r"\b(i take|i'm taking|i am taking|tomo|estoy tomando)\s+([a-záéíóúñ0-9 ,]+?)" + _listEnd,
   );
-  static final _allergy = RegExp(
-    r"\b(allergic to|alérgic[oa] a(?: la| el)?)\s+([a-záéíóúñ0-9 ]+?)(?=[,.;]| and | y |$)",
-  );
+  static final _allergy = RegExp(r"\b(allergic to|alérgic[oa] a(?: la| el)?)\s+([a-záéíóúñ0-9 ,]+?)" + _listEnd);
+
+  /// "aspirin and ibuprofen", "aspirina, ibuprofeno y metformina" → each item.
+  static List<String> _items(String list) => list
+      .split(RegExp(r',\s*|\s+(?:and|or|y|o)\s+'))
+      .map((i) => i.trim().replaceFirst(RegExp(r'^(?:la|el|los|las)\s+'), ''))
+      .where((i) => i.isNotEmpty)
+      .toList();
   static final _deniesMedications = RegExp(
     r"\b(no medications?|no medicine|don'?t take any(thing)?|not taking any(thing)?|no tomo (nada|ningún)|ningún medicamento)\b",
   );

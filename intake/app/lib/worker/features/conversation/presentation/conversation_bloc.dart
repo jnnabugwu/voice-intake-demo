@@ -104,7 +104,8 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
   );
 
   Future<void> _onFinish(FinishRequested event, Emitter<ConversationState> emit) async {
-    final canFinish = state.phase is Gathering || state.phase is SubmitFailed;
+    // A failed reply doesn't trap the worker: what they said can still go to a clinician.
+    final canFinish = state.phase is Gathering || state.phase is ReplyFailed || state.phase is SubmitFailed;
     if (!canFinish || !state.turns.any((t) => t.speaker == Speaker.worker)) return;
     emit(state.copyWith(phase: const ConversationPhase.finished()));
     final language = state.turns.lastWhere((t) => t.speaker == Speaker.worker).language;

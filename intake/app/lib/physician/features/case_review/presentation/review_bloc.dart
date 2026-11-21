@@ -20,6 +20,7 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
   }
 
   final CaseRepository _cases;
+  (String, String)? _lastApproved;
 
   /// What the draft starts as for a new case. The physician edits it; nothing
   /// reaches the worker until they approve.
@@ -58,10 +59,21 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
   Future<void> _onApprove(ApproveRequested event, Emitter<ReviewState> emit) async {
     final current = state;
     if (current is! ReviewReady || current.draft.trim().isEmpty) return;
+    // Approving the step that's already approved changes nothing. A fast double
+    // tap lands here after the first approval finished but before the case
+    // update reached this Bloc, so remember what was just approved.
+    final step = current.draft.trim();
+    final already = switch (current.intakeCase.status) {
+      Approved(:final nextStep) => nextStep == step,
+      _ => false,
+    };
+    if (already || _lastApproved == (current.intakeCase.id, step)) return;
     emit(current.copyWith(approving: true, approveFailure: null));
     final result = await _cases.approve(current.intakeCase.id, nextStep: current.draft);
     final latest = state;
-    if (latest is! ReviewReady) return;
+    // The page may have moved to another case meanwhile; this result isn't about it.
+    if (latest is! ReviewReady || latest.intakeCase.id != current.intakeCase.id) return;
+    if (result is Ok) _lastApproved = (current.intakeCase.id, step);
     emit(switch (result) {
       Ok() => latest.copyWith(approving: false),
       Err(:final failure) => latest.copyWith(approving: false, approveFailure: failure),

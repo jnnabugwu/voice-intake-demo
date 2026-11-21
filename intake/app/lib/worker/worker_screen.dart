@@ -146,7 +146,7 @@ class _WorkerBody extends StatelessWidget {
                   label: strings.finish,
                   icon: LucideIcons.check,
                   expand: true,
-                  onPressed: phase is Gathering && !micLive
+                  onPressed: (phase is Gathering || phase is ReplyFailed) && !micLive
                       ? () => conversationBloc.add(const FinishRequested())
                       : null,
                 ),

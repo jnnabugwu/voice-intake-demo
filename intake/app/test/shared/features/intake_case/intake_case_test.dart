@@ -107,4 +107,29 @@ void main() {
       expect(DemoSummaryRepository.summarizeText('Worker: Como un 7.', Language.es).severity, 7);
     });
   });
+
+  group('DemoSummaryRepository lists', () {
+    test('every item in a list, and an item at the end of a worker line', () {
+      final s = DemoSummaryRepository.summarizeText(
+        'Worker: I take aspirin and ibuprofen\nWorker: I am allergic to penicillin, sulfa\nWorker: It hurts.',
+        Language.en,
+      );
+      expect(s.medications, ['aspirin', 'ibuprofen']);
+      expect(s.allergies, ['penicillin', 'sulfa']);
+    });
+
+    test('a new clause ends the list', () {
+      final s = DemoSummaryRepository.summarizeText(
+        'Worker: I take ibuprofen and I am allergic to penicillin.',
+        Language.en,
+      );
+      expect(s.medications, ['ibuprofen']);
+      expect(s.allergies, ['penicillin']);
+    });
+
+    test('Spanish lists', () {
+      final s = DemoSummaryRepository.summarizeText('Worker: Tomo aspirina, ibuprofeno y metformina.', Language.es);
+      expect(s.medications, ['aspirina', 'ibuprofeno', 'metformina']);
+    });
+  });
 }

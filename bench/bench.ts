@@ -94,6 +94,7 @@ if (noise.length) notes.push(`${noise.length} background-noise clip(s) (\`_noise
 const missing = refs.speakers.filter((s) => !refs.lines.some((l) => clips.has(stem(s.id, l.n)))).map((s) => s.id);
 if (missing.length) notes.push(`No clips yet for: ${missing.join(", ")}.`);
 
-const rows = score(refs, hyps);
+const { rows, rejected } = score(refs, hyps);
+for (const r of rejected) notes.push(`Not scored: ${r}.`);
 writeFileSync(join(here, "results.md"), renderResults(refs, rows, notes, new Date().toISOString().slice(0, 10)));
 console.log(`Wrote bench/results.md: ${rows.length} engine × speaker rows.`);

@@ -13,11 +13,19 @@ describe("score + renderResults", () => {
   const line9en = refs.lines.find((l) => l.n === 9)!.en.text; // lisinopril
   const line1es = refs.lines.find((l) => l.n === 1)!.es.text;
 
-  const rows = score(refs, [
+  const { rows, rejected } = score(refs, [
     { engine: "Fake (batch)", speaker: "en_jn", n: 9, text: line9en.replace("lisinopril", "lysine april"), processingMs: 3000 },
     { engine: "Fake (batch)", speaker: "en_jn", n: 1, text: refs.lines[0]!.en.text, processingMs: 1000 },
     { engine: "Fake (live)", speaker: "es_mx", n: 1, text: line1es, firstWordMs: 400, finalMs: 2400 },
+    { engine: "Fake (live)", speaker: "es_mx", n: 1, text: line1es, firstWordMs: 500, finalMs: 2500 },
+    { engine: "Fake (live)", speaker: "xx_yy", n: 1, text: "hi" },
+    { engine: "Fake (live)", speaker: "es_mx", n: 99, text: "hi" },
   ]);
+
+  it("each line counts once; unknown speakers and lines are rejected, not scored", () => {
+    expect(rows.find((r) => r.speaker === "es_mx")!.lines).toBe(1);
+    expect(rejected).toEqual(['Fake (live): unknown speaker "xx_yy"', "Fake (live), es_mx: unknown line 99"]);
+  });
 
   it("one row per engine × speaker, weak results included", () => {
     expect(rows.map((r) => `${r.engine}/${r.speaker}`)).toEqual(["Fake (batch)/en_jn", "Fake (live)/es_mx"]);
@@ -26,7 +34,7 @@ describe("score + renderResults", () => {
     expect(en.missed).toEqual([{ n: 9, terms: ["lisinopril"] }]);
     expect(en.medianProcessingMs).toBe(2000);
     expect(rows[1]!.wer).toBe(0);
-    expect(rows[1]!.medianFirstWordMs).toBe(400);
+    expect(rows[1]!.medianFirstWordMs).toBe(500); // the later read of line 1 wins
   });
 
   it("an empty run doesn't read as 'no terms missed'", () => {

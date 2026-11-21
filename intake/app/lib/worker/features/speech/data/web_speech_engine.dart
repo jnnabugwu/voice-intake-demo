@@ -32,12 +32,16 @@ class WebSpeechEngine implements SpeechEngine {
   Stream<SpeechResult> listen({required String localeId}) {
     final controller = StreamController<SpeechResult>();
     final session = _Session(controller);
-    // A new session ends any older one first, with what that one heard.
-    _active?.finish();
+    // A new session ends any older one first, with what that one heard, and
+    // stops its recognizer so two browser sessions never race.
+    final previous = _active;
+    final previousLive = previous != null && !previous.ended;
+    previous?.finish();
     _active = session;
 
     controller.onListen = () async {
       try {
+        if (previousLive) await _speech.cancel();
         _speech.errorListener = (error) => session.finish(_resultForError(error, session.heard));
         _speech.statusListener = (status) {
           if (status == SpeechToText.doneStatus) {

@@ -160,19 +160,17 @@ void main() {
     verify: (_) => expect(engine.requestedLocales, hasLength(1)),
   );
 
-  blocTest<SpeechBloc, SpeechState>(
-    'changing language mid-session stops the mic first',
-    build: build,
-    act: (bloc) async {
-      bloc.add(const SpeechStarted());
-      await Future<void>.delayed(Duration.zero);
-      engine.emit(const SpeechResult.partial('hola'));
-      await Future<void>.delayed(Duration.zero);
-      bloc.add(const SpeechLanguageChanged(Language.es));
-    },
-    verify: (bloc) {
-      expect(engine.stopCalls, greaterThanOrEqualTo(1));
-      expect(bloc.state.language, Language.es);
-    },
-  );
+  test('changing language mid-session stops the mic first', () async {
+    final bloc = build();
+    bloc.add(const SpeechStarted());
+    await Future<void>.delayed(Duration.zero);
+    engine.emit(const SpeechResult.partial('hola'));
+    await Future<void>.delayed(Duration.zero);
+    bloc.add(const SpeechLanguageChanged(Language.es));
+    await pumpEventQueue();
+    // Counted before close(), which stops the engine too.
+    expect(engine.stopCalls, 1);
+    expect(bloc.state.language, Language.es);
+    await bloc.close();
+  });
 }

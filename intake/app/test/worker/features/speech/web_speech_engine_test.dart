@@ -145,6 +145,8 @@ void main() {
     onResult!(words('hello'));
     final second = engine.listen(localeId: 'es-US').listen((_) {});
     expect(await first, const [SpeechResult.partial('hello'), SpeechResult.completed('hello')]);
+    await pumpEventQueue();
+    verify(() => stt.cancel()).called(1); // the old recognizer stopped before the new one started
     await second.cancel();
   });
 }

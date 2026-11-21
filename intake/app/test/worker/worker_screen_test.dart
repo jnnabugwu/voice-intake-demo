@@ -105,4 +105,42 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100)); // the live mic pulses, so it never settles
     expect(find.text('Done. A clinician is reviewing what you shared.'), findsNothing);
   });
+
+  testWidgets('approval gate: the next step stays locked until the physician approves', (tester) async {
+    await pumpApp(tester);
+    await tester.enterText(find.byType(EditableText), 'My throat has been sore for three days');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Finish'));
+    await tester.tap(find.text('Finish'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Waiting for a clinician'), findsOneWidget);
+    expect(find.textContaining('Video visit'), findsNothing);
+
+    // Physician side: the case is there with its summary; edit the step and approve.
+    await tester.tap(find.text('Physician'));
+    await tester.pumpAndSettle();
+    expect(find.text('My throat has been sore for three days'), findsWidgets);
+    await tester.enterText(find.byType(EditableText), 'Video visit at 3 pm today.');
+    await tester.pump();
+
+    // A draft is not an approval: the worker is still locked.
+    await tester.tap(find.text('Worker'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Waiting for a clinician'), findsOneWidget);
+    expect(find.textContaining('Video visit'), findsNothing);
+    await tester.tap(find.text('Physician'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Approve'));
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+
+    // Worker side: unlocked, showing exactly what the physician approved.
+    await tester.tap(find.text('Worker'));
+    await tester.pumpAndSettle();
+    expect(find.text('Approved by a clinician'), findsOneWidget);
+    expect(find.text('Video visit at 3 pm today.'), findsOneWidget);
+    expect(find.textContaining('Waiting for a clinician'), findsNothing);
+  });
 }

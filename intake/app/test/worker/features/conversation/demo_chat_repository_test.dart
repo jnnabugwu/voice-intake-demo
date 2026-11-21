@@ -63,4 +63,15 @@ void main() {
     ];
     expect(DemoChatRepository.replyFor(turns, Language.es), isNot(contains('cuánto tiempo')));
   });
+
+  test('"I can\'t take this pain" is not a medication answer, and "also" is not a symptom', () {
+    final first = [w("My back hurts and I can't take this pain")];
+    final turns = [
+      ...first,
+      a(DemoChatRepository.replyFor(first, Language.en)),
+      w('for 3 days, a 7 out of 10, I also take ibuprofen'),
+    ];
+    final reply = DemoChatRepository.replyFor(turns, Language.en);
+    expect(reply, contains('anything else bothering you'));
+  });
 }

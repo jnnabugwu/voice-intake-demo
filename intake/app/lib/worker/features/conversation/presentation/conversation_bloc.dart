@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intake/shared/core/failure.dart';
 import 'package:intake/shared/core/ids.dart';
 import 'package:intake/shared/core/language.dart';
+import 'package:intake/shared/core/result.dart';
 import 'package:intake/worker/features/conversation/domain/chat_chunk.dart';
 import 'package:intake/worker/features/conversation/domain/chat_repository.dart';
+import 'package:intake/worker/features/conversation/domain/submit_intake.dart';
 import 'package:intake/worker/features/conversation/domain/turn.dart';
 import 'package:intake/worker/features/conversation/presentation/conversation_event.dart';
 import 'package:intake/worker/features/conversation/presentation/conversation_state.dart';
@@ -15,7 +17,7 @@ export 'package:intake/worker/features/conversation/presentation/conversation_st
 
 /// Owns the conversation: the turns, the streaming reply, and finishing the intake.
 class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
-  ConversationBloc(this._chat, this._ids) : super(ConversationState(conversationId: _ids.next('c'))) {
+  ConversationBloc(this._chat, this._ids, this._submit) : super(ConversationState(conversationId: _ids.next('c'))) {
     on<UtteranceSubmitted>(
       (e, emit) => _onWorkerText(e.utteranceId, e.text, e.language, emit),
       transformer: droppable(),
@@ -26,11 +28,12 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     );
     // Droppable, not restartable: a second tap must not cancel the retry in flight.
     on<ReplyRetryRequested>(_onRetry, transformer: droppable());
-    on<FinishRequested>(_onFinish);
+    on<FinishRequested>(_onFinish, transformer: droppable());
   }
 
   final ChatRepository _chat;
   final IdGenerator _ids;
+  final SubmitIntake _submit;
 
   bool get _acceptsInput => state.phase is Gathering || state.phase is ReplyFailed;
 
@@ -100,8 +103,13 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     phase: const ConversationPhase.gathering(),
   );
 
-  void _onFinish(FinishRequested event, Emitter<ConversationState> emit) {
-    if (state.phase is! Gathering || !state.turns.any((t) => t.speaker == Speaker.worker)) return;
+  Future<void> _onFinish(FinishRequested event, Emitter<ConversationState> emit) async {
+    // A failed reply doesn't trap the worker: what they said can still go to a clinician.
+    final canFinish = state.phase is Gathering || state.phase is ReplyFailed || state.phase is SubmitFailed;
+    if (!canFinish || !state.turns.any((t) => t.speaker == Speaker.worker)) return;
     emit(state.copyWith(phase: const ConversationPhase.finished()));
+    final language = state.turns.lastWhere((t) => t.speaker == Speaker.worker).language;
+    final result = await _submit(conversationId: state.conversationId, language: language, turns: state.turns);
+    if (result case Err(:final failure)) emit(state.copyWith(phase: ConversationPhase.submitFailed(failure: failure)));
   }
 }

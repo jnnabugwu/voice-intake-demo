@@ -1,0 +1,313 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
+
+part of 'next_step_bloc.dart';
+
+// **************************************************************************
+// FreezedGenerator
+// **************************************************************************
+
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
+T _$identity<T>(T value) => value;
+/// @nodoc
+mixin _$NextStepState {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is NextStepState);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'NextStepState()';
+}
+
+
+}
+
+/// @nodoc
+class $NextStepStateCopyWith<$Res>  {
+$NextStepStateCopyWith(NextStepState _, $Res Function(NextStepState) __);
+}
+
+
+/// Adds pattern-matching-related methods to [NextStepState].
+extension NextStepStatePatterns on NextStepState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( NextStepNone value)?  none,TResult Function( NextStepLocked value)?  locked,TResult Function( NextStepUnlocked value)?  unlocked,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case NextStepNone() when none != null:
+return none(_that);case NextStepLocked() when locked != null:
+return locked(_that);case NextStepUnlocked() when unlocked != null:
+return unlocked(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( NextStepNone value)  none,required TResult Function( NextStepLocked value)  locked,required TResult Function( NextStepUnlocked value)  unlocked,}){
+final _that = this;
+switch (_that) {
+case NextStepNone():
+return none(_that);case NextStepLocked():
+return locked(_that);case NextStepUnlocked():
+return unlocked(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( NextStepNone value)?  none,TResult? Function( NextStepLocked value)?  locked,TResult? Function( NextStepUnlocked value)?  unlocked,}){
+final _that = this;
+switch (_that) {
+case NextStepNone() when none != null:
+return none(_that);case NextStepLocked() when locked != null:
+return locked(_that);case NextStepUnlocked() when unlocked != null:
+return unlocked(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  none,TResult Function()?  locked,TResult Function( String nextStep)?  unlocked,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case NextStepNone() when none != null:
+return none();case NextStepLocked() when locked != null:
+return locked();case NextStepUnlocked() when unlocked != null:
+return unlocked(_that.nextStep);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  none,required TResult Function()  locked,required TResult Function( String nextStep)  unlocked,}) {final _that = this;
+switch (_that) {
+case NextStepNone():
+return none();case NextStepLocked():
+return locked();case NextStepUnlocked():
+return unlocked(_that.nextStep);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  none,TResult? Function()?  locked,TResult? Function( String nextStep)?  unlocked,}) {final _that = this;
+switch (_that) {
+case NextStepNone() when none != null:
+return none();case NextStepLocked() when locked != null:
+return locked();case NextStepUnlocked() when unlocked != null:
+return unlocked(_that.nextStep);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class NextStepNone implements NextStepState {
+  const NextStepNone();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is NextStepNone);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'NextStepState.none()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class NextStepLocked implements NextStepState {
+  const NextStepLocked();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is NextStepLocked);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+    return 'NextStepState.locked()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class NextStepUnlocked implements NextStepState {
+  const NextStepUnlocked({required this.nextStep});
+  
+
+ final  String nextStep;
+
+/// Create a copy of NextStepState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NextStepUnlockedCopyWith<NextStepUnlocked> get copyWith => _$NextStepUnlockedCopyWithImpl<NextStepUnlocked>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is NextStepUnlocked&&(identical(other.nextStep, nextStep) || other.nextStep == nextStep));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,nextStep);
+}
+
+@override
+String toString() {
+    return 'NextStepState.unlocked(nextStep: $nextStep)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NextStepUnlockedCopyWith<$Res> implements $NextStepStateCopyWith<$Res> {
+  factory $NextStepUnlockedCopyWith(NextStepUnlocked value, $Res Function(NextStepUnlocked) _then) = _$NextStepUnlockedCopyWithImpl;
+@useResult
+$Res call({
+ String nextStep
+});
+
+
+
+
+}
+/// @nodoc
+class _$NextStepUnlockedCopyWithImpl<$Res>
+    implements $NextStepUnlockedCopyWith<$Res> {
+  _$NextStepUnlockedCopyWithImpl(this._self, this._then);
+
+  final NextStepUnlocked _self;
+  final $Res Function(NextStepUnlocked) _then;
+
+/// Create a copy of NextStepState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? nextStep = null,}) {
+  return _then(NextStepUnlocked(
+nextStep: null == nextStep ? _self.nextStep : nextStep // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+// dart format on

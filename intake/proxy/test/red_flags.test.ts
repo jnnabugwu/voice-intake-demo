@@ -45,6 +45,18 @@ describe("detectRedFlag over the bench script", () => {
     }
   });
 
+  it("intent to cut, and \"she's confused\"", () => {
+    for (const t of ["I want to cut myself", "I am going to cut myself"]) expect(detectRedFlag(t), t).toBe("crisis");
+    for (const t of ["She's confused", "He's very confused"]) expect(detectRedFlag(t), t).toBe("emergency");
+    expect(detectRedFlag("She's confused about the bill")).toBeNull();
+  });
+
+  it("haircuts and billing confusion are not red flags; Spanish ER trips are", () => {
+    for (const t of ["Quiero cortarme el pelo", "Tengo mucha confusión con mi factura"]) expect(detectRedFlag(t), t).toBeNull();
+    expect(detectRedFlag("Quiero cortarme")).toBe("crisis");
+    for (const t of ["¿Debo llevar a mi mamá a urgencias?", "¿Tengo que ir a urgencias?"]) expect(detectRedFlag(t), t).toBe("emergency");
+  });
+
   it("explicit suicide wording; spills and shaving cuts are not red flags", () => {
     for (const t of ["I have thoughts of suicide", "I attempted suicide last year", "Tuve un intento de suicidio", "Tengo ideación suicida", "pensamientos de suicidio"]) {
       expect(detectRedFlag(t), t).toBe("crisis");

@@ -6,9 +6,11 @@ import 'package:intake/app/router.dart';
 import 'package:intake/shared/core/ids.dart';
 import 'package:intake/shared/features/intake_case/data/demo_summary_repository.dart';
 import 'package:intake/shared/features/intake_case/data/in_memory_case_repository.dart';
+import 'package:intake/shared/features/intake_case/data/proxy_summary_repository.dart';
 import 'package:intake/shared/features/intake_case/domain/case_repository.dart';
 import 'package:intake/shared/features/intake_case/domain/summary_repository.dart';
 import 'package:intake/worker/features/conversation/data/demo_chat_repository.dart';
+import 'package:intake/worker/features/conversation/data/proxy_chat_repository.dart';
 import 'package:intake/worker/features/conversation/domain/chat_repository.dart';
 import 'package:intake/worker/features/speech/data/web_speech_engine.dart';
 import 'package:intake/worker/features/speech/domain/speech_engine.dart';
@@ -25,9 +27,19 @@ void bootstrap() {
         RepositoryProvider<AppMode>.value(value: mode),
         RepositoryProvider<IdGenerator>(create: (_) => IdGenerator()),
         RepositoryProvider<SpeechEngine>(create: (_) => WebSpeechEngine()),
-        // Live mode swaps in the proxy repositories (block 3).
-        RepositoryProvider<ChatRepository>(create: (_) => DemoChatRepository()),
-        RepositoryProvider<SummaryRepository>(create: (_) => const DemoSummaryRepository()),
+        // Demo mode scripts the replies and the summary; live mode asks the proxy.
+        RepositoryProvider<ChatRepository>(
+          create: (_) => switch (mode) {
+            AppMode.demo => DemoChatRepository(),
+            AppMode.live => ProxyChatRepository(baseUrl: proxyUrl),
+          },
+        ),
+        RepositoryProvider<SummaryRepository>(
+          create: (_) => switch (mode) {
+            AppMode.demo => const DemoSummaryRepository(),
+            AppMode.live => ProxySummaryRepository(baseUrl: proxyUrl),
+          },
+        ),
         // Both sides read this one store, in both modes.
         RepositoryProvider<CaseRepository>(create: (_) => InMemoryCaseRepository()),
       ],

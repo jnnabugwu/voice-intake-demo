@@ -94,4 +94,19 @@ void main() {
     expect(detector.detect('I hurt myself lifting boxes at work'), isNull);
     expect(detector.detect('I want to hurt myself')?.kind, RedFlagKind.crisis);
   });
+
+  test('single stroke signs, chest pressure, and uncontracted crisis wording', () {
+    for (final t in [
+      'I have chest pressure',
+      'pain in chest',
+      'my face is drooping',
+      'facial droop',
+      'my arm is numb',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+    for (final t in ['I do not want to live', 'I do not want to be alive']) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+  });
 }

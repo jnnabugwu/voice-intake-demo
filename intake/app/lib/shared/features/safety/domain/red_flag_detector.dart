@@ -59,13 +59,13 @@ class RedFlagDetector {
 
   static final _emergency = [
     RegExp(
-      r"chest pain|pain in (my|the) chest|chest (hurts|is tight|tightness)|pressure in (my|the) chest|heart attack",
+      r"chest (pain|pressure|tightness|discomfort|hurts|is tight)|(pain|pressure|tightness) in (my |the )?chest|heart attack",
     ),
     RegExp(
       r"short(ness)? of breath|can'?t breathe|cannot breathe|trouble breathing|hard to breathe|difficulty breathing",
     ),
     RegExp(
-      r"face (is )?droop|drooping face|droopy face|slurred speech|slurring|numb(ness)? (in|on) (my )?(arm|leg|face)|can'?t (move|feel|lift) (my )?(arm|leg|face)|one side of my (face|body)|stroke",
+      r"face (is )?droop|facial droop|drooping face|droopy face|slurred speech|slurring|numb(ness)? (in|on) (my )?(arm|leg|face)|(arm|leg|face) (is |feels |went )?numb|can'?t (move|feel|lift) (my )?(arm|leg|face)|one side of my (face|body)|stroke",
     ),
     RegExp(
       'dolor (?:en|de) ${_det}pecho|me duele ${_det}pecho|presion en ${_det}pecho|ataque (?:al|del) corazon|infarto',
@@ -79,7 +79,7 @@ class RedFlagDetector {
 
   static final _crisis = [
     RegExp(
-      r"kill myself|end my life|suicid|want to die|don'?t want to (be here|live|be alive)|(want|going|try(ing)?) to hurt myself|hurt myself on purpose|cut(ting)? myself|self[- ]harm",
+      r"kill myself|end my life|suicid|want to die|(don'?t|do not) want to (be here|live|be alive)|(want|going|try(ing)?) to hurt myself|hurt myself on purpose|cut(ting)? myself|self[- ]harm",
     ),
     RegExp(
       r'overdos|took (a|the) whole bottle|took too many (pills|tablets)|swallowed (a bunch of|all (my|the)) pills',

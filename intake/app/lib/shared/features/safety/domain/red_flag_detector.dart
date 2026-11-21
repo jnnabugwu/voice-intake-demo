@@ -11,15 +11,31 @@ class RedFlagDetector {
   /// Both languages are always checked: workers mix them.
   RedFlag? detect(String text, {Language? language}) {
     final t = fold(text);
-    for (final p in _crisis) {
-      final m = p.firstMatch(t);
-      if (m != null) return RedFlag(kind: RedFlagKind.crisis, reason: m.group(0)!);
-    }
-    for (final p in _emergency) {
-      final m = p.firstMatch(t);
-      if (m != null) return RedFlag(kind: RedFlagKind.emergency, reason: m.group(0)!);
+    final crisis = _firstHit(_crisis, t);
+    if (crisis != null) return RedFlag(kind: RedFlagKind.crisis, reason: crisis);
+    final emergency = _firstHit(_emergency, t);
+    if (emergency != null) return RedFlag(kind: RedFlagKind.emergency, reason: emergency);
+    return null;
+  }
+
+  static String? _firstHit(List<RegExp> patterns, String text) {
+    for (final p in patterns) {
+      for (final m in p.allMatches(text)) {
+        if (!_negated(text, m.start)) return m.group(0);
+      }
     }
     return null;
+  }
+
+  /// A denial just before the match, in the same clause: "no chest pain",
+  /// "I don't have chest pain", "sin dolor de pecho". Crisis phrases that
+  /// contain their own "no" ("no quiero vivir") start at the "no", so they
+  /// aren't denied.
+  static bool _negated(String text, int start) {
+    final before = text.substring(start < 30 ? 0 : start - 30, start);
+    final clause = before.split(RegExp(r'[.,;!?]|\bbut\b|\bpero\b')).last;
+    return RegExp(r"\b(no|not|never|without|don'?t|doesn'?t|didn'?t|haven'?t|sin|nunca|tampoco|ningun[oa]?)\b")
+        .hasMatch(clause);
   }
 
   /// Lowercase, curly quotes to straight, accents dropped: speech engines and
@@ -44,13 +60,13 @@ class RedFlagDetector {
       r"short(ness)? of breath|can'?t breathe|cannot breathe|trouble breathing|hard to breathe|difficulty breathing",
     ),
     RegExp(
-      r"face (is )?droop|slurred speech|can'?t (move|feel) (my )?(arm|leg|face)|one side of my (face|body)|stroke",
+      r"face (is )?droop|drooping face|droopy face|slurred speech|slurring|numb(ness)? (in|on) (my )?(arm|leg|face)|can'?t (move|feel|lift) (my )?(arm|leg|face)|one side of my (face|body)|stroke",
     ),
     RegExp(
       'dolor (?:en|de) ${_det}pecho|me duele ${_det}pecho|presion en ${_det}pecho|ataque (?:al|del) corazon|infarto',
     ),
     RegExp(r'me falta el aire|falta de aire|no puedo respirar|me cuesta respirar|dificultad para respirar'),
-    RegExp('cara caida|no puedo mover $_det(?:brazo|pierna)|derrame|habla arrastrada'),
+    RegExp('cara caida|no puedo mover $_det(?:brazo|pierna)|derrame|habla arrastrada|entumecid[oa]|adormecid[oa]'),
     // New confusion (bench line 21) and anyone asking about the ER.
     RegExp(r'\bconfused\b|\bconfusion\b|disoriented|emergency room|\bthe er\b'),
     RegExp(r'confundid[oa]|confusion|desorientad[oa]|sala de emergencias?'),

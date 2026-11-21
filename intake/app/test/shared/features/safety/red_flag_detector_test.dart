@@ -60,4 +60,23 @@ void main() {
       expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
     }
   });
+
+  test('a denial is not a red flag; an affirmed one in the same message still is', () {
+    for (final t in [
+      'I have no chest pain',
+      "I don't have chest pain, just a cough",
+      'Sin dolor de pecho',
+      'No tengo dolor en el pecho',
+      "I'm not short of breath",
+    ]) {
+      expect(detector.detect(t), isNull, reason: t);
+    }
+    expect(detector.detect("No chest pain, but I can't breathe")?.kind, RedFlagKind.emergency);
+  });
+
+  test('lay stroke wordings', () {
+    for (final t in ["My face is drooping and I'm slurring", 'numbness in my arm', 'tengo el brazo entumecido']) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+  });
 }

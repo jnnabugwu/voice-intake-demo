@@ -28,7 +28,10 @@ class DemoSummaryRepository implements SummaryRepository {
     final lower = said.toLowerCase();
 
     final duration = _duration.firstMatch(lower)?.group(0);
-    final severity = _severityOf(lower) ?? _severityFromAnswer(transcript);
+    // The answer to the 1–10 question decides, even when it has no number;
+    // an explicit "6 out of 10" or a bare number is used only if it wasn't asked.
+    final (asked, answer) = _severityFromAnswer(transcript);
+    final severity = answer ?? (asked ? _severityScaleOnly(lower) : _severityOf(lower));
     final symptoms = [
       for (final (pattern, label) in _symptoms)
         if (pattern.allMatches(lower).any((m) => !_negated(lower, m.start))) label,
@@ -43,7 +46,7 @@ class DemoSummaryRepository implements SummaryRepository {
     ];
 
     return IntakeSummary(
-      chiefComplaint: workerLines.isEmpty ? null : _complaint(workerLines.first),
+      chiefComplaint: _complaint(workerLines),
       duration: duration,
       severity: severity,
       symptoms: symptoms,
@@ -97,45 +100,56 @@ class DemoSummaryRepository implements SummaryRepository {
   /// The worker's answer to the 1–10 question, read the way people talk:
   /// "seven seven, just a seven", "um, like an 8", "siete". The last number
   /// from 1 to 10 in the answer wins; anything else is left unsaid.
-  static int? _severityFromAnswer(String transcript) {
+  static (bool, int?) _severityFromAnswer(String transcript) {
     var asked = false;
+    var answered = false;
     for (final line in transcript.split('\n')) {
       if (line.startsWith('Assistant: ')) {
         asked = _scaleQuestion.hasMatch(line);
       } else if (line.startsWith('Worker: ') && asked) {
+        answered = true;
         final words = line.substring('Worker: '.length).toLowerCase().split(RegExp(r'[^a-z0-9áéíóúñ]+'));
         final numbers = [
           for (final w in words)
             if (int.tryParse(w) case final n? when n >= 1 && n <= 10) n else ?_numberWords[w],
         ];
-        if (numbers.isNotEmpty) return numbers.last;
+        if (numbers.isNotEmpty) return (true, numbers.last);
         asked = false;
       }
     }
-    return null;
+    return (answered, null);
   }
 
-  /// The first thing the worker said, minus greetings and their name: the
-  /// physician needs the complaint, and the name doesn't belong in the summary.
-  static String _complaint(String first) {
-    var c = first
-        .replaceFirst(
-          RegExp(
-            r'^(hi|hello|hey|good (morning|afternoon|evening)|hola|buenos días|buenas( tardes| noches)?)[,.!]*\s*',
-            caseSensitive: false,
-          ),
-          '',
-        )
-        .replaceFirst(
-          RegExp(
-            r"^(my name is|this is|me llamo|mi nombre es)\s+\w+(\s+\w+)?\s*(,|\.|and|y)?\s*",
-            caseSensitive: false,
-          ),
-          '',
-        )
-        .trim();
-    if (c.isEmpty) c = first.trim();
-    return c[0].toUpperCase() + c.substring(1);
+  static int? _severityScaleOnly(String lower) {
+    final scaled = _severityScale.firstMatch(lower);
+    return scaled == null ? null : int.parse(scaled.group(1)!);
+  }
+
+  /// The first thing the worker said that is a complaint, minus greetings and
+  /// their name: the physician needs the complaint, not the worker's name.
+  /// Null when no line says anything but hello.
+  static String? _complaint(List<String> lines) {
+    for (final line in lines) {
+      final c = line
+          .replaceFirst(
+            RegExp(
+              r'^(hi|hello|hey|good (morning|afternoon|evening)|hola|buenos días|buenas( tardes| noches)?)[,.!]*\s*',
+              caseSensitive: false,
+            ),
+            '',
+          )
+          .replaceFirst(
+            RegExp(
+              r'^(my name is|this is|me llamo|mi nombre es|soy)\s+[^\s,.!?]+(\s+[^\s,.!?]+)?\s*[,.]?\s*((and|y)\s+)?',
+              caseSensitive: false,
+            ),
+            '',
+          )
+          .trim();
+      if (c.isEmpty) continue;
+      return c[0].toUpperCase() + c.substring(1);
+    }
+    return null;
   }
 
   /// A short answer that is only a number on the scale: "6", "about a 6", "maybe 7", "como un 5".
@@ -225,10 +239,14 @@ class DemoSummaryRepository implements SummaryRepository {
   /// True when a negation sits just before [start] in the same clause:
   /// "no fever", "not allergic to", "sin fiebre", "no tengo tos".
   static bool _negated(String text, int start) {
-    final before = text.substring(start < 30 ? 0 : start - 30, start);
-    // A clause ends at punctuation, "but", or the next worker line.
-    final clause = before.split(RegExp(r'[.,;!?\n]|\bbut\b|\bpero\b')).last;
-    return RegExp(r"\b(no|not|never|without|don'?t|doesn'?t|haven'?t|sin|nunca|tampoco)\b").hasMatch(clause);
+    final before = text.substring(start < 40 ? 0 : start - 40, start);
+    // A clause ends at punctuation, a connective, or the next worker line, and
+    // only the few words right before the match count ("no fever and a cough"
+    // keeps the cough). Same rule as the red-flag detectors.
+    final clause = before.split(RegExp(r'[.,;!?\n]|\b(?:but|and|or|pero|y|o|sin embargo)\b')).last;
+    final words = clause.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final near = words.length > 3 ? words.sublist(words.length - 3) : words;
+    return near.any(RegExp(r"^(no|not|never|without|don'?t|doesn'?t|haven'?t|sin|nunca|tampoco)$").hasMatch);
   }
 
   static final _symptoms = <(RegExp, String)>[
@@ -247,7 +265,7 @@ class DemoSummaryRepository implements SummaryRepository {
     (RegExp(r'\bchills\b|escalofr'), 'chills'),
     (RegExp(r'\bear\b|earache|oído|oreja'), 'ear pain'),
     (RegExp(r'body ache|aches all over|me duele todo el cuerpo|dolor de cuerpo'), 'body aches'),
-    (RegExp(r'tired|fatigue|exhausted|cansad'), 'fatigue'),
+    (RegExp(r'tired|fatigue|exhausted|\bcansad'), 'fatigue'),
     (RegExp(r'chest pain|dolor en el pecho'), 'chest pain'),
     (RegExp(r'short of breath|trouble breathing|falta el aire|me cuesta respirar'), 'shortness of breath'),
   ];

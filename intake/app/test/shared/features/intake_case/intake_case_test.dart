@@ -201,4 +201,33 @@ void main() {
       expect(s.symptoms, ['ear pain']);
     });
   });
+
+  test('cubic round on #32: rested, accented names, greeting-only lines, scoped denials, severity order', () {
+    expect(DemoSummaryRepository.summarizeText('Worker: Estoy descansado', Language.es).symptoms, isEmpty);
+    expect(
+      DemoSummaryRepository.summarizeText(
+        'Worker: Hola, me llamo José, y me duele el estómago',
+        Language.es,
+      ).chiefComplaint,
+      'Me duele el estómago',
+    );
+    expect(
+      DemoSummaryRepository.summarizeText(
+        'Worker: Hi, my name is Jordan, and my ear hurts',
+        Language.en,
+      ).chiefComplaint,
+      'My ear hurts',
+    );
+    expect(
+      DemoSummaryRepository.summarizeText('Worker: Hello\nWorker: My back hurts', Language.en).chiefComplaint,
+      'My back hurts',
+    );
+    expect(DemoSummaryRepository.summarizeText('Worker: hi', Language.en).chiefComplaint, isNull);
+    expect(DemoSummaryRepository.summarizeText('Worker: no fever and a cough', Language.en).symptoms, ['cough']);
+    final s = DemoSummaryRepository.summarizeText(
+      'Worker: 4\nAssistant: On a scale of 1 to 10, how bad is it right now?\nWorker: pretty bad',
+      Language.en,
+    );
+    expect(s.severity, isNull);
+  });
 }

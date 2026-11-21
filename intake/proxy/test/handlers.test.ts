@@ -148,7 +148,13 @@ describe("POST /api/chat", () => {
     const handler = createChatHandler(deps());
     expect((await handler(post({ ...chatBody, language: "fr" }))).status).toBe(400);
     expect((await handler(post({ ...chatBody, messages: [{ role: "assistant", text: "hi" }] }))).status).toBe(400);
-    expect((await handler(post("not json"))).status).toBe(400);
+    expect((await handler(post("a json string, not an object"))).status).toBe(400);
+    const raw = new Request("https://proxy.example/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: "https://app.example" },
+      body: "{not json",
+    });
+    expect((await handler(raw)).status).toBe(400);
   });
 
   it("an origin that isn't allowed is a 403", async () => {

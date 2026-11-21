@@ -73,7 +73,8 @@ export function createChatHandler(deps: Deps) {
     const parsed = ChatRequest.safeParse(await readJson(request));
     if (!parsed.success) return json(400, { code: "bad_request" }, g.cors);
     const body = parsed.data;
-    const key = `${body.conversationId}:${body.turnId}`;
+    // Serialized, so IDs that contain the delimiter can't collide.
+    const key = JSON.stringify([body.conversationId, body.turnId]);
     const headers = { ...sseHeaders, ...g.cors };
 
     const cached = answered.get(key);

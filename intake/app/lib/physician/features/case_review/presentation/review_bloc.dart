@@ -1,5 +1,6 @@
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intake/shared/core/language.dart';
 import 'package:intake/shared/core/result.dart';
 import 'package:intake/shared/features/intake_case/domain/case_repository.dart';
 import 'package:intake/shared/features/intake_case/domain/intake_case.dart';
@@ -26,6 +27,13 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
   /// reaches the worker until they approve.
   static const defaultNextStep = 'A clinician will call you today to talk about your symptoms.';
 
+  /// The starting draft in the worker's language, so an approved default
+  /// never reaches a Spanish-speaking worker in English.
+  static String defaultNextStepFor(Language language) => switch (language) {
+    Language.en => defaultNextStep,
+    Language.es => 'Un médico le llamará hoy para hablar de sus síntomas.',
+  };
+
   Future<void> _onOpened(ReviewOpened event, Emitter<ReviewState> emit) async {
     final id = event.caseId;
     await emit.onEach<IntakeCase?>(
@@ -47,7 +55,7 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
     final approving = current is ReviewReady && current.intakeCase.id == c.id && current.approving;
     final draft = switch (c.status) {
       Approved(:final nextStep) => nextStep,
-      _ => current is ReviewReady && current.intakeCase.id == c.id ? current.draft : defaultNextStep,
+      _ => current is ReviewReady && current.intakeCase.id == c.id ? current.draft : defaultNextStepFor(c.language),
     };
     emit(ReviewState.ready(intakeCase: c, draft: draft, approving: approving));
   }

@@ -32,10 +32,15 @@ class RedFlagDetector {
   /// contain their own "no" ("no quiero vivir") start at the "no", so they
   /// aren't denied.
   static bool _negated(String text, int start) {
-    final before = text.substring(start < 30 ? 0 : start - 30, start);
-    final clause = before.split(RegExp(r'[.,;!?]|\bbut\b|\bpero\b')).last;
-    return RegExp(r"\b(no|not|never|without|don'?t|doesn'?t|didn'?t|haven'?t|sin|nunca|tampoco|ningun[oa]?)\b")
-        .hasMatch(clause);
+    // Only the clause the match is in ("no fever and can't breathe" is two
+    // clauses), and only the few words right before it ("no", "don't have").
+    final before = text.substring(start < 40 ? 0 : start - 40, start);
+    final clause = before.split(RegExp(r'[.,;!?]|\b(?:but|and|or|pero|y|o)\b')).last;
+    final words = clause.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final near = words.length > 3 ? words.sublist(words.length - 3) : words;
+    return near.any(
+      RegExp(r"^(no|not|never|without|don'?t|doesn'?t|didn'?t|haven'?t|sin|nunca|tampoco|ningun[oa]?)$").hasMatch,
+    );
   }
 
   /// Lowercase, curly quotes to straight, accents dropped: speech engines and

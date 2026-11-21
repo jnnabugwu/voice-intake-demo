@@ -71,7 +71,7 @@ class _Ready extends StatelessWidget {
     final escalation = flag == null
         ? null
         : AppAlert.danger(
-            title: 'The chat stopped on a red flag',
+            title: 'Escalated on a red flag',
             description:
                 'The worker was shown ${flag.kind == RedFlagKind.crisis ? '988 and 911' : '911 and 988'}. Trigger: "${flag.reason}". Follow up directly.',
           );

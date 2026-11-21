@@ -132,4 +132,13 @@ void main() {
       expect(s.medications, ['aspirina', 'ibuprofeno', 'metformina']);
     });
   });
+
+  test('no false symptoms inside other words', () {
+    final s = DemoSummaryRepository.summarizeText(
+      'Worker: After the car crash my neck hurts. Mis gatos están bien.',
+      Language.en,
+    );
+    expect(s.symptoms, isNot(contains('rash')));
+    expect(s.symptoms, isNot(contains('cough')));
+  });
 }

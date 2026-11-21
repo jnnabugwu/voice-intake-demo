@@ -1,3 +1,5 @@
+import 'package:intake/shared/core/failure.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intake/shared/core/language.dart';
 import 'package:intake/shared/core/result.dart';
@@ -121,5 +123,35 @@ void main() {
       expect(result, const Ok<void>(null));
       expect((await cases.watchCurrent().first)!.redFlag, RedFlag(kind: kind, reason: flags.first));
     });
+  }
+
+  test('a failed escalation submit is retried until the physician has the case', () {
+    fakeAsync((async) {
+      final cases = _FailingTwice();
+      final bloc = ConversationBloc(
+        FakeChatRepository([]),
+        SequentialIds(),
+        SubmitIntake(const DemoSummaryRepository(), cases),
+      );
+      bloc.add(const TypedMessageSubmitted(text: 'I have chest pain', language: Language.en));
+      async.elapse(const Duration(seconds: 10));
+      expect(cases.attempts, 3);
+      expect(cases.stored, isNotNull);
+      bloc.close();
+      async.flushMicrotasks();
+    });
+  });
+}
+
+class _FailingTwice extends InMemoryCaseRepository {
+  int attempts = 0;
+  IntakeCase? stored;
+
+  @override
+  Future<Result<void>> submit(IntakeCase intakeCase) async {
+    attempts++;
+    if (attempts <= 2) return const Err(NetworkFailure());
+    stored = intakeCase;
+    return super.submit(intakeCase);
   }
 }

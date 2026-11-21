@@ -160,4 +160,14 @@ void main() {
     }
     expect(detector.detect('Creo que tuvo un derrame')?.kind, RedFlagKind.emergency);
   });
+
+  test('haircuts and billing confusion are not red flags; Spanish ER trips are', () {
+    for (final t in ['Quiero cortarme el pelo', 'Tengo mucha confusión con mi factura']) {
+      expect(detector.detect(t), isNull, reason: t);
+    }
+    expect(detector.detect('Quiero cortarme')?.kind, RedFlagKind.crisis);
+    for (final t in ['¿Debo llevar a mi mamá a urgencias?', '¿Tengo que ir a urgencias?']) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+  });
 }

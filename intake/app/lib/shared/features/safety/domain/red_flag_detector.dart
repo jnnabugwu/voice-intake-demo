@@ -82,10 +82,10 @@ class RedFlagDetector {
     ),
     RegExp(r'\b(go|going|take (her|him|them|me|my \w+)|bring (her|him|them|me)) to the (emergency room|er)\b'),
     RegExp(
-      r'\b(esta|anda|se ve|ha estado|se puso) (muy |mas |tan )?((cansad[oa]|debil|maread[oa]|somnolient[oa]) y )?(confundid[oa]|desorientad[oa])\b(?! (con|sobre|de|por))|confusion (repentina|nueva)|\btengo (mucha )?confusion\b',
+      r'\b(esta|anda|se ve|ha estado|se puso) (muy |mas |tan )?((cansad[oa]|debil|maread[oa]|somnolient[oa]) y )?(confundid[oa]|desorientad[oa])\b(?! (con|sobre|de|por))|confusion (repentina|nueva)|\btengo (mucha )?confusion\b(?! (con|sobre|de|por))',
     ),
     RegExp(
-      r'\b(la|lo|los|las|me) (llevo|llevamos|llevar) a (la sala de )?(emergencias|urgencias)|\bir a (la sala de )?emergencias',
+      r'\b((la|lo|los|las|me) (llevo|llevamos|llevar)|(llevo|llevamos|llevar) a (mi|su|el|la) \w+) a (la sala de )?(emergencias|urgencias)|\b(ir|vamos|voy) a (la sala de )?(emergencias|urgencias)',
     ),
   ];
 
@@ -97,7 +97,7 @@ class RedFlagDetector {
       r'overdos|took (a|the) whole bottle|took too many (pills|tablets)|swallowed (a bunch of|all (my|the)) pills',
     ),
     RegExp(
-      r'matarme|me (quiero|voy a) matar|quitarme la vida|suicidarme|ideas suicidas|ideacion suicida|pensamientos (suicidas|de suicidio)|pienso en el suicidio|intento de suicidio|intente suicidarme|quiero morir(me)?|no quiero (estar aqui|vivir|seguir viviendo)|(quiero|voy a) hacerme dano|cortarme',
+      r'matarme|me (quiero|voy a) matar|quitarme la vida|suicidarme|ideas suicidas|ideacion suicida|pensamientos (suicidas|de suicidio)|pienso en el suicidio|intento de suicidio|intente suicidarme|quiero morir(me)?|no quiero (estar aqui|vivir|seguir viviendo)|(quiero|voy a) (hacerme dano|cortarme(?! el| la| las| los| un| una))',
     ),
     RegExp(r'sobredosis|me tome (todo el frasco|todas las pastillas|demasiadas pastillas)'),
   ];

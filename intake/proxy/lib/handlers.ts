@@ -158,8 +158,13 @@ export function createChatHandler(deps: Deps) {
             }
           }
         } catch (error) {
-          send(sseEvent("error", { code: "upstream" }));
-          logRequest({ route: "chat", status: 502, error: error instanceof Error ? error.name : "unknown" });
+          // A client that went away isn't an upstream failure.
+          if (upstream.signal.aborted) {
+            logRequest({ route: "chat", status: 499, code: "client_closed" });
+          } else {
+            send(sseEvent("error", { code: "upstream" }));
+            logRequest({ route: "chat", status: 502, error: error instanceof Error ? error.name : "unknown" });
+          }
         } finally {
           inFlight.delete(key);
           // A reply cut short (error or disconnect) still spent what it generated.

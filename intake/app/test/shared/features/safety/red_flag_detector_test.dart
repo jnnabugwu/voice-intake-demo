@@ -72,6 +72,8 @@ void main() {
       expect(detector.detect(t), isNull, reason: t);
     }
     expect(detector.detect("No chest pain, but I can't breathe")?.kind, RedFlagKind.emergency);
+    expect(detector.detect("I have no fever and can't breathe")?.kind, RedFlagKind.emergency);
+    expect(detector.detect('No tengo fiebre y me falta el aire')?.kind, RedFlagKind.emergency);
   });
 
   test('lay stroke wordings', () {

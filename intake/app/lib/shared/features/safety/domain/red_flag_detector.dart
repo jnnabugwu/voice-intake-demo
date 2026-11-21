@@ -23,12 +23,16 @@ class RedFlagDetector {
   }
 
   static final _emergency = [
-    RegExp(r"chest pain|pain in (my|the) chest|chest (hurts|is tight|tightness)|pressure in (my|the) chest"),
-    RegExp(r"short of breath|can'?t breathe|cannot breathe|trouble breathing|hard to breathe|difficulty breathing"),
+    RegExp(
+      r"chest pain|pain in (my|the) chest|chest (hurts|is tight|tightness)|pressure in (my|the) chest|heart attack",
+    ),
+    RegExp(
+      r"short(ness)? of breath|can'?t breathe|cannot breathe|trouble breathing|hard to breathe|difficulty breathing",
+    ),
     RegExp(
       r"face (is )?droop|slurred speech|can'?t (move|feel) (my )?(arm|leg|face)|one side of my (face|body)|stroke",
     ),
-    RegExp(r'dolor (en|de) el pecho|me duele el pecho|presión en el pecho'),
+    RegExp(r'dolor (en|de)( el)? pecho|me duele el pecho|presión en el pecho|ataque (al|del) corazón|infarto'),
     RegExp(r'me falta el aire|falta de aire|no puedo respirar|me cuesta respirar|dificultad para respirar'),
     RegExp(r'cara caída|no puedo mover (el brazo|la pierna)|derrame|habla arrastrada'),
     // New confusion (bench line 21) and anyone asking about the ER.
@@ -41,7 +45,7 @@ class RedFlagDetector {
       r"kill myself|end my life|suicid|want to die|don'?t want to (be here|live|be alive)|hurt myself|self[- ]harm",
     ),
     RegExp(
-      r'matarme|quitarme la vida|suicid|quiero morir(me)?|no quiero (estar aquí|vivir|seguir viviendo)|hacerme daño',
+      r'matarme|me (quiero|voy a) matar|quitarme la vida|suicid|quiero morir(me)?|no quiero (estar aquí|vivir|seguir viviendo)|hacerme daño',
     ),
   ];
 }

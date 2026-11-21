@@ -29,4 +29,17 @@ void main() {
     expect(detector.detect('Ya no quiero vivir')!.kind, RedFlagKind.crisis);
     expect(detector.detect('My chest hurts')!.kind, RedFlagKind.emergency);
   });
+
+  test('common wordings', () {
+    expect(detector.detect('Me quiero matar')!.kind, RedFlagKind.crisis);
+    for (final t in [
+      'I have shortness of breath',
+      'Tengo dolor de pecho',
+      "I think it's a heart attack",
+      'Creo que es un ataque al corazón',
+      'Mi papá tuvo un infarto',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+  });
 }

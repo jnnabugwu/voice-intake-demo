@@ -163,7 +163,7 @@ grep -rlE "package:intake/[a-z_]+/features/[a-z_]+/data/" lib --include='*.dart'
   | grep -vE "^lib/bootstrap\.dart$|^lib/[a-z_]+/features/[a-z_]+/data/"
 ```
 
-CI runs the script and fails on any output (`.circleci/config.yml`, job `intake-app`).
+Run the script before each commit; any output is a violation.
 
 ## Features and Blocs
 

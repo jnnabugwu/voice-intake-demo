@@ -135,4 +135,31 @@ void main() {
     expect(find.text('Video visit at 3 pm today.'), findsOneWidget);
     expect(find.textContaining('Waiting for a clinician'), findsNothing);
   });
+
+  for (final (lang, text, call) in [
+    ('EN', "I have chest pain that goes down my left arm, and I'm short of breath.", 'Call 911'),
+    ('ES', 'Tengo un dolor en el pecho que me baja por el brazo izquierdo, y me falta el aire.', 'Llamar al 911'),
+  ]) {
+    testWidgets('bench line 20 ($lang) stops the chat with the 911 card, which switching sides cannot dismiss', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      if (lang == 'ES') {
+        await tester.tap(find.text('ES'));
+        await tester.pumpAndSettle();
+      }
+      await tester.enterText(find.byType(EditableText), text);
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pumpAndSettle();
+      expect(find.text(call), findsOneWidget);
+      expect(find.byType(EditableText), findsNothing);
+
+      await tester.tap(find.text('Physician'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Escalated: emergency'), findsOneWidget);
+      await tester.tap(find.text('Worker'));
+      await tester.pumpAndSettle();
+      expect(find.text(call), findsOneWidget);
+    });
+  }
 }

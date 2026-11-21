@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intake/shared/core/language.dart';
 import 'package:intake/shared/features/intake_case/domain/intake_summary.dart';
+import 'package:intake/shared/features/safety/domain/red_flag.dart';
 
 part 'intake_case.freezed.dart';
 
@@ -16,6 +17,9 @@ abstract class TranscriptLine with _$TranscriptLine {
 sealed class CaseStatus with _$CaseStatus {
   const factory CaseStatus.awaitingReview() = AwaitingReview;
   const factory CaseStatus.approved({required String nextStep}) = Approved;
+
+  /// The worker was shown 911 / 988. The physician still sees the case.
+  const factory CaseStatus.escalated({required RedFlag flag}) = Escalated;
 }
 
 /// One worker's request for care: the only thing the two sides exchange.

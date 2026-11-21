@@ -526,9 +526,12 @@ Bloc processes events of the same type concurrently by default. Every handler th
 
 1. **Before any model call**, `ConversationBloc` runs `RedFlagDetector` on the new text in the conversation's language. A hit stops the chat, moves the case to `Escalated`, and shows the full-screen card: 911 for emergencies and 988 for crisis, in the worker's language.
 2. **After the summary**, a non-empty `red_flags` list in the summary also escalates.
-3. **A refusal** from the model (`ChatChunk.refused`) shows "Let me connect you with a clinician" and offers the same card.
+3. **A refusal** from the model (`ChatChunk.refused`) shows "Let me connect you with a clinician" and offers the 911 and 988 lines as buttons (`HelpLines`). The chat continues; a refusal isn't an emergency.
+4. **The proxy checks again.** It runs the same EN/ES patterns on the newest message before calling the model and answers with a `red_flag` event (`ChatChunk.redFlag`), which escalates like step 1. This covers any client that skips the app's check.
 
-`RedFlagDetector` is pure Dart with English and Spanish phrase lists. It has no network and no model, so it works in demo mode and offline.
+An escalated case reaches the physician at once with `CaseStatus.escalated(flag)`, and the review page says what the worker was shown. Both pattern lists are tested against every line of `bench/references.json` in both languages: lines 20 (chest pain) and 21 (new confusion in an older adult with diabetes, asking about the ER) escalate, and 1–19 don't.
+
+`RedFlagDetector` is pure Dart with English and Spanish phrase lists, checked in both languages on every message because workers mix them. It has no network and no model, so it works in demo mode and offline.
 
 ## Demo mode and live mode
 

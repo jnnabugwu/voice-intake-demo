@@ -56,14 +56,15 @@ extension ChatChunkPatterns on ChatChunk {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChatDelta value)?  delta,TResult Function( ChatDone value)?  done,TResult Function( ChatRefused value)?  refused,TResult Function( ChatFailed value)?  failed,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChatDelta value)?  delta,TResult Function( ChatDone value)?  done,TResult Function( ChatRefused value)?  refused,TResult Function( ChatFailed value)?  failed,TResult Function( ChatRedFlag value)?  redFlag,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ChatDelta() when delta != null:
 return delta(_that);case ChatDone() when done != null:
 return done(_that);case ChatRefused() when refused != null:
 return refused(_that);case ChatFailed() when failed != null:
-return failed(_that);case _:
+return failed(_that);case ChatRedFlag() when redFlag != null:
+return redFlag(_that);case _:
   return orElse();
 
 }
@@ -81,14 +82,15 @@ return failed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChatDelta value)  delta,required TResult Function( ChatDone value)  done,required TResult Function( ChatRefused value)  refused,required TResult Function( ChatFailed value)  failed,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChatDelta value)  delta,required TResult Function( ChatDone value)  done,required TResult Function( ChatRefused value)  refused,required TResult Function( ChatFailed value)  failed,required TResult Function( ChatRedFlag value)  redFlag,}){
 final _that = this;
 switch (_that) {
 case ChatDelta():
 return delta(_that);case ChatDone():
 return done(_that);case ChatRefused():
 return refused(_that);case ChatFailed():
-return failed(_that);}
+return failed(_that);case ChatRedFlag():
+return redFlag(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -102,14 +104,15 @@ return failed(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChatDelta value)?  delta,TResult? Function( ChatDone value)?  done,TResult? Function( ChatRefused value)?  refused,TResult? Function( ChatFailed value)?  failed,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChatDelta value)?  delta,TResult? Function( ChatDone value)?  done,TResult? Function( ChatRefused value)?  refused,TResult? Function( ChatFailed value)?  failed,TResult? Function( ChatRedFlag value)?  redFlag,}){
 final _that = this;
 switch (_that) {
 case ChatDelta() when delta != null:
 return delta(_that);case ChatDone() when done != null:
 return done(_that);case ChatRefused() when refused != null:
 return refused(_that);case ChatFailed() when failed != null:
-return failed(_that);case _:
+return failed(_that);case ChatRedFlag() when redFlag != null:
+return redFlag(_that);case _:
   return null;
 
 }
@@ -126,13 +129,14 @@ return failed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text)?  delta,TResult Function()?  done,TResult Function()?  refused,TResult Function( Failure failure)?  failed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text)?  delta,TResult Function()?  done,TResult Function()?  refused,TResult Function( Failure failure)?  failed,TResult Function( RedFlagKind kind)?  redFlag,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ChatDelta() when delta != null:
 return delta(_that.text);case ChatDone() when done != null:
 return done();case ChatRefused() when refused != null:
 return refused();case ChatFailed() when failed != null:
-return failed(_that.failure);case _:
+return failed(_that.failure);case ChatRedFlag() when redFlag != null:
+return redFlag(_that.kind);case _:
   return orElse();
 
 }
@@ -150,13 +154,14 @@ return failed(_that.failure);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text)  delta,required TResult Function()  done,required TResult Function()  refused,required TResult Function( Failure failure)  failed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text)  delta,required TResult Function()  done,required TResult Function()  refused,required TResult Function( Failure failure)  failed,required TResult Function( RedFlagKind kind)  redFlag,}) {final _that = this;
 switch (_that) {
 case ChatDelta():
 return delta(_that.text);case ChatDone():
 return done();case ChatRefused():
 return refused();case ChatFailed():
-return failed(_that.failure);}
+return failed(_that.failure);case ChatRedFlag():
+return redFlag(_that.kind);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -170,13 +175,14 @@ return failed(_that.failure);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text)?  delta,TResult? Function()?  done,TResult? Function()?  refused,TResult? Function( Failure failure)?  failed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text)?  delta,TResult? Function()?  done,TResult? Function()?  refused,TResult? Function( Failure failure)?  failed,TResult? Function( RedFlagKind kind)?  redFlag,}) {final _that = this;
 switch (_that) {
 case ChatDelta() when delta != null:
 return delta(_that.text);case ChatDone() when done != null:
 return done();case ChatRefused() when refused != null:
 return refused();case ChatFailed() when failed != null:
-return failed(_that.failure);case _:
+return failed(_that.failure);case ChatRedFlag() when redFlag != null:
+return redFlag(_that.kind);case _:
   return null;
 
 }
@@ -378,6 +384,74 @@ class _$ChatFailedCopyWithImpl<$Res>
   return _then(ChatFailed(
 null == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as Failure,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ChatRedFlag implements ChatChunk {
+  const ChatRedFlag(this.kind);
+  
+
+ final  RedFlagKind kind;
+
+/// Create a copy of ChatChunk
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatRedFlagCopyWith<ChatRedFlag> get copyWith => _$ChatRedFlagCopyWithImpl<ChatRedFlag>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatRedFlag&&(identical(other.kind, kind) || other.kind == kind));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,kind);
+}
+
+@override
+String toString() {
+    return 'ChatChunk.redFlag(kind: $kind)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatRedFlagCopyWith<$Res> implements $ChatChunkCopyWith<$Res> {
+  factory $ChatRedFlagCopyWith(ChatRedFlag value, $Res Function(ChatRedFlag) _then) = _$ChatRedFlagCopyWithImpl;
+@useResult
+$Res call({
+ RedFlagKind kind
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatRedFlagCopyWithImpl<$Res>
+    implements $ChatRedFlagCopyWith<$Res> {
+  _$ChatRedFlagCopyWithImpl(this._self, this._then);
+
+  final ChatRedFlag _self;
+  final $Res Function(ChatRedFlag) _then;
+
+/// Create a copy of ChatChunk
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? kind = null,}) {
+  return _then(ChatRedFlag(
+null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as RedFlagKind,
   ));
 }
 

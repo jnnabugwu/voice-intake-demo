@@ -48,7 +48,7 @@ class _ApprovePanelState extends State<ApprovePanel> {
     final approved = widget.status is Approved;
     final unchanged = switch (widget.status) {
       Approved(:final nextStep) => nextStep == widget.draft.trim(),
-      AwaitingReview() => false,
+      AwaitingReview() || Escalated() => false,
     };
     return AppCard(
       title: 'Next step for the worker',

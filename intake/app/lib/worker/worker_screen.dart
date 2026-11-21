@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intake/shared/core/failure.dart';
+import 'package:intake/shared/features/safety/presentation/escalation_card.dart';
 import 'package:intake/shared/ui/ui.dart';
 import 'package:intake/worker/features/conversation/presentation/chat_list.dart';
 import 'package:intake/worker/features/conversation/presentation/conversation_bloc.dart';
@@ -59,6 +60,11 @@ class WorkerScreen extends StatelessWidget {
             );
           },
         ),
+        // A red flag stops the chat, so the mic stops too.
+        BlocListener<ConversationBloc, ConversationState>(
+          listenWhen: (previous, current) => previous.phase is! RedFlagRaised && current.phase is RedFlagRaised,
+          listener: (context, state) => context.read<SpeechBloc>().add(const SpeechStopped()),
+        ),
       ],
       child: const _WorkerBody(),
     );
@@ -86,6 +92,14 @@ class _WorkerBody extends StatelessWidget {
       _ => null,
     };
 
+    // Safety is state, not a route: nothing on this page can dismiss the card.
+    final flag = switch ((phase, context.watch<NextStepBloc>().state)) {
+      (RedFlagRaised(:final flag), _) => flag,
+      (_, NextStepEscalated(:final flag)) => flag,
+      _ => null,
+    };
+    if (flag != null) return EscalationCard(flag: flag, language: language);
+
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -103,6 +117,7 @@ class _WorkerBody extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ChatList(state: conversation, language: language),
+            if (conversation.clinicianOffered) ...[const SizedBox(height: 12), HelpLines(language: language)],
             if (spendCapped) ...[
               const SizedBox(height: 16),
               AppAlert.info(icon: LucideIcons.pause, title: strings.spendCapTitle, description: strings.spendCapBody),

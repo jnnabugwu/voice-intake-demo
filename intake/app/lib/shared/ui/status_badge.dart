@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:intake/shared/features/intake_case/domain/intake_case.dart';
+import 'package:intake/shared/features/safety/domain/red_flag.dart';
 import 'package:intake/shared/ui/components.dart';
 import 'package:intake/shared/ui/theme.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -27,6 +28,11 @@ class StatusBadge extends StatelessWidget {
         label: approvedLabel ?? 'Approved',
         icon: LucideIcons.circleCheck,
         color: tokens.approved,
+      ),
+      Escalated(:final flag) => AppBadge.outline(
+        label: flag.kind == RedFlagKind.crisis ? 'Escalated: crisis (988 shown)' : 'Escalated: emergency (911 shown)',
+        icon: LucideIcons.siren,
+        color: tokens.escalation,
       ),
     };
   }

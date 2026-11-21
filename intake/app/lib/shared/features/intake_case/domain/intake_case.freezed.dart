@@ -323,12 +323,13 @@ extension CaseStatusPatterns on CaseStatus {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AwaitingReview value)?  awaitingReview,TResult Function( Approved value)?  approved,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AwaitingReview value)?  awaitingReview,TResult Function( Approved value)?  approved,TResult Function( Escalated value)?  escalated,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case AwaitingReview() when awaitingReview != null:
 return awaitingReview(_that);case Approved() when approved != null:
-return approved(_that);case _:
+return approved(_that);case Escalated() when escalated != null:
+return escalated(_that);case _:
   return orElse();
 
 }
@@ -346,12 +347,13 @@ return approved(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AwaitingReview value)  awaitingReview,required TResult Function( Approved value)  approved,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AwaitingReview value)  awaitingReview,required TResult Function( Approved value)  approved,required TResult Function( Escalated value)  escalated,}){
 final _that = this;
 switch (_that) {
 case AwaitingReview():
 return awaitingReview(_that);case Approved():
-return approved(_that);}
+return approved(_that);case Escalated():
+return escalated(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -365,12 +367,13 @@ return approved(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AwaitingReview value)?  awaitingReview,TResult? Function( Approved value)?  approved,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AwaitingReview value)?  awaitingReview,TResult? Function( Approved value)?  approved,TResult? Function( Escalated value)?  escalated,}){
 final _that = this;
 switch (_that) {
 case AwaitingReview() when awaitingReview != null:
 return awaitingReview(_that);case Approved() when approved != null:
-return approved(_that);case _:
+return approved(_that);case Escalated() when escalated != null:
+return escalated(_that);case _:
   return null;
 
 }
@@ -387,11 +390,12 @@ return approved(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  awaitingReview,TResult Function( String nextStep)?  approved,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  awaitingReview,TResult Function( String nextStep)?  approved,TResult Function( RedFlag flag)?  escalated,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AwaitingReview() when awaitingReview != null:
 return awaitingReview();case Approved() when approved != null:
-return approved(_that.nextStep);case _:
+return approved(_that.nextStep);case Escalated() when escalated != null:
+return escalated(_that.flag);case _:
   return orElse();
 
 }
@@ -409,11 +413,12 @@ return approved(_that.nextStep);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  awaitingReview,required TResult Function( String nextStep)  approved,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  awaitingReview,required TResult Function( String nextStep)  approved,required TResult Function( RedFlag flag)  escalated,}) {final _that = this;
 switch (_that) {
 case AwaitingReview():
 return awaitingReview();case Approved():
-return approved(_that.nextStep);}
+return approved(_that.nextStep);case Escalated():
+return escalated(_that.flag);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -427,11 +432,12 @@ return approved(_that.nextStep);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  awaitingReview,TResult? Function( String nextStep)?  approved,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  awaitingReview,TResult? Function( String nextStep)?  approved,TResult? Function( RedFlag flag)?  escalated,}) {final _that = this;
 switch (_that) {
 case AwaitingReview() when awaitingReview != null:
 return awaitingReview();case Approved() when approved != null:
-return approved(_that.nextStep);case _:
+return approved(_that.nextStep);case Escalated() when escalated != null:
+return escalated(_that.flag);case _:
   return null;
 
 }
@@ -537,6 +543,83 @@ as String,
 }
 
 
+}
+
+/// @nodoc
+
+
+class Escalated implements CaseStatus {
+  const Escalated({required this.flag});
+  
+
+ final  RedFlag flag;
+
+/// Create a copy of CaseStatus
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$EscalatedCopyWith<Escalated> get copyWith => _$EscalatedCopyWithImpl<Escalated>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is Escalated&&(identical(other.flag, flag) || other.flag == flag));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,flag);
+}
+
+@override
+String toString() {
+    return 'CaseStatus.escalated(flag: $flag)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $EscalatedCopyWith<$Res> implements $CaseStatusCopyWith<$Res> {
+  factory $EscalatedCopyWith(Escalated value, $Res Function(Escalated) _then) = _$EscalatedCopyWithImpl;
+@useResult
+$Res call({
+ RedFlag flag
+});
+
+
+$RedFlagCopyWith<$Res> get flag;
+
+}
+/// @nodoc
+class _$EscalatedCopyWithImpl<$Res>
+    implements $EscalatedCopyWith<$Res> {
+  _$EscalatedCopyWithImpl(this._self, this._then);
+
+  final Escalated _self;
+  final $Res Function(Escalated) _then;
+
+/// Create a copy of CaseStatus
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? flag = null,}) {
+  return _then(Escalated(
+flag: null == flag ? _self.flag : flag // ignore: cast_nullable_to_non_nullable
+as RedFlag,
+  ));
+}
+
+/// Create a copy of CaseStatus
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RedFlagCopyWith<$Res> get flag {
+  
+  return $RedFlagCopyWith<$Res>(_self.flag, (value) {
+    return _then(_self.copyWith(flag: value));
+  });
+}
 }
 
 /// @nodoc

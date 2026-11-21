@@ -4,6 +4,7 @@ import 'package:intake/physician/features/case_review/presentation/approve_panel
 import 'package:intake/physician/features/case_review/presentation/review_bloc.dart';
 import 'package:intake/physician/features/case_review/presentation/summary_panel.dart';
 import 'package:intake/shared/features/intake_case/domain/intake_case.dart';
+import 'package:intake/shared/features/safety/domain/red_flag.dart';
 import 'package:intake/shared/ui/ui.dart';
 
 /// The physician's review of one case. [caseId] null means the current case.
@@ -66,6 +67,14 @@ class _Ready extends StatelessWidget {
       onDraftChanged: (text) => bloc.add(NextStepDraftChanged(text)),
       onApprove: () => bloc.add(const ApproveRequested()),
     );
+    final escalation = switch (intakeCase.status) {
+      Escalated(:final flag) => AppAlert.danger(
+        title: 'The chat stopped on a red flag',
+        description:
+            'The worker was shown ${flag.kind == RedFlagKind.crisis ? '988 and 911' : '911 and 988'}. Trigger: "${flag.reason}". Follow up directly.',
+      ),
+      _ => null,
+    };
     final header = Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 12,
@@ -85,6 +94,7 @@ class _Ready extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 header,
+                if (escalation != null) ...[const SizedBox(height: 12), escalation],
                 const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,6 +112,7 @@ class _Ready extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           children: [
             header,
+            if (escalation != null) ...[const SizedBox(height: 12), escalation],
             const SizedBox(height: 16),
             SummaryPanel(intakeCase: intakeCase),
             const SizedBox(height: 16),

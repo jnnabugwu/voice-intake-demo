@@ -15,7 +15,8 @@ class NextStepCard extends StatelessWidget {
     final es = language == Language.es;
     final tokens = context.tokens;
     return switch (state) {
-      NextStepNone() => const SizedBox.shrink(),
+      // WorkerScreen shows the full-screen escalation card instead.
+      NextStepNone() || NextStepEscalated() => const SizedBox.shrink(),
       NextStepLocked() => Semantics(
         liveRegion: true,
         child: AppCard(

@@ -43,7 +43,7 @@ Tracking issue: #3. Checkpoints that need Jordan: #4, #5, and the mic, fresh-pro
 
 ### Speech on the web (speech_to_text 7.5.0)
 
-- The web plugin only reports **partial** results. The final arrives through the `done` status, after the plugin's own `finalTimeout` (2 s by default) promotes the last partial. The engine sets it to 700 ms.
+- The web plugin only reports **partial** results. After `stop()`, the plugin's own `finalTimeout` (2 s by default; the engine sets 700 ms) turns the last partial into a final result, delivered through the **result callback** (`finalResult: true`). Only then does it report the `done` status, which ends the session rather than carrying text.
 - `done` reaches the status listener only after a final result was delivered. When Chrome stops by itself after partials, `done` is held back, so the engine needs a fallback timer after `notListening`.
 - `initialize()` registers its callbacks only on the first call. Later sessions set `errorListener` / `statusListener` directly.
 - On web, `partialResults: true` also sets `continuous`, so Chrome keeps listening across pauses until stop or a long silence.

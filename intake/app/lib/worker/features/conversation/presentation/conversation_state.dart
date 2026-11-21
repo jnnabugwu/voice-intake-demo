@@ -28,4 +28,7 @@ sealed class ConversationPhase with _$ConversationPhase {
   const factory ConversationPhase.replyFailed({required String turnId, required Failure failure}) = ReplyFailed;
   const factory ConversationPhase.redFlagRaised({required RedFlag flag}) = RedFlagRaised;
   const factory ConversationPhase.finished() = Finished;
+
+  /// Finish couldn't hand the case to a clinician. Finish again retries.
+  const factory ConversationPhase.submitFailed({required Failure failure}) = SubmitFailed;
 }

@@ -123,7 +123,16 @@ class _WorkerBody extends StatelessWidget {
               AppAlert.info(icon: LucideIcons.pause, title: strings.spendCapTitle, description: strings.spendCapBody),
             ],
             const SizedBox(height: 24),
-            if (finished) ...[
+            if (phase is SubmitFailed) ...[
+              AppAlert.danger(title: strings.submitFailed),
+              const SizedBox(height: 12),
+              AppButton.primary(
+                label: strings.tryAgain,
+                icon: LucideIcons.refreshCw,
+                expand: true,
+                onPressed: () => conversationBloc.add(const FinishRequested()),
+              ),
+            ] else if (finished) ...[
               AppAlert.info(icon: LucideIcons.send, title: strings.finished),
               const SizedBox(height: 16),
               NextStepCard(state: context.watch<NextStepBloc>().state, language: language),

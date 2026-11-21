@@ -1,5 +1,7 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:intake/shared/features/intake_case/domain/intake_case.dart';
+import 'package:intake/shared/core/result.dart';
 import 'package:intake/shared/core/failure.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:intake/shared/core/language.dart';
 import 'package:intake/worker/features/conversation/domain/chat_chunk.dart';
 import 'package:intake/worker/features/conversation/domain/turn.dart';
@@ -11,6 +13,16 @@ import 'package:intake/worker/features/conversation/domain/submit_intake.dart';
 
 import '../../../helpers/fake_chat_repository.dart';
 import '../../../helpers/sequential_ids.dart';
+
+class _FlakyCases extends InMemoryCaseRepository {
+  int attempts = 0;
+
+  @override
+  Future<Result<void>> submit(IntakeCase intakeCase) async {
+    attempts++;
+    return attempts == 1 ? const Err(NetworkFailure()) : super.submit(intakeCase);
+  }
+}
 
 SubmitIntake submit() => SubmitIntake(const DemoSummaryRepository(), InMemoryCaseRepository());
 
@@ -155,6 +167,43 @@ void main() {
     expect(chat.calls, hasLength(2));
     expect(bloc.state.phase, const ConversationPhase.gathering());
     expect(bloc.state.turns.last.text, 'How long?');
+    await bloc.close();
+  });
+
+  test('a reply stream that closes without done is a retryable failure', () async {
+    final chat = FakeChatRepository([
+      [const ChatChunk.delta('How lo')],
+      [const ChatChunk.delta('How long?'), const ChatChunk.done()],
+    ]);
+    final bloc = ConversationBloc(chat, SequentialIds(), submit());
+    bloc.add(const TypedMessageSubmitted(text: 'sore throat', language: Language.en));
+    await pumpEventQueue();
+    expect(bloc.state.phase, isA<ReplyFailed>());
+    expect(bloc.state.turns, hasLength(1));
+    bloc.add(const ReplyRetryRequested());
+    await pumpEventQueue();
+    expect(bloc.state.turns.last.text, 'How long?');
+    await bloc.close();
+  });
+
+  test('a failed submit surfaces, and Finish again retries it', () async {
+    final cases = _FlakyCases();
+    final bloc = ConversationBloc(
+      FakeChatRepository([
+        [const ChatChunk.done()],
+      ]),
+      SequentialIds(),
+      SubmitIntake(const DemoSummaryRepository(), cases),
+    );
+    bloc.add(const TypedMessageSubmitted(text: 'hi', language: Language.en));
+    await pumpEventQueue();
+    bloc.add(const FinishRequested());
+    await pumpEventQueue();
+    expect(bloc.state.phase, const ConversationPhase.submitFailed(failure: NetworkFailure()));
+    bloc.add(const FinishRequested());
+    await pumpEventQueue();
+    expect(bloc.state.phase, const ConversationPhase.finished());
+    expect(cases.attempts, 2);
     await bloc.close();
   });
 }

@@ -1,7 +1,9 @@
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intake/shared/core/failure.dart';
 import 'package:intake/shared/core/ids.dart';
 import 'package:intake/shared/core/language.dart';
+import 'package:intake/shared/core/result.dart';
 import 'package:intake/shared/features/safety/domain/red_flag.dart';
 import 'package:intake/shared/features/safety/domain/red_flag_detector.dart';
 import 'package:intake/worker/features/conversation/domain/chat_chunk.dart';
@@ -98,7 +100,14 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
         }
       },
     );
-    if (!ended && !isClosed) emit(_withAssistant(turnId, reply, language));
+    // A stream that closed without saying how it ended is a failure the worker can retry.
+    if (!ended && !isClosed) {
+      emit(
+        state.copyWith(
+          phase: ConversationPhase.replyFailed(turnId: turnId, failure: const UnknownFailure('stream_ended_early')),
+        ),
+      );
+    }
     if (state.phase case RedFlagRaised(:final flag)) await _submitEscalated(flag, language);
   }
 
@@ -107,7 +116,8 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     await _submitEscalated(flag, language);
   }
 
-  /// The physician sees an escalated case right away; the worker sees the card.
+  /// The physician sees an escalated case right away; the worker sees the
+  /// card either way, so a failed submit here can't hide the help lines.
   Future<void> _submitEscalated(RedFlag flag, Language language) async {
     final _ = await _submit(conversationId: state.conversationId, language: language, turns: state.turns, flag: flag);
   }
@@ -121,10 +131,11 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
   );
 
   Future<void> _onFinish(FinishRequested event, Emitter<ConversationState> emit) async {
-    if (state.phase is! Gathering || !state.turns.any((t) => t.speaker == Speaker.worker)) return;
+    final canFinish = state.phase is Gathering || state.phase is SubmitFailed;
+    if (!canFinish || !state.turns.any((t) => t.speaker == Speaker.worker)) return;
     emit(state.copyWith(phase: const ConversationPhase.finished()));
     final language = state.turns.lastWhere((t) => t.speaker == Speaker.worker).language;
-    // The in-memory store can't fail; a backend store would surface this on the next-step card.
-    final _ = await _submit(conversationId: state.conversationId, language: language, turns: state.turns);
+    final result = await _submit(conversationId: state.conversationId, language: language, turns: state.turns);
+    if (result case Err(:final failure)) emit(state.copyWith(phase: ConversationPhase.submitFailed(failure: failure)));
   }
 }

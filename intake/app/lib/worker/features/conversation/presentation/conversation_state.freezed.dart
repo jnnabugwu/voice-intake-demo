@@ -355,7 +355,7 @@ extension ConversationPhasePatterns on ConversationPhase {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( Gathering value)?  gathering,TResult Function( Streaming value)?  streaming,TResult Function( ReplyFailed value)?  replyFailed,TResult Function( RedFlagRaised value)?  redFlagRaised,TResult Function( Finished value)?  finished,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( Gathering value)?  gathering,TResult Function( Streaming value)?  streaming,TResult Function( ReplyFailed value)?  replyFailed,TResult Function( RedFlagRaised value)?  redFlagRaised,TResult Function( Finished value)?  finished,TResult Function( SubmitFailed value)?  submitFailed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case Gathering() when gathering != null:
@@ -363,7 +363,8 @@ return gathering(_that);case Streaming() when streaming != null:
 return streaming(_that);case ReplyFailed() when replyFailed != null:
 return replyFailed(_that);case RedFlagRaised() when redFlagRaised != null:
 return redFlagRaised(_that);case Finished() when finished != null:
-return finished(_that);case _:
+return finished(_that);case SubmitFailed() when submitFailed != null:
+return submitFailed(_that);case _:
   return orElse();
 
 }
@@ -381,7 +382,7 @@ return finished(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( Gathering value)  gathering,required TResult Function( Streaming value)  streaming,required TResult Function( ReplyFailed value)  replyFailed,required TResult Function( RedFlagRaised value)  redFlagRaised,required TResult Function( Finished value)  finished,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( Gathering value)  gathering,required TResult Function( Streaming value)  streaming,required TResult Function( ReplyFailed value)  replyFailed,required TResult Function( RedFlagRaised value)  redFlagRaised,required TResult Function( Finished value)  finished,required TResult Function( SubmitFailed value)  submitFailed,}){
 final _that = this;
 switch (_that) {
 case Gathering():
@@ -389,7 +390,8 @@ return gathering(_that);case Streaming():
 return streaming(_that);case ReplyFailed():
 return replyFailed(_that);case RedFlagRaised():
 return redFlagRaised(_that);case Finished():
-return finished(_that);}
+return finished(_that);case SubmitFailed():
+return submitFailed(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -403,7 +405,7 @@ return finished(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( Gathering value)?  gathering,TResult? Function( Streaming value)?  streaming,TResult? Function( ReplyFailed value)?  replyFailed,TResult? Function( RedFlagRaised value)?  redFlagRaised,TResult? Function( Finished value)?  finished,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( Gathering value)?  gathering,TResult? Function( Streaming value)?  streaming,TResult? Function( ReplyFailed value)?  replyFailed,TResult? Function( RedFlagRaised value)?  redFlagRaised,TResult? Function( Finished value)?  finished,TResult? Function( SubmitFailed value)?  submitFailed,}){
 final _that = this;
 switch (_that) {
 case Gathering() when gathering != null:
@@ -411,7 +413,8 @@ return gathering(_that);case Streaming() when streaming != null:
 return streaming(_that);case ReplyFailed() when replyFailed != null:
 return replyFailed(_that);case RedFlagRaised() when redFlagRaised != null:
 return redFlagRaised(_that);case Finished() when finished != null:
-return finished(_that);case _:
+return finished(_that);case SubmitFailed() when submitFailed != null:
+return submitFailed(_that);case _:
   return null;
 
 }
@@ -428,14 +431,15 @@ return finished(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  gathering,TResult Function( String turnId,  String reply)?  streaming,TResult Function( String turnId,  Failure failure)?  replyFailed,TResult Function( RedFlag flag)?  redFlagRaised,TResult Function()?  finished,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  gathering,TResult Function( String turnId,  String reply)?  streaming,TResult Function( String turnId,  Failure failure)?  replyFailed,TResult Function( RedFlag flag)?  redFlagRaised,TResult Function()?  finished,TResult Function( Failure failure)?  submitFailed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case Gathering() when gathering != null:
 return gathering();case Streaming() when streaming != null:
 return streaming(_that.turnId,_that.reply);case ReplyFailed() when replyFailed != null:
 return replyFailed(_that.turnId,_that.failure);case RedFlagRaised() when redFlagRaised != null:
 return redFlagRaised(_that.flag);case Finished() when finished != null:
-return finished();case _:
+return finished();case SubmitFailed() when submitFailed != null:
+return submitFailed(_that.failure);case _:
   return orElse();
 
 }
@@ -453,14 +457,15 @@ return finished();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  gathering,required TResult Function( String turnId,  String reply)  streaming,required TResult Function( String turnId,  Failure failure)  replyFailed,required TResult Function( RedFlag flag)  redFlagRaised,required TResult Function()  finished,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  gathering,required TResult Function( String turnId,  String reply)  streaming,required TResult Function( String turnId,  Failure failure)  replyFailed,required TResult Function( RedFlag flag)  redFlagRaised,required TResult Function()  finished,required TResult Function( Failure failure)  submitFailed,}) {final _that = this;
 switch (_that) {
 case Gathering():
 return gathering();case Streaming():
 return streaming(_that.turnId,_that.reply);case ReplyFailed():
 return replyFailed(_that.turnId,_that.failure);case RedFlagRaised():
 return redFlagRaised(_that.flag);case Finished():
-return finished();}
+return finished();case SubmitFailed():
+return submitFailed(_that.failure);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -474,14 +479,15 @@ return finished();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  gathering,TResult? Function( String turnId,  String reply)?  streaming,TResult? Function( String turnId,  Failure failure)?  replyFailed,TResult? Function( RedFlag flag)?  redFlagRaised,TResult? Function()?  finished,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  gathering,TResult? Function( String turnId,  String reply)?  streaming,TResult? Function( String turnId,  Failure failure)?  replyFailed,TResult? Function( RedFlag flag)?  redFlagRaised,TResult? Function()?  finished,TResult? Function( Failure failure)?  submitFailed,}) {final _that = this;
 switch (_that) {
 case Gathering() when gathering != null:
 return gathering();case Streaming() when streaming != null:
 return streaming(_that.turnId,_that.reply);case ReplyFailed() when replyFailed != null:
 return replyFailed(_that.turnId,_that.failure);case RedFlagRaised() when redFlagRaised != null:
 return redFlagRaised(_that.flag);case Finished() when finished != null:
-return finished();case _:
+return finished();case SubmitFailed() when submitFailed != null:
+return submitFailed(_that.failure);case _:
   return null;
 
 }
@@ -769,5 +775,73 @@ String toString() {
 
 
 
+
+/// @nodoc
+
+
+class SubmitFailed implements ConversationPhase {
+  const SubmitFailed({required this.failure});
+  
+
+ final  Failure failure;
+
+/// Create a copy of ConversationPhase
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SubmitFailedCopyWith<SubmitFailed> get copyWith => _$SubmitFailedCopyWithImpl<SubmitFailed>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is SubmitFailed&&(identical(other.failure, failure) || other.failure == failure));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,failure);
+}
+
+@override
+String toString() {
+    return 'ConversationPhase.submitFailed(failure: $failure)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $SubmitFailedCopyWith<$Res> implements $ConversationPhaseCopyWith<$Res> {
+  factory $SubmitFailedCopyWith(SubmitFailed value, $Res Function(SubmitFailed) _then) = _$SubmitFailedCopyWithImpl;
+@useResult
+$Res call({
+ Failure failure
+});
+
+
+
+
+}
+/// @nodoc
+class _$SubmitFailedCopyWithImpl<$Res>
+    implements $SubmitFailedCopyWith<$Res> {
+  _$SubmitFailedCopyWithImpl(this._self, this._then);
+
+  final SubmitFailed _self;
+  final $Res Function(SubmitFailed) _then;
+
+/// Create a copy of ConversationPhase
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? failure = null,}) {
+  return _then(SubmitFailed(
+failure: null == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as Failure,
+  ));
+}
+
+
+}
 
 // dart format on

@@ -124,6 +124,14 @@ void main() {
     expect(find.text('My throat has been sore for three days'), findsWidgets);
     await tester.enterText(find.byType(EditableText), 'Video visit at 3 pm today.');
     await tester.pump();
+
+    // A draft is not an approval: the worker is still locked.
+    await tester.tap(find.text('Worker'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Waiting for a clinician'), findsOneWidget);
+    expect(find.textContaining('Video visit'), findsNothing);
+    await tester.tap(find.text('Physician'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Approve'));
     await tester.tap(find.text('Approve'));
     await tester.pumpAndSettle();

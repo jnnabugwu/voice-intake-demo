@@ -79,10 +79,14 @@ class RedFlagDetector {
 
   static final _crisis = [
     RegExp(
-      r"kill myself|end my life|suicid|want to die|don'?t want to (be here|live|be alive)|hurt myself|self[- ]harm",
+      r"kill myself|end my life|suicid|want to die|don'?t want to (be here|live|be alive)|(want|going|try(ing)?) to hurt myself|hurt myself on purpose|cut(ting)? myself|self[- ]harm",
     ),
     RegExp(
-      r'matarme|me (quiero|voy a) matar|quitarme la vida|suicid|quiero morir(me)?|no quiero (estar aqui|vivir|seguir viviendo)|hacerme dano',
+      r'overdos|took (a|the) whole bottle|took too many (pills|tablets)|swallowed (a bunch of|all (my|the)) pills',
     ),
+    RegExp(
+      r'matarme|me (quiero|voy a) matar|quitarme la vida|suicid|quiero morir(me)?|no quiero (estar aqui|vivir|seguir viviendo)|(quiero|voy a) hacerme dano|cortarme',
+    ),
+    RegExp(r'sobredosis|me tome (todo el frasco|todas las pastillas|demasiadas pastillas)'),
   ];
 }

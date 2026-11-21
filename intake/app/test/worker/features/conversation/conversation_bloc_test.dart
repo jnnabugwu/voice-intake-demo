@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:intake/shared/core/failure.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:intake/shared/core/language.dart';
 import 'package:intake/worker/features/conversation/domain/chat_chunk.dart';
 import 'package:intake/worker/features/conversation/domain/turn.dart';
@@ -145,6 +145,22 @@ void main() {
     await pumpEventQueue();
     expect(chat.calls, hasLength(2));
     expect(bloc.state.phase, const ConversationPhase.gathering());
+    expect(bloc.state.turns.last.text, 'How long?');
+    await bloc.close();
+  });
+
+  test('a reply stream that closes without done is a retryable failure', () async {
+    final chat = FakeChatRepository([
+      [const ChatChunk.delta('How lo')],
+      [const ChatChunk.delta('How long?'), const ChatChunk.done()],
+    ]);
+    final bloc = ConversationBloc(chat, SequentialIds());
+    bloc.add(const TypedMessageSubmitted(text: 'sore throat', language: Language.en));
+    await pumpEventQueue();
+    expect(bloc.state.phase, isA<ReplyFailed>());
+    expect(bloc.state.turns, hasLength(1));
+    bloc.add(const ReplyRetryRequested());
+    await pumpEventQueue();
     expect(bloc.state.turns.last.text, 'How long?');
     await bloc.close();
   });

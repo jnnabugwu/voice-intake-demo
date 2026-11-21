@@ -45,6 +45,15 @@ describe("detectRedFlag over the bench script", () => {
     }
   });
 
+  it("explicit suicide wording; spills and shaving cuts are not red flags", () => {
+    for (const t of ["I have thoughts of suicide", "I attempted suicide last year", "Tuve un intento de suicidio", "Tengo ideación suicida", "pensamientos de suicidio"]) {
+      expect(detectRedFlag(t), t).toBe("crisis");
+    }
+    for (const t of ["Me derramé el café", "I cut myself shaving"]) expect(detectRedFlag(t), t).toBeNull();
+    expect(detectRedFlag("Creo que tuvo un derrame")).toBe("emergency");
+    expect(detectRedFlag("derrame cerebral")).toBe("emergency");
+  });
+
   it("confusion needs to be a symptom, and the ER a question about going", () => {
     for (const t of [
       "I'm confused about my bill",

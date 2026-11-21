@@ -82,15 +82,16 @@ export function createChatHandler(deps: Deps) {
       logRequest({ route: "chat", status: 200, replayed: true });
       return new Response(sseEvent("delta", { text: cached }) + sseEvent("done"), { headers });
     }
-    const capped = overCap(deps, g.cors, "chat");
-    if (capped) return capped;
-
-    // Red flags stop the chat before any model call.
+    // Red flags stop the chat before any model call, and before the spend cap:
+    // this path costs nothing, so an emergency is never answered with a 429.
     const flag = detectRedFlag(body.messages.at(-1)!.text);
     if (flag) {
       logRequest({ route: "chat", status: 200, redFlag: flag });
       return new Response(sseEvent("red_flag", { kind: flag }), { headers });
     }
+
+    const capped = overCap(deps, g.cors, "chat");
+    if (capped) return capped;
 
     const encoder = new TextEncoder();
     const upstream = new AbortController();

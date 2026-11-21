@@ -516,7 +516,7 @@ Bloc processes events of the same type concurrently by default. Every handler th
 |---|---|---|---|
 | `SpeechBloc` | `SpeechStarted` | `droppable` | A second tap while the mic starts does nothing |
 | `ConversationBloc` | `UtteranceSubmitted`, `TypedMessageSubmitted` | `droppable` | One reply at a time; the UI disables input while a reply streams, so nothing is dropped silently |
-| `ConversationBloc` | `ReplyRetryRequested` | `restartable` | A retry replaces a failed attempt |
+| `ConversationBloc` | `ReplyRetryRequested` | `droppable` | A second tap is ignored while the retry runs. `restartable` would cancel the retry in flight and strand the phase on `streaming` |
 | `ReviewBloc` | `ApproveRequested` | `droppable` | A double tap can't approve twice |
 
 **Stable IDs make retries safe.** Each utterance and each turn has an ID created once, when it is first submitted. A retry reuses the turn ID, and the proxy and `ConversationBloc` ignore a turn ID they have already answered.

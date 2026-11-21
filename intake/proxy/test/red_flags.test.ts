@@ -45,6 +45,13 @@ describe("detectRedFlag over the bench script", () => {
     expect(detectRedFlag("I want to hurt myself")).toBe("crisis");
   });
 
+  it("single stroke signs, chest pressure, and uncontracted crisis wording", () => {
+    for (const t of ["I have chest pressure", "pain in chest", "my face is drooping", "facial droop", "my arm is numb"]) {
+      expect(detectRedFlag(t), t).toBe("emergency");
+    }
+    for (const t of ["I do not want to live", "I do not want to be alive"]) expect(detectRedFlag(t), t).toBe("crisis");
+  });
+
   it("catches common wordings", () => {
     for (const t of ["I have shortness of breath", "Tengo dolor de pecho", "I think it's a heart attack", "Creo que es un ataque al corazón", "Mi papá tuvo un infarto"]) {
       expect(detectRedFlag(t), t).toBe("emergency");

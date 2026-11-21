@@ -79,7 +79,7 @@ export function createChatHandler(deps: Deps) {
     const body = parsed.data;
     // The whole request, serialized: a reused turn ID with different messages
     // is a different request, and IDs containing a delimiter can't collide.
-    const key = JSON.stringify([body.conversationId, body.turnId, body.messages]);
+    const key = JSON.stringify([body.conversationId, body.turnId, body.language, body.messages]);
     const headers = { ...sseHeaders, ...g.cors };
 
     // Red flags stop the chat before any model call, a replay, the rate limit or

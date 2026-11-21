@@ -5,6 +5,8 @@ import 'package:intake/shared/ui/ui.dart';
 import 'package:intake/worker/features/conversation/presentation/chat_list.dart';
 import 'package:intake/worker/features/conversation/presentation/conversation_bloc.dart';
 import 'package:intake/worker/features/conversation/presentation/conversation_strings.dart';
+import 'package:intake/worker/features/next_step/presentation/next_step_bloc.dart';
+import 'package:intake/worker/features/next_step/presentation/next_step_card.dart';
 import 'package:intake/worker/features/speech/presentation/language_toggle.dart';
 import 'package:intake/worker/features/speech/presentation/live_transcript.dart';
 import 'package:intake/worker/features/speech/presentation/mic_button.dart';
@@ -106,9 +108,11 @@ class _WorkerBody extends StatelessWidget {
               AppAlert.info(icon: LucideIcons.pause, title: strings.spendCapTitle, description: strings.spendCapBody),
             ],
             const SizedBox(height: 24),
-            if (finished)
-              AppAlert.info(icon: LucideIcons.clock, title: strings.finished)
-            else ...[
+            if (finished) ...[
+              AppAlert.info(icon: LucideIcons.send, title: strings.finished),
+              const SizedBox(height: 16),
+              NextStepCard(state: context.watch<NextStepBloc>().state, language: language),
+            ] else ...[
               LiveTranscript(phase: speech.phase, language: language),
               const SizedBox(height: 16),
               Center(

@@ -19,7 +19,7 @@ void main() {
     expect(states, const [
       NextStepState.none(),
       NextStepState.locked(),
-      NextStepState.unlocked(nextStep: 'Video visit today'),
+      NextStepState.unlocked(caseId: 'c_1', nextStep: 'Video visit today'),
     ]);
     await bloc.close();
   });

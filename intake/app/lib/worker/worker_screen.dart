@@ -89,7 +89,7 @@ class _WorkerBody extends StatelessWidget {
     final micLive = speech.phase is SpeechStarting || speech.phase is SpeechListening;
     final nextStep = context.watch<NextStepBloc>().state;
     // An approved next step replaces the red-flag card; the help lines stay under it.
-    final approved = nextStep is NextStepUnlocked;
+    final approved = nextStep is NextStepUnlocked && nextStep.caseId == conversation.conversationId;
     final finished = phase is Finished || (phase is RedFlagRaised && approved);
     final speechFailure = switch (speech.phase) {
       SpeechUnavailable(:final failure) => failure,
@@ -98,7 +98,8 @@ class _WorkerBody extends StatelessWidget {
 
     // Safety is state, not a route: nothing on this page can dismiss the card.
     final flag = switch ((phase, nextStep)) {
-      (_, NextStepUnlocked()) => null,
+      // Only an approval for this conversation's case replaces its card.
+      (_, NextStepUnlocked(:final caseId)) when caseId == conversation.conversationId => null,
       (RedFlagRaised(:final flag), _) => flag,
       (_, NextStepEscalated(:final flag)) => flag,
       _ => null,

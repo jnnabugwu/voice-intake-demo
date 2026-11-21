@@ -123,8 +123,23 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
   /// The physician sees an escalated case right away; the worker sees the
   /// card either way, so a failed submit here can't hide the help lines.
   Future<void> _submitEscalated(RedFlag flag, Language language) async {
-    final _ = await _submit(conversationId: state.conversationId, language: language, turns: state.turns, flag: flag);
+    // The worker's card doesn't wait on this, but the physician must get the
+    // case, so a failed submit is retried with backoff.
+    for (var attempt = 0; attempt < _escalationAttempts; attempt++) {
+      if (attempt > 0) await Future<void>.delayed(_escalationBackoff * attempt);
+      if (isClosed) return;
+      final result = await _submit(
+        conversationId: state.conversationId,
+        language: language,
+        turns: state.turns,
+        flag: flag,
+      );
+      if (result is Ok) return;
+    }
   }
+
+  static const _escalationAttempts = 4;
+  static const _escalationBackoff = Duration(seconds: 1);
 
   ConversationState _withAssistant(String turnId, String text, Language language) => state.copyWith(
     turns: [

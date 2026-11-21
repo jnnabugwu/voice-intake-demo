@@ -2,6 +2,50 @@
 
 _Updated at the end of each session. Newest session first._
 
+## 2026-11-20 (evening): the cloud hand-off, cubic's review rounds, blocks 3–6
+
+### Where it ended
+
+| Issue | PR | State |
+|---|---|---|
+| #9 proxy | #20 | merged after 6 cubic rounds |
+| #11 physician side, approval gate | #21 | merged |
+| #12 red flags | #22 | merged |
+| #10 live mode in the app | #25 | merged |
+| #14 bench scorer | #26 | merged |
+| #15 `/bench` page | #29 | merged |
+| #16 AssemblyAI + `results.md` | #27 | merged |
+| #13 ship | #28 | README and accessibility tests in review; deploy and the video are Jordan's |
+
+Left for Jordan: #4 (Claude key, Console spend limit: the only hard cost ceiling), #5 (clips, AssemblyAI key), reading `/bench`, deploying, the fresh-profile check, the video.
+
+### What happened
+
+- **The "cloud" agent ran on the laptop.** An agent launched with remote isolation came back with Flutter at `~/Development/flutter` and `gh` on the Mac keychain: it was a local subagent. It also ran in a sandbox that refused compound shell commands, so in 40 minutes it fixed part of one PR and pushed nothing. **Rule:** before telling Jordan it's safe to leave, confirm the agent is really remote (ask it for `hostname` and `pwd`), or start a cloud session from claude.ai/code instead.
+- **Another session shared the main checkout.** It switched branches (`remove-circleci`, then `docs-learnings`) while this session was working. **Rule:** when other sessions are open in the repo, do all work in separate `git worktree`s and never touch the main checkout.
+- **cubic found something on almost every pass.** Rounds 2–4 on the red-flag work surfaced real safety gaps:
+  - denials ("no chest pain") escalated, then over-broad denial handling suppressed real ones ("no fever **and** can't breathe");
+  - "sin embargo" read as a denial;
+  - "I hurt myself lifting boxes" read as a crisis;
+  - overdose wording was missing;
+  - "dolor de pecho", "facial droop", "my arm is numb" and unaccented Spanish were missed;
+  - an emergency could get a 429 from the rate limit or the spend cap, or a replayed reply.
+
+  Each fix went into **both** detectors (app and proxy) with a test.
+- **A product call surfaced mid-review:** whether an approved next step replaces the 911/988 card. Jordan chose: the card holds until a clinician approves, then the approved step shows, with the help lines still offered.
+
+### Rules that came out of it
+
+| Problem | Rule |
+|---|---|
+| Two red-flag detectors (Dart, TypeScript) drift | Change both in the same session, mirror each test, and run both over every `bench/references.json` line in both languages |
+| Negation is hard | A denial counts only within the 3 words before a match and in the same clause; "and", "but", "y", "pero", "sin embargo" and a line break end a clause |
+| Safety paths behind cost controls | Red-flag checks run before the rate limit, the replay cache and the spend cap: they cost nothing, so an emergency never gets a 429 |
+| `rootBundle` in widget tests | Its cache outlives each test's zone, so a second test's asset load never completes. Read fixtures with `File` in tests and keep a separate drift test for the asset copy |
+| A double tap approved twice | `droppable()` can't drop an event that arrives after a fast handler finishes. Make the action idempotent instead |
+| The README described features still in open PRs | Stack docs PRs on top of the features they describe so they merge last |
+| The GitHub API rate limit | The limit is shared across sessions. Batch reply/resolve calls and wait with one background loop, not repeated polls |
+
 ## 2026-11-20: issues, blocks 1–4, the proxy
 
 ### Where it stands

@@ -72,7 +72,9 @@ export type Summarize = (input: { system: string; transcript: string }) => Promi
 
 /** Structured summary at the model's default effort. */
 export const summarize: Summarize = async ({ system, transcript }) => {
-  const response = await anthropic().beta.messages.parse({
+  // create, not parse: the response (and what it cost) comes back even when the
+  // output fails validation, so the spend cap counts every billed summary.
+  const response = await anthropic().beta.messages.create({
     model: model(),
     max_tokens: 16000,
     ...FALLBACK,
@@ -81,9 +83,22 @@ export const summarize: Summarize = async ({ system, transcript }) => {
     output_config: { format: betaZodOutputFormat(ModelSummary) },
   });
   const usage = totalUsage(response.usage);
-  if (response.stop_reason === "refusal" || !response.parsed_output) return { type: "refused", usage };
-  return { type: "ok", summary: response.parsed_output, usage };
+  if (response.stop_reason === "refusal") return { type: "refused", usage };
+  const parsed = parseSummary(response.content);
+  return parsed ? { type: "ok", summary: parsed, usage } : { type: "refused", usage };
 };
+
+/** The structured output, validated against the schema (including severity 1-10), or null. */
+export function parseSummary(content: ReadonlyArray<{ type: string; text?: string }>): z.infer<typeof ModelSummary> | null {
+  const text = content.find((b) => b.type === "text")?.text;
+  if (!text) return null;
+  try {
+    const result = ModelSummary.safeParse(JSON.parse(text));
+    return result.success ? result.data : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * The Messages API wants alternating roles starting with the user. A failed

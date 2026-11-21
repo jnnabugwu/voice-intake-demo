@@ -18,5 +18,12 @@ describe("detectRedFlag over the bench script", () => {
     expect(detectRedFlag("I have chest pain")).toBe("emergency");
     expect(detectRedFlag("I don't want to be here anymore")).toBe("crisis");
     expect(detectRedFlag("Ya no quiero vivir")).toBe("crisis");
+    expect(detectRedFlag("Me quiero matar")).toBe("crisis");
+  });
+
+  it("catches common wordings", () => {
+    for (const t of ["I have shortness of breath", "Tengo dolor de pecho", "I think it's a heart attack", "Creo que es un ataque al corazón", "Mi papá tuvo un infarto"]) {
+      expect(detectRedFlag(t), t).toBe("emergency");
+    }
   });
 });

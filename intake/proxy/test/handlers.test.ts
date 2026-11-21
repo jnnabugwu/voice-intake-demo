@@ -112,6 +112,16 @@ describe("POST /api/chat", () => {
     expect(again).toContain("event: done");
   });
 
+  it("an answered turn still replays after the cap closes", async () => {
+    const meter = new SpendMeter(0.0001);
+    const handler = createChatHandler(deps({ meter }));
+    await (await handler(post(chatBody))).text();
+    expect(meter.isOverCap()).toBe(true);
+    const replay = await handler(post(chatBody));
+    expect(replay.status).toBe(200);
+    expect(await replay.text()).toContain("event: done");
+  });
+
   it("over the per-IP rate limit returns 429 rate_limited", async () => {
     const handler = createChatHandler(deps({ limiter: new RateLimiter(1) }));
     expect((await handler(post({ ...chatBody, turnId: "a" }))).status).toBe(200);

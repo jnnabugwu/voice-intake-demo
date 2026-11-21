@@ -2,7 +2,7 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { IntakeSummary, ModelSummary } from "../contract/summary.js";
-import { toApiMessages, totalUsage } from "../lib/claude.js";
+import { parseSummary, toApiMessages, totalUsage } from "../lib/claude.js";
 
 describe("toApiMessages", () => {
   it("joins neighbours with the same role and drops a leading assistant turn", () => {
@@ -55,5 +55,19 @@ describe("summary contract", () => {
     const base = { chief_complaint: null, duration: null, symptoms: [], medications: [], allergies: [], red_flags: [], open_questions: [] };
     expect(ModelSummary.safeParse({ ...base, severity: 11 }).success).toBe(false);
     expect(ModelSummary.safeParse({ ...base, severity: null }).success).toBe(true);
+  });
+});
+
+describe("parseSummary", () => {
+  const ok = { chief_complaint: "Cough", duration: null, severity: 4, symptoms: [], medications: [], allergies: [], red_flags: [], open_questions: [] };
+
+  it("validates the structured output", () => {
+    expect(parseSummary([{ type: "text", text: JSON.stringify(ok) }])).toEqual(ok);
+  });
+
+  it("returns null for invalid JSON, a bad severity, or no text", () => {
+    expect(parseSummary([{ type: "text", text: "{not json" }])).toBeNull();
+    expect(parseSummary([{ type: "text", text: JSON.stringify({ ...ok, severity: 12 }) }])).toBeNull();
+    expect(parseSummary([{ type: "thinking" }])).toBeNull();
   });
 });

@@ -31,7 +31,7 @@ class AnsweredTurns {
 
 type Gate = { ok: true; cors: Record<string, string> } | { ok: false; response: Response };
 
-/** Origin, rate limit and spend cap, in that order. */
+/** Origin and rate limit. The spend cap is checked separately, after a replay could answer for free. */
 function gate(request: Request, deps: Deps): Gate {
   const origin = request.headers.get("origin");
   const cors = corsHeaders(origin, deps.config);
@@ -42,10 +42,13 @@ function gate(request: Request, deps: Deps): Gate {
   if (!deps.limiter.take(clientIp(request))) {
     return { ok: false, response: json(429, { code: "rate_limited" }, cors) };
   }
-  if (deps.meter.isOverCap()) {
-    return { ok: false, response: json(429, { code: "spend_cap" }, cors) };
-  }
   return { ok: true, cors };
+}
+
+function overCap(deps: Deps, cors: Record<string, string>, route: string): Response | null {
+  if (!deps.meter.isOverCap()) return null;
+  logRequest({ route, status: 429, code: "spend_cap" });
+  return json(429, { code: "spend_cap" }, cors);
 }
 
 async function readJson(request: Request): Promise<unknown> {
@@ -78,6 +81,8 @@ export function createChatHandler(deps: Deps) {
       logRequest({ route: "chat", status: 200, replayed: true });
       return new Response(sseEvent("delta", { text: cached }) + sseEvent("done"), { headers });
     }
+    const capped = overCap(deps, g.cors, "chat");
+    if (capped) return capped;
 
     // Red flags stop the chat before any model call.
     const flag = detectRedFlag(body.messages.at(-1)!.text);
@@ -158,6 +163,8 @@ export function createSummaryHandler(deps: Deps) {
     const parsed = SummaryRequest.safeParse(await readJson(request));
     if (!parsed.success) return json(400, { code: "bad_request" }, g.cors);
     const body = parsed.data;
+    const capped = overCap(deps, g.cors, "summary");
+    if (capped) return capped;
 
     try {
       const result = await deps.summarize({ system: summarySystemPrompt, transcript: body.transcript });

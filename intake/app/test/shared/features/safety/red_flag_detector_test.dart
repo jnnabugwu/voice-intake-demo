@@ -81,4 +81,32 @@ void main() {
       expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
     }
   });
+
+  test('overdose is a crisis; an accidental injury is not', () {
+    for (final t in [
+      'I took a whole bottle of pills',
+      'I think I overdosed',
+      'Me tomé todas las pastillas',
+      'sobredosis',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+    expect(detector.detect('I hurt myself lifting boxes at work'), isNull);
+    expect(detector.detect('I want to hurt myself')?.kind, RedFlagKind.crisis);
+  });
+
+  test('single stroke signs, chest pressure, and uncontracted crisis wording', () {
+    for (final t in [
+      'I have chest pressure',
+      'pain in chest',
+      'my face is drooping',
+      'facial droop',
+      'my arm is numb',
+    ]) {
+      expect(detector.detect(t)?.kind, RedFlagKind.emergency, reason: t);
+    }
+    for (final t in ['I do not want to live', 'I do not want to be alive']) {
+      expect(detector.detect(t)?.kind, RedFlagKind.crisis, reason: t);
+    }
+  });
 }

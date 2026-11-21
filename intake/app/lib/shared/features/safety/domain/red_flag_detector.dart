@@ -35,7 +35,7 @@ class RedFlagDetector {
     // Only the clause the match is in ("no fever and can't breathe" is two
     // clauses), and only the few words right before it ("no", "don't have").
     final before = text.substring(start < 40 ? 0 : start - 40, start);
-    final clause = before.split(RegExp(r'[.,;!?]|\b(?:but|and|or|pero|y|o|sin embargo)\b')).last;
+    final clause = before.split(RegExp(r'[.,;!?\n]|\b(?:but|and|or|pero|y|o|sin embargo)\b')).last;
     final words = clause.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
     final near = words.length > 3 ? words.sublist(words.length - 3) : words;
     return near.any(

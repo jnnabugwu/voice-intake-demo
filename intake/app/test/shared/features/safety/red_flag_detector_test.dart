@@ -73,6 +73,7 @@ void main() {
     }
     expect(detector.detect("No chest pain, but I can't breathe")?.kind, RedFlagKind.emergency);
     expect(detector.detect("I have no fever and can't breathe")?.kind, RedFlagKind.emergency);
+    expect(detector.detect("no chest pain\ncan't breathe")?.kind, RedFlagKind.emergency);
     expect(detector.detect('Sin embargo me duele el pecho')?.kind, RedFlagKind.emergency);
     expect(detector.detect('No tengo fiebre y me falta el aire')?.kind, RedFlagKind.emergency);
   });

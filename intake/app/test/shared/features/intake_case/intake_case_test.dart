@@ -76,4 +76,35 @@ void main() {
       expect(s.language, Language.es);
     });
   });
+
+  group('DemoSummaryRepository never records a denial as present', () {
+    test('negated symptoms, medications and allergies stay out', () {
+      final s = DemoSummaryRepository.summarizeText(
+        "Worker: I have a cough but no fever.\nWorker: I don't take anything, and I'm not allergic to penicillin.",
+        Language.en,
+      );
+      expect(s.symptoms, ['cough']);
+      expect(s.medications, isEmpty);
+      expect(s.allergies, isEmpty);
+      expect(s.openQuestions, isNot(contains('Any medications?')));
+      expect(s.openQuestions, isNot(contains('Any allergies?')));
+    });
+
+    test('Spanish negation', () {
+      final s = DemoSummaryRepository.summarizeText('Worker: Tengo tos, sin fiebre.', Language.es);
+      expect(s.symptoms, ['cough']);
+    });
+
+    test('a denial only answers its own question', () {
+      final s = DemoSummaryRepository.summarizeText('Worker: Sore throat. No allergies.', Language.en);
+      expect(s.openQuestions, contains('Any medications?'));
+      expect(s.openQuestions, isNot(contains('Any allergies?')));
+    });
+
+    test('a duration is not a severity; a short scale answer is', () {
+      expect(DemoSummaryRepository.summarizeText('Worker: Fever for 3 days', Language.en).severity, isNull);
+      expect(DemoSummaryRepository.summarizeText('Worker: about a 6', Language.en).severity, 6);
+      expect(DemoSummaryRepository.summarizeText('Worker: Como un 7.', Language.es).severity, 7);
+    });
+  });
 }

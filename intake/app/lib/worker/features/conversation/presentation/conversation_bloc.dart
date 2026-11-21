@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intake/shared/core/failure.dart';
 import 'package:intake/shared/core/ids.dart';
 import 'package:intake/shared/core/language.dart';
+import 'package:intake/shared/core/result.dart';
 import 'package:intake/worker/features/conversation/domain/chat_chunk.dart';
 import 'package:intake/worker/features/conversation/domain/chat_repository.dart';
 import 'package:intake/worker/features/conversation/domain/submit_intake.dart';
@@ -103,10 +104,11 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
   );
 
   Future<void> _onFinish(FinishRequested event, Emitter<ConversationState> emit) async {
-    if (state.phase is! Gathering || !state.turns.any((t) => t.speaker == Speaker.worker)) return;
+    final canFinish = state.phase is Gathering || state.phase is SubmitFailed;
+    if (!canFinish || !state.turns.any((t) => t.speaker == Speaker.worker)) return;
     emit(state.copyWith(phase: const ConversationPhase.finished()));
     final language = state.turns.lastWhere((t) => t.speaker == Speaker.worker).language;
-    // The in-memory store can't fail; a backend store would surface this on the next-step card.
-    final _ = await _submit(conversationId: state.conversationId, language: language, turns: state.turns);
+    final result = await _submit(conversationId: state.conversationId, language: language, turns: state.turns);
+    if (result case Err(:final failure)) emit(state.copyWith(phase: ConversationPhase.submitFailed(failure: failure)));
   }
 }

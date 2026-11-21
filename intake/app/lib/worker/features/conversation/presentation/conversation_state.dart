@@ -23,4 +23,7 @@ sealed class ConversationPhase with _$ConversationPhase {
   const factory ConversationPhase.streaming({required String turnId, required String reply}) = Streaming;
   const factory ConversationPhase.replyFailed({required String turnId, required Failure failure}) = ReplyFailed;
   const factory ConversationPhase.finished() = Finished;
+
+  /// Finish couldn't hand the case to a clinician. Finish again retries.
+  const factory ConversationPhase.submitFailed({required Failure failure}) = SubmitFailed;
 }

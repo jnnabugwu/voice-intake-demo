@@ -52,9 +52,11 @@ class _ApprovePanelState extends State<ApprovePanel> {
     };
     return AppCard(
       title: 'Next step for the worker',
-      description: approved
-          ? 'Approved. The worker sees this now. Edit and approve again to change it.'
-          : 'The worker sees nothing until you approve.',
+      description: switch ((approved, unchanged)) {
+        (true, true) => 'Approved. The worker sees this now. Edit and approve again to change it.',
+        (true, false) => 'Edited. The worker still sees the approved version until you approve again.',
+        _ => 'The worker sees nothing until you approve.',
+      },
       footer: AppButton.primary(
         label: approved ? 'Approve changes' : 'Approve',
         icon: LucideIcons.check,

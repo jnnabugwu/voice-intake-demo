@@ -14,6 +14,8 @@ class ConversationStrings {
   String get finish => _es ? 'Terminar' : 'Finish';
   String get finished =>
       _es ? 'Listo. Un médico está revisando su información.' : 'Done. A clinician is reviewing what you shared.';
+  String get submitFailed => _es ? 'No se pudo enviar a un médico.' : "Couldn't send this to a clinician.";
+  String get tryAgain => _es ? 'Intentar de nuevo' : 'Try again';
   String get you => _es ? 'Usted' : 'You';
   String get assistant => _es ? 'Asistente' : 'Assistant';
   String get retry => _es ? 'Reintentar' : 'Retry';

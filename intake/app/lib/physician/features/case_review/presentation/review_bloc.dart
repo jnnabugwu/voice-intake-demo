@@ -37,13 +37,18 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
     final c = event.intakeCase;
     if (c == null) return emit(const ReviewState.noCase());
     final current = state;
-    // Keep the physician's draft while they edit the same case.
-    final draft = switch ((current, c.status)) {
-      (ReviewReady(:final intakeCase, :final draft), _) when intakeCase.id == c.id => draft,
-      (_, Approved(:final nextStep)) => nextStep,
-      _ => defaultNextStep,
+    // Same case, same status: keep the physician's draft and any approve in flight.
+    if (current is ReviewReady && current.intakeCase.id == c.id && current.intakeCase.status == c.status) {
+      return emit(current.copyWith(intakeCase: c));
+    }
+    // Same case, newly approved: the editor shows what the worker now sees,
+    // and an approve in flight stays in flight until its own result arrives.
+    final approving = current is ReviewReady && current.intakeCase.id == c.id && current.approving;
+    final draft = switch (c.status) {
+      Approved(:final nextStep) => nextStep,
+      _ => current is ReviewReady && current.intakeCase.id == c.id ? current.draft : defaultNextStep,
     };
-    emit(ReviewState.ready(intakeCase: c, draft: draft));
+    emit(ReviewState.ready(intakeCase: c, draft: draft, approving: approving));
   }
 
   void _onDraftChanged(NextStepDraftChanged event, Emitter<ReviewState> emit) {

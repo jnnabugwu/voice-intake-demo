@@ -46,4 +46,27 @@ void main() {
     expect((await repo.watch('c_1').first)!.status, const CaseStatus.awaitingReview());
     await bloc.close();
   });
+
+  test('the approve lock holds through the case update the approval itself causes', () async {
+    final repo = InMemoryCaseRepository();
+    await repo.submit(_case);
+    final bloc = ReviewBloc(repo)..add(const ReviewOpened('c_1'));
+    await pumpEventQueue();
+    final seen = <ReviewState>[];
+    final sub = bloc.stream.listen(seen.add);
+    bloc
+      ..add(const NextStepDraftChanged('Video visit'))
+      ..add(const ApproveRequested());
+    await pumpEventQueue();
+    await sub.cancel();
+    final readies = seen.whereType<ReviewReady>().toList();
+    // approving goes true once, then false once, with no early false in between.
+    final flips = [
+      for (var i = 1; i < readies.length; i++)
+        if (readies[i].approving != readies[i - 1].approving) readies[i].approving,
+    ];
+    expect(flips, [true, false]);
+    expect(readies.last.draft, 'Video visit');
+    await bloc.close();
+  });
 }

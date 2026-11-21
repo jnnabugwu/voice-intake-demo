@@ -31,10 +31,16 @@ class DemoSummaryRepository implements SummaryRepository {
     final severity = _severityOf(lower);
     final symptoms = [
       for (final (pattern, label) in _symptoms)
-        if (pattern.hasMatch(lower)) label,
+        if (pattern.allMatches(lower).any((m) => !_negated(lower, m.start))) label,
     ];
-    final medications = [for (final m in _medication.allMatches(lower)) m.group(2)!.trim()];
-    final allergies = [for (final m in _allergy.allMatches(lower)) m.group(2)!.trim()];
+    final medications = [
+      for (final m in _medication.allMatches(lower))
+        if (!_negated(lower, m.start)) m.group(2)!.trim(),
+    ];
+    final allergies = [
+      for (final m in _allergy.allMatches(lower))
+        if (!_negated(lower, m.start)) m.group(2)!.trim(),
+    ];
 
     return IntakeSummary(
       chiefComplaint: workerLines.isEmpty ? null : workerLines.first,
@@ -47,8 +53,8 @@ class DemoSummaryRepository implements SummaryRepository {
       openQuestions: [
         if (duration == null) 'How long has this been going on?',
         if (severity == null) 'How bad is it, 1 to 10?',
-        if (medications.isEmpty && !_denies.hasMatch(lower)) 'Any medications?',
-        if (allergies.isEmpty && !_denies.hasMatch(lower)) 'Any allergies?',
+        if (medications.isEmpty && !_deniesMedications.hasMatch(lower)) 'Any medications?',
+        if (allergies.isEmpty && !_deniesAllergies.hasMatch(lower)) 'Any allergies?',
       ],
       transcript: transcript,
     );
@@ -60,15 +66,19 @@ class DemoSummaryRepository implements SummaryRepository {
   );
 
   static final _severityScale = RegExp(r'\b(10|[1-9])\s*(/|out of|de|sobre)\s*(10|ten|diez)\b');
-  static final _bareNumber = RegExp(r'^\D*\b(10|[1-9])\b\D*$');
+
+  /// A short answer that is only a number on the scale: "6", "about a 6", "maybe 7", "como un 5".
+  static final _bareNumber = RegExp(
+    r"^(about|around|maybe|probably|like|i'?d say|it'?s|it is|más o menos|como|tal vez|es|unos?)?\s*(an?|un|una|el)?\s*(10|[1-9])\s*[.!]?$",
+  );
 
   static int? _severityOf(String lower) {
     final scaled = _severityScale.firstMatch(lower);
     if (scaled != null) return int.parse(scaled.group(1)!);
     // A short answer that is just a number ("About a 6.") answers the scale question.
     for (final line in lower.split(' \n ')) {
-      final m = _bareNumber.firstMatch(line);
-      if (m != null && line.length < 30) return int.parse(m.group(1)!);
+      final m = _bareNumber.firstMatch(line.trim());
+      if (m != null) return int.parse(m.group(3)!);
     }
     return null;
   }
@@ -79,7 +89,20 @@ class DemoSummaryRepository implements SummaryRepository {
   static final _allergy = RegExp(
     r"\b(allergic to|alérgic[oa] a(?: la| el)?)\s+([a-záéíóúñ0-9 ]+?)(?=[,.;]| and | y |$)",
   );
-  static final _denies = RegExp(r'\b(no medications?|no allergies|nothing else|ningún medicamento|ninguna alergia)\b');
+  static final _deniesMedications = RegExp(
+    r"\b(no medications?|no medicine|don'?t take any(thing)?|not taking any(thing)?|no tomo (nada|ningún)|ningún medicamento)\b",
+  );
+  static final _deniesAllergies = RegExp(
+    r"\b(no allergies|not allergic|no known allergies|no (soy|tengo) alérgic[oa]|no tengo alergias|ninguna alergia)\b",
+  );
+
+  /// True when a negation sits just before [start] in the same clause:
+  /// "no fever", "not allergic to", "sin fiebre", "no tengo tos".
+  static bool _negated(String text, int start) {
+    final before = text.substring(start < 30 ? 0 : start - 30, start);
+    final clause = before.split(RegExp(r'[.,;!?]|\bbut\b|\bpero\b')).last;
+    return RegExp(r"\b(no|not|never|without|don'?t|doesn'?t|haven'?t|sin|nunca|tampoco)\b").hasMatch(clause);
+  }
 
   static final _symptoms = <(RegExp, String)>[
     (RegExp(r'sore throat|throat|garganta'), 'sore throat'),

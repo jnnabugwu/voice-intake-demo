@@ -4,6 +4,21 @@ _Updated at the end of each session. Newest session first._
 
 ## 2026-11-20 (evening): the cloud hand-off, cubic's review rounds, blocks 3–6
 
+### Where it ended
+
+| Issue | PR | State |
+|---|---|---|
+| #9 proxy | #20 | merged after 6 cubic rounds |
+| #11 physician side, approval gate | #21 | merged |
+| #12 red flags | #22 | merged |
+| #10 live mode in the app | #25 | merged |
+| #14 bench scorer | #26 | merged |
+| #15 `/bench` page | #29 | merged |
+| #16 AssemblyAI + `results.md` | #27 | merged |
+| #13 ship | #28 | README and accessibility tests in review; deploy and the video are Jordan's |
+
+Left for Jordan: #4 (Claude key, Console spend limit: the only hard cost ceiling), #5 (clips, AssemblyAI key), reading `/bench`, deploying, the fresh-profile check, the video.
+
 ### What happened
 
 - **The "cloud" agent ran on the laptop.** An agent launched with remote isolation came back with Flutter at `~/Development/flutter` and `gh` on the Mac keychain: it was a local subagent. It also ran in a sandbox that refused compound shell commands, so in 40 minutes it fixed part of one PR and pushed nothing. **Rule:** before telling Jordan it's safe to leave, confirm the agent is really remote (ask it for `hostname` and `pwd`), or start a cloud session from claude.ai/code instead.

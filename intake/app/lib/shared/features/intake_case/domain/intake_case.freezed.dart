@@ -543,7 +543,9 @@ as String,
 mixin _$IntakeCase {
 
  String get id; Language get language; List<TranscriptLine> get transcript;/// Null when the summary couldn't be built; the physician still has the transcript.
- IntakeSummary? get summary; CaseStatus get status;
+ IntakeSummary? get summary; CaseStatus get status;/// Set when the chat stopped on a red flag and the worker was shown
+/// 911 / 988. A record of what happened, so approving the case keeps it.
+ RedFlag? get redFlag;
 /// Create a copy of IntakeCase
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -555,20 +557,20 @@ $IntakeCaseCopyWith<IntakeCase> get copyWith => _$IntakeCaseCopyWithImpl<IntakeC
 @override
 bool operator ==(Object other) {
   final _this = this as IntakeCase;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is IntakeCase&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.language, _this.language) || other.language == _this.language)&&const DeepCollectionEquality().equals(other.transcript, _this.transcript)&&(identical(other.summary, _this.summary) || other.summary == _this.summary)&&(identical(other.status, _this.status) || other.status == _this.status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is IntakeCase&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.language, _this.language) || other.language == _this.language)&&const DeepCollectionEquality().equals(other.transcript, _this.transcript)&&(identical(other.summary, _this.summary) || other.summary == _this.summary)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.redFlag, _this.redFlag) || other.redFlag == _this.redFlag));
 }
 
 
 @override
 int get hashCode {
   final _this = this as IntakeCase;
-  return Object.hash(runtimeType,_this.id,_this.language,const DeepCollectionEquality().hash(_this.transcript),_this.summary,_this.status);
+  return Object.hash(runtimeType,_this.id,_this.language,const DeepCollectionEquality().hash(_this.transcript),_this.summary,_this.status,_this.redFlag);
 }
 
 @override
 String toString() {
   final _this = this as IntakeCase;
-  return 'IntakeCase(id: ${_this.id}, language: ${_this.language}, transcript: ${_this.transcript}, summary: ${_this.summary}, status: ${_this.status})';
+  return 'IntakeCase(id: ${_this.id}, language: ${_this.language}, transcript: ${_this.transcript}, summary: ${_this.summary}, status: ${_this.status}, redFlag: ${_this.redFlag})';
 }
 
 
@@ -579,11 +581,11 @@ abstract mixin class $IntakeCaseCopyWith<$Res>  {
   factory $IntakeCaseCopyWith(IntakeCase value, $Res Function(IntakeCase) _then) = _$IntakeCaseCopyWithImpl;
 @useResult
 $Res call({
- String id, Language language, List<TranscriptLine> transcript, IntakeSummary? summary, CaseStatus status
+ String id, Language language, List<TranscriptLine> transcript, IntakeSummary? summary, CaseStatus status, RedFlag? redFlag
 });
 
 
-$IntakeSummaryCopyWith<$Res>? get summary;$CaseStatusCopyWith<$Res> get status;
+$IntakeSummaryCopyWith<$Res>? get summary;$CaseStatusCopyWith<$Res> get status;$RedFlagCopyWith<$Res>? get redFlag;
 
 }
 /// @nodoc
@@ -596,14 +598,15 @@ class _$IntakeCaseCopyWithImpl<$Res>
 
 /// Create a copy of IntakeCase
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? language = null,Object? transcript = null,Object? summary = freezed,Object? status = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? language = null,Object? transcript = null,Object? summary = freezed,Object? status = null,Object? redFlag = freezed,}) {
   return _then(IntakeCase(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,language: null == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
 as Language,transcript: null == transcript ? _self.transcript : transcript // ignore: cast_nullable_to_non_nullable
 as List<TranscriptLine>,summary: freezed == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
 as IntakeSummary?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as CaseStatus,
+as CaseStatus,redFlag: freezed == redFlag ? _self.redFlag : redFlag // ignore: cast_nullable_to_non_nullable
+as RedFlag?,
   ));
 }
 /// Create a copy of IntakeCase
@@ -626,6 +629,18 @@ $CaseStatusCopyWith<$Res> get status {
   
   return $CaseStatusCopyWith<$Res>(_self.status, (value) {
     return _then(_self.copyWith(status: value));
+  });
+}/// Create a copy of IntakeCase
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RedFlagCopyWith<$Res>? get redFlag {
+    if (_self.redFlag == null) {
+    return null;
+  }
+
+  return $RedFlagCopyWith<$Res>(_self.redFlag!, (value) {
+    return _then(_self.copyWith(redFlag: value));
   });
 }
 }
@@ -709,10 +724,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Language language,  List<TranscriptLine> transcript,  IntakeSummary? summary,  CaseStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  Language language,  List<TranscriptLine> transcript,  IntakeSummary? summary,  CaseStatus status,  RedFlag? redFlag)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _IntakeCase() when $default != null:
-return $default(_that.id,_that.language,_that.transcript,_that.summary,_that.status);case _:
+return $default(_that.id,_that.language,_that.transcript,_that.summary,_that.status,_that.redFlag);case _:
   return orElse();
 
 }
@@ -730,10 +745,10 @@ return $default(_that.id,_that.language,_that.transcript,_that.summary,_that.sta
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Language language,  List<TranscriptLine> transcript,  IntakeSummary? summary,  CaseStatus status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  Language language,  List<TranscriptLine> transcript,  IntakeSummary? summary,  CaseStatus status,  RedFlag? redFlag)  $default,) {final _that = this;
 switch (_that) {
 case _IntakeCase():
-return $default(_that.id,_that.language,_that.transcript,_that.summary,_that.status);case _:
+return $default(_that.id,_that.language,_that.transcript,_that.summary,_that.status,_that.redFlag);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -750,10 +765,10 @@ return $default(_that.id,_that.language,_that.transcript,_that.summary,_that.sta
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Language language,  List<TranscriptLine> transcript,  IntakeSummary? summary,  CaseStatus status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  Language language,  List<TranscriptLine> transcript,  IntakeSummary? summary,  CaseStatus status,  RedFlag? redFlag)?  $default,) {final _that = this;
 switch (_that) {
 case _IntakeCase() when $default != null:
-return $default(_that.id,_that.language,_that.transcript,_that.summary,_that.status);case _:
+return $default(_that.id,_that.language,_that.transcript,_that.summary,_that.status,_that.redFlag);case _:
   return null;
 
 }
@@ -765,7 +780,7 @@ return $default(_that.id,_that.language,_that.transcript,_that.summary,_that.sta
 
 
 class _IntakeCase implements IntakeCase {
-  const _IntakeCase({required this.id, required this.language, required  List<TranscriptLine> transcript, this.summary, this.status = const CaseStatus.awaitingReview()}): _transcript = transcript;
+  const _IntakeCase({required this.id, required this.language, required  List<TranscriptLine> transcript, this.summary, this.status = const CaseStatus.awaitingReview(), this.redFlag}): _transcript = transcript;
   
 
 @override final  String id;
@@ -780,6 +795,9 @@ class _IntakeCase implements IntakeCase {
 /// Null when the summary couldn't be built; the physician still has the transcript.
 @override final  IntakeSummary? summary;
 @override@JsonKey() final  CaseStatus status;
+/// Set when the chat stopped on a red flag and the worker was shown
+/// 911 / 988. A record of what happened, so approving the case keeps it.
+@override final  RedFlag? redFlag;
 
 /// Create a copy of IntakeCase
 /// with the given fields replaced by the non-null parameter values.
@@ -791,18 +809,18 @@ _$IntakeCaseCopyWith<_IntakeCase> get copyWith => __$IntakeCaseCopyWithImpl<_Int
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _IntakeCase&&(identical(other.id, id) || other.id == id)&&(identical(other.language, language) || other.language == language)&&const DeepCollectionEquality().equals(other.transcript, _transcript)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.status, status) || other.status == status));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _IntakeCase&&(identical(other.id, id) || other.id == id)&&(identical(other.language, language) || other.language == language)&&const DeepCollectionEquality().equals(other.transcript, _transcript)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.status, status) || other.status == status)&&(identical(other.redFlag, redFlag) || other.redFlag == redFlag));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,language,const DeepCollectionEquality().hash(_transcript),summary,status);
+    return Object.hash(runtimeType,id,language,const DeepCollectionEquality().hash(_transcript),summary,status,redFlag);
 }
 
 @override
 String toString() {
-    return 'IntakeCase(id: $id, language: $language, transcript: $transcript, summary: $summary, status: $status)';
+    return 'IntakeCase(id: $id, language: $language, transcript: $transcript, summary: $summary, status: $status, redFlag: $redFlag)';
 }
 
 
@@ -813,11 +831,11 @@ abstract mixin class _$IntakeCaseCopyWith<$Res> implements $IntakeCaseCopyWith<$
   factory _$IntakeCaseCopyWith(_IntakeCase value, $Res Function(_IntakeCase) _then) = __$IntakeCaseCopyWithImpl;
 @override @useResult
 $Res call({
- String id, Language language, List<TranscriptLine> transcript, IntakeSummary? summary, CaseStatus status
+ String id, Language language, List<TranscriptLine> transcript, IntakeSummary? summary, CaseStatus status, RedFlag? redFlag
 });
 
 
-@override $IntakeSummaryCopyWith<$Res>? get summary;@override $CaseStatusCopyWith<$Res> get status;
+@override $IntakeSummaryCopyWith<$Res>? get summary;@override $CaseStatusCopyWith<$Res> get status;@override $RedFlagCopyWith<$Res>? get redFlag;
 
 }
 /// @nodoc
@@ -830,14 +848,15 @@ class __$IntakeCaseCopyWithImpl<$Res>
 
 /// Create a copy of IntakeCase
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? language = null,Object? transcript = null,Object? summary = freezed,Object? status = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? language = null,Object? transcript = null,Object? summary = freezed,Object? status = null,Object? redFlag = freezed,}) {
   return _then(_IntakeCase(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,language: null == language ? _self.language : language // ignore: cast_nullable_to_non_nullable
 as Language,transcript: null == transcript ? _self._transcript : transcript // ignore: cast_nullable_to_non_nullable
 as List<TranscriptLine>,summary: freezed == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
 as IntakeSummary?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as CaseStatus,
+as CaseStatus,redFlag: freezed == redFlag ? _self.redFlag : redFlag // ignore: cast_nullable_to_non_nullable
+as RedFlag?,
   ));
 }
 
@@ -861,6 +880,18 @@ $CaseStatusCopyWith<$Res> get status {
   
   return $CaseStatusCopyWith<$Res>(_self.status, (value) {
     return _then(_self.copyWith(status: value));
+  });
+}/// Create a copy of IntakeCase
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RedFlagCopyWith<$Res>? get redFlag {
+    if (_self.redFlag == null) {
+    return null;
+  }
+
+  return $RedFlagCopyWith<$Res>(_self.redFlag!, (value) {
+    return _then(_self.copyWith(redFlag: value));
   });
 }
 }

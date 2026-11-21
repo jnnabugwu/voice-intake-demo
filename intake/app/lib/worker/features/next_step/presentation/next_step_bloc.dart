@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intake/shared/features/intake_case/domain/case_repository.dart';
 import 'package:intake/shared/features/intake_case/domain/intake_case.dart';
+import 'package:intake/shared/features/safety/domain/red_flag.dart';
 
 part 'next_step_bloc.freezed.dart';
 
@@ -12,7 +13,14 @@ sealed class NextStepState with _$NextStepState {
 
   /// Submitted, waiting for a clinician. No content.
   const factory NextStepState.locked() = NextStepLocked;
-  const factory NextStepState.unlocked({required String nextStep}) = NextStepUnlocked;
+
+  /// [flag] is set when the chat had stopped on a red flag: the worker keeps
+  /// the help lines beside the approved step.
+  const factory NextStepState.unlocked({required String caseId, required String nextStep, RedFlag? flag}) =
+      NextStepUnlocked;
+
+  /// The case escalated (for example, a red flag in the summary): show 911 / 988.
+  const factory NextStepState.escalated({required RedFlag flag}) = NextStepEscalated;
 }
 
 sealed class NextStepEvent {
@@ -30,10 +38,17 @@ class NextStepBloc extends Bloc<NextStepEvent, NextStepState> {
     on<NextStepWatchStarted>(
       (event, emit) => emit.forEach<IntakeCase?>(
         _cases.watchCurrent(),
-        onData: (c) => switch (c?.status) {
-          null => const NextStepState.none(),
-          AwaitingReview() => const NextStepState.locked(),
-          Approved(:final nextStep) => NextStepState.unlocked(nextStep: nextStep),
+        // A red flag keeps the 911 / 988 card up until a clinician approves a
+        // next step; then the step shows, with the help lines still offered.
+        onData: (c) => switch ((c?.status, c?.redFlag)) {
+          (null, _) => const NextStepState.none(),
+          (Approved(:final nextStep), final flag) => NextStepState.unlocked(
+            caseId: c!.id,
+            nextStep: nextStep,
+            flag: flag,
+          ),
+          (AwaitingReview(), final RedFlag flag) => NextStepState.escalated(flag: flag),
+          (AwaitingReview(), null) => const NextStepState.locked(),
         },
       ),
     );

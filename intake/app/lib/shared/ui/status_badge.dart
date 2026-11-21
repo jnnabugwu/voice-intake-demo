@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:intake/shared/features/intake_case/domain/intake_case.dart';
+import 'package:intake/shared/features/safety/domain/red_flag.dart';
 import 'package:intake/shared/ui/components.dart';
 import 'package:intake/shared/ui/theme.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -30,6 +31,21 @@ class StatusBadge extends StatelessWidget {
       ),
     };
   }
+}
+
+/// Shown beside the status when the chat stopped on a red flag. It stays
+/// after approval: the worker was shown 911 / 988 either way.
+class EscalationBadge extends StatelessWidget {
+  const EscalationBadge({super.key, required this.flag});
+
+  final RedFlag flag;
+
+  @override
+  Widget build(BuildContext context) => AppBadge.outline(
+    label: flag.kind == RedFlagKind.crisis ? 'Escalated: crisis (988 shown)' : 'Escalated: emergency (911 shown)',
+    icon: LucideIcons.siren,
+    color: context.tokens.escalation,
+  );
 }
 
 /// A section that opens and closes, such as the full transcript.

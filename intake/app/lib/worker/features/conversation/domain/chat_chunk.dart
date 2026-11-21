@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intake/shared/core/failure.dart';
+import 'package:intake/shared/features/safety/domain/red_flag.dart';
 
 part 'chat_chunk.freezed.dart';
 
@@ -13,4 +14,7 @@ sealed class ChatChunk with _$ChatChunk {
   /// The model declined. The worker is offered a clinician.
   const factory ChatChunk.refused() = ChatRefused;
   const factory ChatChunk.failed(Failure failure) = ChatFailed;
+
+  /// The proxy's own red-flag pass caught something the app's didn't.
+  const factory ChatChunk.redFlag(RedFlagKind kind) = ChatRedFlag;
 }

@@ -56,13 +56,14 @@ extension NextStepStatePatterns on NextStepState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( NextStepNone value)?  none,TResult Function( NextStepLocked value)?  locked,TResult Function( NextStepUnlocked value)?  unlocked,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( NextStepNone value)?  none,TResult Function( NextStepLocked value)?  locked,TResult Function( NextStepUnlocked value)?  unlocked,TResult Function( NextStepEscalated value)?  escalated,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case NextStepNone() when none != null:
 return none(_that);case NextStepLocked() when locked != null:
 return locked(_that);case NextStepUnlocked() when unlocked != null:
-return unlocked(_that);case _:
+return unlocked(_that);case NextStepEscalated() when escalated != null:
+return escalated(_that);case _:
   return orElse();
 
 }
@@ -80,13 +81,14 @@ return unlocked(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( NextStepNone value)  none,required TResult Function( NextStepLocked value)  locked,required TResult Function( NextStepUnlocked value)  unlocked,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( NextStepNone value)  none,required TResult Function( NextStepLocked value)  locked,required TResult Function( NextStepUnlocked value)  unlocked,required TResult Function( NextStepEscalated value)  escalated,}){
 final _that = this;
 switch (_that) {
 case NextStepNone():
 return none(_that);case NextStepLocked():
 return locked(_that);case NextStepUnlocked():
-return unlocked(_that);}
+return unlocked(_that);case NextStepEscalated():
+return escalated(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -100,13 +102,14 @@ return unlocked(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( NextStepNone value)?  none,TResult? Function( NextStepLocked value)?  locked,TResult? Function( NextStepUnlocked value)?  unlocked,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( NextStepNone value)?  none,TResult? Function( NextStepLocked value)?  locked,TResult? Function( NextStepUnlocked value)?  unlocked,TResult? Function( NextStepEscalated value)?  escalated,}){
 final _that = this;
 switch (_that) {
 case NextStepNone() when none != null:
 return none(_that);case NextStepLocked() when locked != null:
 return locked(_that);case NextStepUnlocked() when unlocked != null:
-return unlocked(_that);case _:
+return unlocked(_that);case NextStepEscalated() when escalated != null:
+return escalated(_that);case _:
   return null;
 
 }
@@ -123,12 +126,13 @@ return unlocked(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  none,TResult Function()?  locked,TResult Function( String nextStep)?  unlocked,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  none,TResult Function()?  locked,TResult Function( String caseId,  String nextStep,  RedFlag? flag)?  unlocked,TResult Function( RedFlag flag)?  escalated,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case NextStepNone() when none != null:
 return none();case NextStepLocked() when locked != null:
 return locked();case NextStepUnlocked() when unlocked != null:
-return unlocked(_that.nextStep);case _:
+return unlocked(_that.caseId,_that.nextStep,_that.flag);case NextStepEscalated() when escalated != null:
+return escalated(_that.flag);case _:
   return orElse();
 
 }
@@ -146,12 +150,13 @@ return unlocked(_that.nextStep);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  none,required TResult Function()  locked,required TResult Function( String nextStep)  unlocked,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  none,required TResult Function()  locked,required TResult Function( String caseId,  String nextStep,  RedFlag? flag)  unlocked,required TResult Function( RedFlag flag)  escalated,}) {final _that = this;
 switch (_that) {
 case NextStepNone():
 return none();case NextStepLocked():
 return locked();case NextStepUnlocked():
-return unlocked(_that.nextStep);}
+return unlocked(_that.caseId,_that.nextStep,_that.flag);case NextStepEscalated():
+return escalated(_that.flag);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -165,12 +170,13 @@ return unlocked(_that.nextStep);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  none,TResult? Function()?  locked,TResult? Function( String nextStep)?  unlocked,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  none,TResult? Function()?  locked,TResult? Function( String caseId,  String nextStep,  RedFlag? flag)?  unlocked,TResult? Function( RedFlag flag)?  escalated,}) {final _that = this;
 switch (_that) {
 case NextStepNone() when none != null:
 return none();case NextStepLocked() when locked != null:
 return locked();case NextStepUnlocked() when unlocked != null:
-return unlocked(_that.nextStep);case _:
+return unlocked(_that.caseId,_that.nextStep,_that.flag);case NextStepEscalated() when escalated != null:
+return escalated(_that.flag);case _:
   return null;
 
 }
@@ -246,10 +252,12 @@ String toString() {
 
 
 class NextStepUnlocked implements NextStepState {
-  const NextStepUnlocked({required this.nextStep});
+  const NextStepUnlocked({required this.caseId, required this.nextStep, this.flag});
   
 
+ final  String caseId;
  final  String nextStep;
+ final  RedFlag? flag;
 
 /// Create a copy of NextStepState
 /// with the given fields replaced by the non-null parameter values.
@@ -261,18 +269,18 @@ $NextStepUnlockedCopyWith<NextStepUnlocked> get copyWith => _$NextStepUnlockedCo
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is NextStepUnlocked&&(identical(other.nextStep, nextStep) || other.nextStep == nextStep));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is NextStepUnlocked&&(identical(other.caseId, caseId) || other.caseId == caseId)&&(identical(other.nextStep, nextStep) || other.nextStep == nextStep)&&(identical(other.flag, flag) || other.flag == flag));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,nextStep);
+    return Object.hash(runtimeType,caseId,nextStep,flag);
 }
 
 @override
 String toString() {
-    return 'NextStepState.unlocked(nextStep: $nextStep)';
+    return 'NextStepState.unlocked(caseId: $caseId, nextStep: $nextStep, flag: $flag)';
 }
 
 
@@ -283,11 +291,11 @@ abstract mixin class $NextStepUnlockedCopyWith<$Res> implements $NextStepStateCo
   factory $NextStepUnlockedCopyWith(NextStepUnlocked value, $Res Function(NextStepUnlocked) _then) = _$NextStepUnlockedCopyWithImpl;
 @useResult
 $Res call({
- String nextStep
+ String caseId, String nextStep, RedFlag? flag
 });
 
 
-
+$RedFlagCopyWith<$Res>? get flag;
 
 }
 /// @nodoc
@@ -300,14 +308,105 @@ class _$NextStepUnlockedCopyWithImpl<$Res>
 
 /// Create a copy of NextStepState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? nextStep = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? caseId = null,Object? nextStep = null,Object? flag = freezed,}) {
   return _then(NextStepUnlocked(
-nextStep: null == nextStep ? _self.nextStep : nextStep // ignore: cast_nullable_to_non_nullable
-as String,
+caseId: null == caseId ? _self.caseId : caseId // ignore: cast_nullable_to_non_nullable
+as String,nextStep: null == nextStep ? _self.nextStep : nextStep // ignore: cast_nullable_to_non_nullable
+as String,flag: freezed == flag ? _self.flag : flag // ignore: cast_nullable_to_non_nullable
+as RedFlag?,
   ));
 }
 
+/// Create a copy of NextStepState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RedFlagCopyWith<$Res>? get flag {
+    if (_self.flag == null) {
+    return null;
+  }
 
+  return $RedFlagCopyWith<$Res>(_self.flag!, (value) {
+    return _then(_self.copyWith(flag: value));
+  });
+}
+}
+
+/// @nodoc
+
+
+class NextStepEscalated implements NextStepState {
+  const NextStepEscalated({required this.flag});
+  
+
+ final  RedFlag flag;
+
+/// Create a copy of NextStepState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NextStepEscalatedCopyWith<NextStepEscalated> get copyWith => _$NextStepEscalatedCopyWithImpl<NextStepEscalated>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is NextStepEscalated&&(identical(other.flag, flag) || other.flag == flag));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,flag);
+}
+
+@override
+String toString() {
+    return 'NextStepState.escalated(flag: $flag)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NextStepEscalatedCopyWith<$Res> implements $NextStepStateCopyWith<$Res> {
+  factory $NextStepEscalatedCopyWith(NextStepEscalated value, $Res Function(NextStepEscalated) _then) = _$NextStepEscalatedCopyWithImpl;
+@useResult
+$Res call({
+ RedFlag flag
+});
+
+
+$RedFlagCopyWith<$Res> get flag;
+
+}
+/// @nodoc
+class _$NextStepEscalatedCopyWithImpl<$Res>
+    implements $NextStepEscalatedCopyWith<$Res> {
+  _$NextStepEscalatedCopyWithImpl(this._self, this._then);
+
+  final NextStepEscalated _self;
+  final $Res Function(NextStepEscalated) _then;
+
+/// Create a copy of NextStepState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? flag = null,}) {
+  return _then(NextStepEscalated(
+flag: null == flag ? _self.flag : flag // ignore: cast_nullable_to_non_nullable
+as RedFlag,
+  ));
+}
+
+/// Create a copy of NextStepState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RedFlagCopyWith<$Res> get flag {
+  
+  return $RedFlagCopyWith<$Res>(_self.flag, (value) {
+    return _then(_self.copyWith(flag: value));
+  });
+}
 }
 
 // dart format on

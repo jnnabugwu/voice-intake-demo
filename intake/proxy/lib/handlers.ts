@@ -65,6 +65,7 @@ async function readJson(request: Request): Promise<unknown> {
 
 export function createChatHandler(deps: Deps) {
   const answered = new AnsweredTurns();
+  const inFlight = new Set<string>();
   const now = deps.now ?? Date.now;
 
   return async function POST(request: Request): Promise<Response> {
@@ -99,9 +100,16 @@ export function createChatHandler(deps: Deps) {
       logRequest({ route: "chat", status: 200, replayed: true });
       return new Response(sseEvent("delta", { text: cached }) + sseEvent("done"), { headers });
     }
+    // The same turn already streaming (a double retry): don't pay twice. The
+    // client retries, and gets the replay once the first answer is stored.
+    if (inFlight.has(key)) {
+      logRequest({ route: "chat", status: 429, code: "in_flight" });
+      return json(429, { code: "rate_limited" }, g.cors);
+    }
     const capped = overCap(deps, g.cors, "chat");
     if (capped) return capped;
 
+    inFlight.add(key);
     const encoder = new TextEncoder();
     const upstream = new AbortController();
     const stream = new ReadableStream<Uint8Array>({
@@ -148,6 +156,7 @@ export function createChatHandler(deps: Deps) {
           send(sseEvent("error", { code: "upstream" }));
           logRequest({ route: "chat", status: 502, error: error instanceof Error ? error.name : "unknown" });
         } finally {
+          inFlight.delete(key);
           // A reply cut short (error or disconnect) still spent what it generated.
           if (!metered && partial) deps.meter.record(partial);
           if (!upstream.signal.aborted) controller.close();

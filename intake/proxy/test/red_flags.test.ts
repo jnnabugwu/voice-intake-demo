@@ -38,6 +38,13 @@ describe("detectRedFlag over the bench script", () => {
     expect(detectRedFlag("no quiero estar aqui")).toBe("crisis");
   });
 
+  it("talking about someone else's suicide is not a crisis; intent is", () => {
+    expect(detectRedFlag("My sister died by suicide last year")).toBeNull();
+    for (const t of ["I'm suicidal", "I've been thinking about suicide", "Pienso en suicidarme", "Tengo ideas suicidas"]) {
+      expect(detectRedFlag(t), t).toBe("crisis");
+    }
+  });
+
   it("overdose is a crisis; an accidental injury is not", () => {
     for (const t of ["I took a whole bottle of pills", "I think I overdosed", "Me tomé todas las pastillas", "sobredosis"]) {
       expect(detectRedFlag(t), t).toBe("crisis");

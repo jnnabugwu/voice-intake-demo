@@ -45,6 +45,17 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
   void _onUpdated(ReviewCaseUpdated event, Emitter<ReviewState> emit) {
     final c = event.intakeCase;
     if (c == null) return emit(const ReviewState.noCase());
+    // The remembered approval only guards until the repository reflects it;
+    // after that the status itself is the guard, and a later change must not
+    // block approving that text again.
+    final remembered = _lastApproved;
+    if (remembered != null && remembered.$1 == c.id) {
+      final reflected = switch (c.status) {
+        Approved(:final nextStep) => nextStep == remembered.$2,
+        _ => false,
+      };
+      if (!reflected) _lastApproved = null;
+    }
     final current = state;
     // Same case, same status: keep the physician's draft and any approve in flight.
     if (current is ReviewReady && current.intakeCase.id == c.id && current.intakeCase.status == c.status) {

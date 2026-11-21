@@ -91,7 +91,9 @@ class DemoSummaryRepository implements SummaryRepository {
   static final _medication = RegExp(
     r"\b(i take|i'm taking|i am taking|tomo|estoy tomando)\s+([a-záéíóúñ0-9 ,]+?)" + _listEnd,
   );
-  static final _allergy = RegExp(r"\b(allergic to|alérgic[oa] a(?: la| el)?)\s+([a-záéíóúñ0-9 ,]+?)" + _listEnd);
+  static final _allergy = RegExp(
+    r"\b(allergic to|alérgic[oa] (?:a(?: la| el| los| las)?|al))\s+([a-záéíóúñ0-9 ,]+?)" + _listEnd,
+  );
 
   /// "aspirin and ibuprofen", "aspirina, ibuprofeno y metformina" → each item.
   static List<String> _items(String list) => list
@@ -110,7 +112,8 @@ class DemoSummaryRepository implements SummaryRepository {
   /// "no fever", "not allergic to", "sin fiebre", "no tengo tos".
   static bool _negated(String text, int start) {
     final before = text.substring(start < 30 ? 0 : start - 30, start);
-    final clause = before.split(RegExp(r'[.,;!?]|\bbut\b|\bpero\b')).last;
+    // A clause ends at punctuation, "but", or the next worker line.
+    final clause = before.split(RegExp(r'[.,;!?\n]|\bbut\b|\bpero\b')).last;
     return RegExp(r"\b(no|not|never|without|don'?t|doesn'?t|haven'?t|sin|nunca|tampoco)\b").hasMatch(clause);
   }
 

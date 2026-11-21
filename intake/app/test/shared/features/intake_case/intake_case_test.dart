@@ -141,4 +141,11 @@ void main() {
     expect(s.symptoms, isNot(contains('rash')));
     expect(s.symptoms, isNot(contains('cough')));
   });
+
+  test('a denial on one line does not reach the next; "alérgico al"', () {
+    final s = DemoSummaryRepository.summarizeText('Worker: No\nWorker: I have a cough', Language.en);
+    expect(s.symptoms, ['cough']);
+    final es = DemoSummaryRepository.summarizeText('Worker: Soy alérgico al ibuprofeno.', Language.es);
+    expect(es.allergies, ['ibuprofeno']);
+  });
 }

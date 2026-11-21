@@ -19,6 +19,9 @@ export function isChromeExport(value: unknown): value is ChromeExport {
     !!v &&
     v.engine === "chrome-web-speech" &&
     typeof v.speaker === "string" &&
+    typeof v.locale === "string" &&
+    typeof v.browser === "string" &&
+    typeof v.date === "string" &&
     Array.isArray(v.lines) &&
     v.lines.every(
       (l) =>

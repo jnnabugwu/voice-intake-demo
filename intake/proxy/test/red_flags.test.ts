@@ -27,6 +27,7 @@ describe("detectRedFlag over the bench script", () => {
     }
     expect(detectRedFlag("No chest pain, but I can't breathe")).toBe("emergency");
     expect(detectRedFlag("I have no fever and can't breathe")).toBe("emergency");
+    expect(detectRedFlag("Sin embargo me duele el pecho")).toBe("emergency");
     expect(detectRedFlag("No tengo fiebre y me falta el aire")).toBe("emergency");
   });
 
@@ -35,6 +36,55 @@ describe("detectRedFlag over the bench script", () => {
       expect(detectRedFlag(t), t).toBe("emergency");
     }
     expect(detectRedFlag("no quiero estar aqui")).toBe("crisis");
+  });
+
+  it("talking about someone else's suicide is not a crisis; intent is", () => {
+    expect(detectRedFlag("My sister died by suicide last year")).toBeNull();
+    for (const t of ["I'm suicidal", "I've been thinking about suicide", "Pienso en suicidarme", "Tengo ideas suicidas"]) {
+      expect(detectRedFlag(t), t).toBe("crisis");
+    }
+  });
+
+  it("intent to cut, and \"she's confused\"", () => {
+    for (const t of ["I want to cut myself", "I am going to cut myself"]) expect(detectRedFlag(t), t).toBe("crisis");
+    for (const t of ["She's confused", "He's very confused"]) expect(detectRedFlag(t), t).toBe("emergency");
+    expect(detectRedFlag("She's confused about the bill")).toBeNull();
+  });
+
+  it("haircuts and billing confusion are not red flags; Spanish ER trips are", () => {
+    for (const t of ["Quiero cortarme el pelo", "Tengo mucha confusión con mi factura"]) expect(detectRedFlag(t), t).toBeNull();
+    expect(detectRedFlag("Quiero cortarme")).toBe("crisis");
+    for (const t of ["¿Debo llevar a mi mamá a urgencias?", "¿Tengo que ir a urgencias?"]) expect(detectRedFlag(t), t).toBe("emergency");
+  });
+
+  it("explicit suicide wording; spills and shaving cuts are not red flags", () => {
+    for (const t of ["I have thoughts of suicide", "I attempted suicide last year", "Tuve un intento de suicidio", "Tengo ideación suicida", "pensamientos de suicidio"]) {
+      expect(detectRedFlag(t), t).toBe("crisis");
+    }
+    for (const t of ["Me derramé el café", "I cut myself shaving"]) expect(detectRedFlag(t), t).toBeNull();
+    expect(detectRedFlag("Creo que tuvo un derrame")).toBe("emergency");
+    expect(detectRedFlag("derrame cerebral")).toBe("emergency");
+  });
+
+  it("confusion needs to be a symptom, and the ER a question about going", () => {
+    for (const t of [
+      "I'm confused about my bill",
+      "I'm confused about how this works",
+      "She is confused by the form",
+      "Estoy confundida con mi factura",
+      "I went to the emergency room last month, how do I get reimbursed?",
+    ]) {
+      expect(detectRedFlag(t), t).toBeNull();
+    }
+    for (const t of [
+      "My dad has been confused since this morning",
+      "She seems very confused and sleepy",
+      "Mi mamá está muy confundida",
+      "Should I take him to the ER?",
+      "¿Lo llevo a urgencias?",
+    ]) {
+      expect(detectRedFlag(t), t).toBe("emergency");
+    }
   });
 
   it("overdose is a crisis; an accidental injury is not", () => {

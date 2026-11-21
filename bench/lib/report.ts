@@ -46,11 +46,28 @@ const langOf = (refs: References, speaker: string): "en" | "es" =>
   refs.speakers.find((s) => s.id === speaker)?.lang.startsWith("es") ? "es" : "en";
 
 /** Scores every engine × speaker that has transcripts. WER is pooled over words. */
-export function score(refs: References, hyps: Hypothesis[]): Row[] {
-  const groups = new Map<string, Hypothesis[]>();
-  for (const h of hyps) groups.set(`${h.engine}\u0000${h.speaker}`, [...(groups.get(`${h.engine}\u0000${h.speaker}`) ?? []), h]);
+export function score(refs: References, hyps: Hypothesis[]): { rows: Row[]; rejected: string[] } {
+  const rejected: string[] = [];
+  const groups = new Map<string, Map<number, Hypothesis>>();
+  for (const h of hyps) {
+    // Only speakers and lines the script defines are scored; anything else is reported, not guessed.
+    if (!refs.speakers.some((s) => s.id === h.speaker)) {
+      rejected.push(`${h.engine}: unknown speaker "${h.speaker}"`);
+      continue;
+    }
+    if (!refs.lines.some((l) => l.n === h.n)) {
+      rejected.push(`${h.engine}, ${h.speaker}: unknown line ${h.n}`);
+      continue;
+    }
+    const key = `${h.engine}\u0000${h.speaker}`;
+    const byLine = groups.get(key) ?? new Map<number, Hypothesis>();
+    // A repeated session for the same line: the latest read wins, so each line counts once.
+    byLine.set(h.n, h);
+    groups.set(key, byLine);
+  }
   const rows: Row[] = [];
-  for (const group of groups.values()) {
+  for (const byLine of groups.values()) {
+    const group = [...byLine.values()];
     const { engine, speaker } = group[0]!;
     const lang = langOf(refs, speaker);
     let errors = 0;
@@ -80,7 +97,8 @@ export function score(refs: References, hyps: Hypothesis[]): Row[] {
       medianProcessingMs: median(group.flatMap((h) => (h.processingMs == null ? [] : [h.processingMs]))),
     });
   }
-  return rows.sort((a, b) => a.speaker.localeCompare(b.speaker) || a.engine.localeCompare(b.engine));
+  rows.sort((a, b) => a.speaker.localeCompare(b.speaker) || a.engine.localeCompare(b.engine));
+  return { rows, rejected };
 }
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
@@ -105,7 +123,9 @@ export function renderResults(refs: References, rows: Row[], notes: string[], da
     "",
     "## Missed medical terms",
     "",
-    ...(rows.every((r) => r.missed.length === 0)
+    ...(rows.length === 0
+      ? ["No engine produced transcripts yet."]
+      : rows.every((r) => r.missed.length === 0)
       ? ["None."]
       : rows.flatMap((r) =>
           r.missed.length === 0

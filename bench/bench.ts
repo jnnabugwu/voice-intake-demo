@@ -60,7 +60,11 @@ if (!key) {
     const lang = speaker.lang.startsWith("es") ? "es" : "en";
     for (const line of refs.lines) {
       const clip = clips.get(stem(speaker.id, line.n));
-      if (!clip) continue;
+      if (!clip) {
+        // Partial recordings: say which lines are missing so the scores are read in context.
+        if (refs.lines.some((l) => clips.has(stem(speaker.id, l.n)))) notes.push(`No clip for ${stem(speaker.id, line.n)}.`);
+        continue;
+      }
       // Keyed on the clip's bytes: pull-audio rewrites files, and a re-recorded clip must be re-transcribed.
       const digest = createHash("sha256").update(readFileSync(clip)).digest("hex").slice(0, 16);
       const cached = join(cacheDir, `${stem(speaker.id, line.n)}.${digest}.json`);
@@ -84,9 +88,13 @@ if (!key) {
   }
 }
 
+const noise = [...clips.keys()].filter((k) => k.endsWith("_noise"));
+if (noise.length) notes.push(`${noise.length} background-noise clip(s) (\`_noise\`) were found and not scored; the table is the quiet reads.`);
+
 const missing = refs.speakers.filter((s) => !refs.lines.some((l) => clips.has(stem(s.id, l.n)))).map((s) => s.id);
 if (missing.length) notes.push(`No clips yet for: ${missing.join(", ")}.`);
 
-const rows = score(refs, hyps);
+const { rows, rejected } = score(refs, hyps);
+for (const r of rejected) notes.push(`Not scored: ${r}.`);
 writeFileSync(join(here, "results.md"), renderResults(refs, rows, notes, new Date().toISOString().slice(0, 10)));
 console.log(`Wrote bench/results.md: ${rows.length} engine × speaker rows.`);

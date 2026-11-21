@@ -57,7 +57,17 @@ export class AssemblyAI {
   private async json(url: string, init: RequestInit): Promise<Record<string, any>> {
     // Each request gets its own timeout, so a fetch that never settles fails instead.
     const res = await this.fetchFn(url, { ...init, signal: init.signal ?? AbortSignal.timeout(120_000) });
-    if (!res.ok) throw new Error(`AssemblyAI ${res.status} on ${new URL(url).pathname}`);
+    if (!res.ok) {
+      // AssemblyAI explains failures in the body ({"error": "..."}); keep it for results.md.
+      const detail = await res.text().then((t) => {
+        try {
+          return (JSON.parse(t) as { error?: string }).error ?? t;
+        } catch {
+          return t;
+        }
+      });
+      throw new Error(`AssemblyAI ${res.status} on ${new URL(url).pathname}: ${detail.slice(0, 200)}`);
+    }
     return (await res.json()) as Record<string, any>;
   }
 }

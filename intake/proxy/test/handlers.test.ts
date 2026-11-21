@@ -119,6 +119,50 @@ describe("POST /api/chat", () => {
     expect(await res.text()).toContain("event: red_flag");
   });
 
+  it("a duplicate of a turn still streaming doesn't call the model again", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const reply = vi.fn(async function* () {
+      yield { type: "text" as const, text: "Hi" };
+      await gate;
+      yield { type: "end" as const, refused: false, usage };
+    });
+    const handler = createChatHandler(deps({ reply }));
+    const first = await handler(post(chatBody));
+    const reader = first.body!.getReader();
+    await reader.read();
+    const second = await handler(post(chatBody));
+    expect(second.status).toBe(429);
+    expect(reply).toHaveBeenCalledTimes(1);
+    release();
+    while (!(await reader.read()).done) {}
+    expect(await (await handler(post(chatBody))).text()).toContain("event: done");
+  });
+
+  it("an earlier red flag in the history is caught, even if the newest message is benign", async () => {
+    const reply = vi.fn(replyWith({ type: "end", refused: false, usage }));
+    const res = await createChatHandler(deps({ reply }))(
+      post({
+        ...chatBody,
+        messages: [
+          { role: "user", text: "I have chest pain" },
+          { role: "assistant", text: "How long?" },
+          { role: "user", text: "an hour" },
+        ],
+      }),
+    );
+    expect(await res.text()).toContain("event: red_flag");
+    expect(reply).not.toHaveBeenCalled();
+  });
+
+  it("a refused turn replays its refusal instead of calling the model again", async () => {
+    const reply = vi.fn(replyWith({ type: "end", refused: true, usage }));
+    const handler = createChatHandler(deps({ reply }));
+    await (await handler(post(chatBody))).text();
+    expect(await (await handler(post(chatBody))).text()).toContain("event: refusal");
+    expect(reply).toHaveBeenCalledTimes(1);
+  });
+
   it("an answered turn still replays after the cap closes", async () => {
     const meter = new SpendMeter(0.0001);
     const handler = createChatHandler(deps({ meter }));

@@ -18,12 +18,15 @@ export interface Deps {
 }
 
 /** Turns already answered, by conversation and turn ID, so a retry replays instead of paying twice. */
+type Answer = { text: string; refused: boolean };
+
+/** Turns already answered (or refused), so a retry replays instead of paying twice. */
 class AnsweredTurns {
-  private readonly replies = new Map<string, string>();
+  private readonly replies = new Map<string, Answer>();
   get(key: string) {
     return this.replies.get(key);
   }
-  set(key: string, text: string) {
+  set(key: string, text: Answer) {
     this.replies.set(key, text);
     if (this.replies.size > 500) this.replies.delete(this.replies.keys().next().value!);
   }
@@ -65,6 +68,7 @@ async function readJson(request: Request): Promise<unknown> {
 
 export function createChatHandler(deps: Deps) {
   const answered = new AnsweredTurns();
+  const inFlight = new Set<string>();
   const now = deps.now ?? Date.now;
 
   return async function POST(request: Request): Promise<Response> {
@@ -84,7 +88,12 @@ export function createChatHandler(deps: Deps) {
 
     // Red flags stop the chat before any model call, a replay, the rate limit or
     // the spend cap: this path costs nothing, so an emergency never gets a 429.
-    const flag = detectRedFlag(body.messages.at(-1)!.text);
+    // Every worker message, not just the newest: the whole history goes upstream,
+    // and a client that skipped the app's check may have sent an earlier one.
+    const flag = body.messages
+      .filter((m) => m.role === "user")
+      .map((m) => detectRedFlag(m.text))
+      .reduce<ReturnType<typeof detectRedFlag>>((worst, f) => (worst === "crisis" ? worst : f ?? worst), null);
     if (flag) {
       logRequest({ route: "chat", status: 200, redFlag: flag });
       return new Response(sseEvent("red_flag", { kind: flag }), { headers });
@@ -97,11 +106,19 @@ export function createChatHandler(deps: Deps) {
     const cached = answered.get(key);
     if (cached !== undefined) {
       logRequest({ route: "chat", status: 200, replayed: true });
-      return new Response(sseEvent("delta", { text: cached }) + sseEvent("done"), { headers });
+      const ending = cached.refused ? sseEvent("refusal") : sseEvent("done");
+      return new Response((cached.text ? sseEvent("delta", { text: cached.text }) : "") + ending, { headers });
+    }
+    // The same turn already streaming (a double retry): don't pay twice. The
+    // client retries, and gets the replay once the first answer is stored.
+    if (inFlight.has(key)) {
+      logRequest({ route: "chat", status: 429, code: "in_flight" });
+      return json(429, { code: "rate_limited" }, g.cors);
     }
     const capped = overCap(deps, g.cors, "chat");
     if (capped) return capped;
 
+    inFlight.add(key);
     const encoder = new TextEncoder();
     const upstream = new AbortController();
     const stream = new ReadableStream<Uint8Array>({
@@ -127,12 +144,8 @@ export function createChatHandler(deps: Deps) {
             } else {
               deps.meter.record(event.usage);
               metered = true;
-              if (event.refused) {
-                send(sseEvent("refusal"));
-              } else {
-                answered.set(key, text);
-                send(sseEvent("done"));
-              }
+              answered.set(key, { text, refused: event.refused });
+              send(event.refused ? sseEvent("refusal") : sseEvent("done"));
               logRequest({
                 route: "chat",
                 status: 200,
@@ -145,9 +158,15 @@ export function createChatHandler(deps: Deps) {
             }
           }
         } catch (error) {
-          send(sseEvent("error", { code: "upstream" }));
-          logRequest({ route: "chat", status: 502, error: error instanceof Error ? error.name : "unknown" });
+          // A client that went away isn't an upstream failure.
+          if (upstream.signal.aborted) {
+            logRequest({ route: "chat", status: 499, code: "client_closed" });
+          } else {
+            send(sseEvent("error", { code: "upstream" }));
+            logRequest({ route: "chat", status: 502, error: error instanceof Error ? error.name : "unknown" });
+          }
         } finally {
+          inFlight.delete(key);
           // A reply cut short (error or disconnect) still spent what it generated.
           if (!metered && partial) deps.meter.record(partial);
           if (!upstream.signal.aborted) controller.close();

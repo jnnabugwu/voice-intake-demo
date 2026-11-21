@@ -50,8 +50,9 @@ flutter run -d chrome --dart-define=PROXY_URL=http://localhost:3000
 - **The proxy** streams over SSE and has a CORS allowlist, a per-IP rate limit, a daily spend cap, and Claude's server-side refusal fallback. It logs metadata only, never transcripts.
 
 ```sh
-cd intake/app && flutter analyze && flutter test && tool/check_boundaries.sh
-cd intake/proxy && npx tsc --noEmit && npx vitest run
+(cd intake/app && flutter analyze && flutter test && tool/check_boundaries.sh)
+(cd intake/proxy && npm ci && npx tsc --noEmit && npx vitest run)
+(cd bench && npm ci && npm test)
 ```
 
 ## Speech bench

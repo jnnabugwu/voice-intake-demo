@@ -64,6 +64,19 @@ describe("AssemblyAI", () => {
     expect(JSON.parse(calls[1]!.body!)).toMatchObject({ audio_url: "https://cdn/x", language_code: "es" });
   });
 
+  it("a job that never finishes hits the deadline", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "aai-"));
+    const clip = join(dir, "c.webm");
+    writeFileSync(clip, "x");
+    let t = 0;
+    const slow = async (url: string) => {
+      t += 60_000;
+      const body = url.endsWith("/upload") ? { upload_url: "u" } : url.endsWith("/transcript") ? { id: "j" } : { status: "processing" };
+      return new Response(JSON.stringify(body), { status: 200 });
+    };
+    await expect(new AssemblyAI("k", slow, () => t, 0, 5 * 60_000).transcribe(clip, "en")).rejects.toThrow("no result");
+  });
+
   it("an error status or a failed request throws, so the runner can note it", async () => {
     const dir = mkdtempSync(join(tmpdir(), "aai-"));
     const clip = join(dir, "c.webm");
@@ -77,5 +90,13 @@ describe("Chrome exports", () => {
   it("recognizes a /bench export", () => {
     expect(isChromeExport({ engine: "chrome-web-speech", speaker: "en_jn", lines: [] })).toBe(true);
     expect(isChromeExport({ engine: "other" })).toBe(false);
+    expect(isChromeExport({ engine: "chrome-web-speech", speaker: "en_jn", lines: [null] })).toBe(false);
+    expect(
+      isChromeExport({
+        engine: "chrome-web-speech",
+        speaker: "en_jn",
+        lines: [{ n: 1, transcript: "hi", micOnMs: 0, firstPartialMs: null, finalMs: 900 }],
+      }),
+    ).toBe(true);
   });
 });

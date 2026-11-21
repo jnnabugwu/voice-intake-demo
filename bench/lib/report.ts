@@ -1,4 +1,4 @@
-import { missedTerms, wer } from "./scoring.js";
+import { missedTerms, normalize, wer } from "./scoring.js";
 
 export interface Side {
   text: string;
@@ -60,7 +60,8 @@ export function score(refs: References, hyps: Hypothesis[]): Row[] {
     for (const h of group.sort((a, b) => a.n - b.n)) {
       const ref = refs.lines.find((l) => l.n === h.n)?.[lang];
       if (!ref) continue;
-      const refWords = ref.text.split(/\s+/).length;
+      // wer() divides by normalized words ("one hundred and two" is one word, 102), so pool on the same count.
+      const refWords = normalize(ref.text).length;
       errors += wer(ref.text, h.text) * refWords;
       words += refWords;
       terms += ref.key_terms.length;

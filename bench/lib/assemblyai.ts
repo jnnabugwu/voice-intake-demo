@@ -19,6 +19,8 @@ export class AssemblyAI {
     private readonly fetchFn: FetchLike = fetch,
     private readonly now: () => number = Date.now,
     private readonly pollMs = 1500,
+    /** Give up on one clip after this long, so a stuck job can't stall the run. */
+    private readonly deadlineMs = 10 * 60_000,
   ) {}
 
   static readonly base = "https://api.assemblyai.com/v2";
@@ -44,6 +46,7 @@ export class AssemblyAI {
     });
 
     for (;;) {
+      if (this.now() - started > this.deadlineMs) throw new Error(`AssemblyAI: no result after ${this.deadlineMs / 1000} s`);
       const status = await this.json(`${AssemblyAI.base}/transcript/${job.id}`, { headers: auth });
       if (status.status === "completed") return { text: String(status.text ?? ""), processingMs: this.now() - started };
       if (status.status === "error") throw new Error(`AssemblyAI: ${status.error ?? "transcription failed"}`);
@@ -52,7 +55,8 @@ export class AssemblyAI {
   }
 
   private async json(url: string, init: RequestInit): Promise<Record<string, any>> {
-    const res = await this.fetchFn(url, init);
+    // Each request gets its own timeout, so a fetch that never settles fails instead.
+    const res = await this.fetchFn(url, { ...init, signal: init.signal ?? AbortSignal.timeout(120_000) });
     if (!res.ok) throw new Error(`AssemblyAI ${res.status} on ${new URL(url).pathname}`);
     return (await res.json()) as Record<string, any>;
   }

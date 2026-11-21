@@ -11,7 +11,23 @@ export interface ChromeExport {
   lines: { n: number; transcript: string; micOnMs: number; firstPartialMs: number | null; finalMs: number | null }[];
 }
 
+const isTime = (x: unknown) => x === null || (typeof x === "number" && Number.isFinite(x));
+
 export function isChromeExport(value: unknown): value is ChromeExport {
   const v = value as ChromeExport;
-  return !!v && v.engine === "chrome-web-speech" && typeof v.speaker === "string" && Array.isArray(v.lines);
+  return (
+    !!v &&
+    v.engine === "chrome-web-speech" &&
+    typeof v.speaker === "string" &&
+    Array.isArray(v.lines) &&
+    v.lines.every(
+      (l) =>
+        !!l &&
+        Number.isInteger(l.n) &&
+        typeof l.transcript === "string" &&
+        typeof l.micOnMs === "number" &&
+        isTime(l.firstPartialMs) &&
+        isTime(l.finalMs),
+    )
+  );
 }

@@ -6,6 +6,7 @@
  * File-engine transcripts are cached in bench/.cache/ (gitignored), so a rerun
  * only pays for new clips. Delete the cache to re-transcribe.
  */
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,7 +23,13 @@ const hyps: Hypothesis[] = [];
 // Chrome Web Speech: live sessions exported from the app's /bench page.
 const chromeDir = join(here, "chrome");
 for (const file of existsSync(chromeDir) ? readdirSync(chromeDir).filter((f) => f.endsWith(".json")) : []) {
-  const data = JSON.parse(readFileSync(join(chromeDir, file), "utf8"));
+  let data: unknown;
+  try {
+    data = JSON.parse(readFileSync(join(chromeDir, file), "utf8"));
+  } catch {
+    notes.push(`Skipped \`chrome/${file}\`: not valid JSON.`);
+    continue;
+  }
   if (!isChromeExport(data)) {
     notes.push(`Skipped \`chrome/${file}\`: not a /bench export.`);
     continue;
@@ -54,7 +61,9 @@ if (!key) {
     for (const line of refs.lines) {
       const clip = clips.get(stem(speaker.id, line.n));
       if (!clip) continue;
-      const cached = join(cacheDir, `${stem(speaker.id, line.n)}.json`);
+      // Keyed on the clip's bytes: pull-audio rewrites files, and a re-recorded clip must be re-transcribed.
+      const digest = createHash("sha256").update(readFileSync(clip)).digest("hex").slice(0, 16);
+      const cached = join(cacheDir, `${stem(speaker.id, line.n)}.${digest}.json`);
       let result: { text: string; processingMs: number };
       if (existsSync(cached)) {
         result = JSON.parse(readFileSync(cached, "utf8"));

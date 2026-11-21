@@ -37,6 +37,14 @@ describe("detectRedFlag over the bench script", () => {
     expect(detectRedFlag("no quiero estar aqui")).toBe("crisis");
   });
 
+  it("overdose is a crisis; an accidental injury is not", () => {
+    for (const t of ["I took a whole bottle of pills", "I think I overdosed", "Me tomé todas las pastillas", "sobredosis"]) {
+      expect(detectRedFlag(t), t).toBe("crisis");
+    }
+    expect(detectRedFlag("I hurt myself lifting boxes at work")).toBeNull();
+    expect(detectRedFlag("I want to hurt myself")).toBe("crisis");
+  });
+
   it("catches common wordings", () => {
     for (const t of ["I have shortness of breath", "Tengo dolor de pecho", "I think it's a heart attack", "Creo que es un ataque al corazón", "Mi papá tuvo un infarto"]) {
       expect(detectRedFlag(t), t).toBe("emergency");

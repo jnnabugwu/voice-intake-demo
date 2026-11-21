@@ -31,15 +31,19 @@ class AnsweredTurns {
 
 type Gate = { ok: true; cors: Record<string, string> } | { ok: false; response: Response };
 
-/** Origin and rate limit. The spend cap is checked separately, after a replay could answer for free. */
-function gate(request: Request, deps: Deps): Gate {
+/**
+ * The origin check, and the per-IP rate limit unless [rateLimit] is false.
+ * Chat skips it here and applies it after the red-flag check, so an
+ * emergency is never answered with a 429.
+ */
+function gate(request: Request, deps: Deps, { rateLimit = true } = {}): Gate {
   const origin = request.headers.get("origin");
   const cors = corsHeaders(origin, deps.config);
   // No Origin means a non-browser client (curl); CORS doesn't apply to it.
   if (origin && !isAllowedOrigin(origin, deps.config)) {
     return { ok: false, response: json(403, { code: "forbidden_origin" }) };
   }
-  if (!deps.limiter.take(clientIp(request))) {
+  if (rateLimit && !deps.limiter.take(clientIp(request))) {
     return { ok: false, response: json(429, { code: "rate_limited" }, cors) };
   }
   return { ok: true, cors };
@@ -65,7 +69,7 @@ export function createChatHandler(deps: Deps) {
 
   return async function POST(request: Request): Promise<Response> {
     const started = now();
-    const g = gate(request, deps);
+    const g = gate(request, deps, { rateLimit: false });
     if (!g.ok) {
       logRequest({ route: "chat", status: g.response.status });
       return g.response;
@@ -78,12 +82,16 @@ export function createChatHandler(deps: Deps) {
     const key = JSON.stringify([body.conversationId, body.turnId, body.messages]);
     const headers = { ...sseHeaders, ...g.cors };
 
-    // Red flags stop the chat before any model call, a replay or the spend cap:
-    // this path costs nothing, so an emergency is never answered with a 429.
+    // Red flags stop the chat before any model call, a replay, the rate limit or
+    // the spend cap: this path costs nothing, so an emergency never gets a 429.
     const flag = detectRedFlag(body.messages.at(-1)!.text);
     if (flag) {
       logRequest({ route: "chat", status: 200, redFlag: flag });
       return new Response(sseEvent("red_flag", { kind: flag }), { headers });
+    }
+    if (!deps.limiter.take(clientIp(request))) {
+      logRequest({ route: "chat", status: 429, code: "rate_limited" });
+      return json(429, { code: "rate_limited" }, g.cors);
     }
 
     const cached = answered.get(key);

@@ -206,4 +206,21 @@ void main() {
     expect(cases.attempts, 2);
     await bloc.close();
   });
+
+  test('Finish works after a failed reply, so the worker is never trapped', () async {
+    final bloc = ConversationBloc(
+      FakeChatRepository([
+        [const ChatChunk.failed(NetworkFailure())],
+      ]),
+      SequentialIds(),
+      submit(),
+    );
+    bloc.add(const TypedMessageSubmitted(text: 'sore throat', language: Language.en));
+    await pumpEventQueue();
+    expect(bloc.state.phase, isA<ReplyFailed>());
+    bloc.add(const FinishRequested());
+    await pumpEventQueue();
+    expect(bloc.state.phase, const ConversationPhase.finished());
+    await bloc.close();
+  });
 }

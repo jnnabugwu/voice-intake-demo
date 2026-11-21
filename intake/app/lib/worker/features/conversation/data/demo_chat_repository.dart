@@ -55,9 +55,11 @@ class DemoChatRepository implements ChatRepository {
     _Topic.severity: RegExp(
       r'\b(\d+|ten|diez)\s*(/|out of|de|sobre)\s*(10|ten|diez)\b|\b(mild|moderate|severe|terrible|leve|moderad[oa]|fuerte|grave)\b',
     ),
-    _Topic.otherSymptoms: RegExp(r'\b(also|and also|fever|cough|nausea|también|fiebre|tos|náuseas)\b'),
+    _Topic.otherSymptoms: RegExp(
+      r'\b(fever|cough|nausea|vomit\w*|dizz\w*|rash|chills|fiebre|tos|náuseas?|vómito\w*|mareo\w*|sarpullido|escalofríos)\b',
+    ),
     _Topic.medications: RegExp(
-      r'\b(take|taking|medication|medicine|pills?|mg|milligrams?|allerg\w*|tomo|tomando|medicamentos?|medicina|pastillas?|miligramos|alérgic\w*|alergia)\b',
+      r"\b(i take|i'm taking|i am taking|medications?|medicine|pills?|mg|milligrams?|allerg\w*|tomo|tomando|medicamentos?|medicina|pastillas?|miligramos|alérgic\w*|alergia)\b",
     ),
   };
 

@@ -42,6 +42,22 @@ void main() {
       expect(events.first.data['text'], 'How ');
     });
 
+    test('a CRLF split across reads still ends the event', () async {
+      final events = await parseSse(
+        Stream.fromIterable(
+          ['event: delta\r\ndata: {"text":"a"}\r', '\n\r\nevent: done\r\ndata: {}\r\n\r\n'].map(utf8.encode),
+        ),
+      ).toList();
+      expect(events.map((e) => e.event), ['delta', 'done']);
+    });
+
+    test('a truncated final block is not an event', () async {
+      final events = await parseSse(
+        Stream.fromIterable(['event: delta\ndata: {"text":"a"}\n\n', 'event: done\ndata: {}'].map(utf8.encode)),
+      ).toList();
+      expect(events.map((e) => e.event), ['delta']);
+    });
+
     test('CRLF line endings and malformed data', () async {
       final events = await parseSse(Stream.value(utf8.encode('event: error\r\ndata: {oops\r\n\r\n'))).toList();
       expect(events.single.event, 'error');

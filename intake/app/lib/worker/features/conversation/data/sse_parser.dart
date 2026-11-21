@@ -4,23 +4,23 @@ import 'dart:convert';
 typedef SseEvent = ({String event, Map<String, dynamic> data});
 
 /// Turns a byte stream into server-sent events. Events can arrive split
-/// across chunks, or several in one chunk; both are handled. Malformed data
-/// becomes an empty map rather than an error.
+/// across chunks, or several in one chunk; both are handled. Only a block
+/// closed by the blank-line delimiter is an event: a truncated tail (the
+/// connection dropped mid-event) is discarded, so a half-sent `done` can't end
+/// a reply. Malformed data becomes an empty map rather than an error.
 Stream<SseEvent> parseSse(Stream<List<int>> bytes) async* {
   var buffer = '';
   await for (final text in bytes.transform(utf8.decoder)) {
-    buffer += text.replaceAll('\r\n', '\n');
+    // Normalize the whole buffer, not the chunk: a CRLF can straddle two chunks.
+    buffer = (buffer + text).replaceAll('\r\n', '\n');
     var end = buffer.indexOf('\n\n');
     while (end != -1) {
-      final block = buffer.substring(0, end);
+      final event = _parseBlock(buffer.substring(0, end));
       buffer = buffer.substring(end + 2);
-      final event = _parseBlock(block);
       if (event != null) yield event;
       end = buffer.indexOf('\n\n');
     }
   }
-  final tail = _parseBlock(buffer.trim());
-  if (tail != null) yield tail;
 }
 
 SseEvent? _parseBlock(String block) {

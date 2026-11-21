@@ -27,6 +27,7 @@ describe("detectRedFlag over the bench script", () => {
     }
     expect(detectRedFlag("No chest pain, but I can't breathe")).toBe("emergency");
     expect(detectRedFlag("I have no fever and can't breathe")).toBe("emergency");
+    expect(detectRedFlag("no chest pain\ncan't breathe")).toBe("emergency");
     expect(detectRedFlag("Sin embargo me duele el pecho")).toBe("emergency");
     expect(detectRedFlag("No tengo fiebre y me falta el aire")).toBe("emergency");
   });

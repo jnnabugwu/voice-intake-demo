@@ -133,14 +133,14 @@ class DemoSummaryRepository implements SummaryRepository {
       final c = line
           .replaceFirst(
             RegExp(
-              r'^(hi|hello|hey|good (morning|afternoon|evening)|hola|buenos días|buenas( tardes| noches)?)[,.!]*\s*',
+              r'^(hi|hello|hey|good (morning|afternoon|evening)|hola|buenos días|buenas( tardes| noches)?)\b[,.!]*\s*',
               caseSensitive: false,
             ),
             '',
           )
           .replaceFirst(
             RegExp(
-              r'^(my name is|this is|me llamo|mi nombre es|soy)\s+[^\s,.!?]+(\s+[^\s,.!?]+)?\s*[,.]?\s*((and|y)\s+)?',
+              r'^(my name is|this is|me llamo|mi nombre es)\s+[^\s,.!?]+(\s+[^\s,.!?]+)?\s*[,.]?\s*((and|y)\s+)?',
               caseSensitive: false,
             ),
             '',

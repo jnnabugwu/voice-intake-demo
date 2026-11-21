@@ -230,4 +230,15 @@ void main() {
     );
     expect(s.severity, isNull);
   });
+
+  test('"high fever" keeps its h; "soy alérgica" is not a name', () {
+    expect(
+      DemoSummaryRepository.summarizeText('Worker: high fever since last night', Language.en).chiefComplaint,
+      'High fever since last night',
+    );
+    expect(
+      DemoSummaryRepository.summarizeText('Worker: Soy alérgica a la penicilina', Language.es).chiefComplaint,
+      'Soy alérgica a la penicilina',
+    );
+  });
 }

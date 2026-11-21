@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intake/shared/core/ids.dart';
+import 'package:intake/worker/features/conversation/domain/chat_repository.dart';
+import 'package:intake/worker/features/conversation/presentation/conversation_bloc.dart';
 import 'package:intake/worker/features/speech/domain/speech_engine.dart';
 import 'package:intake/worker/features/speech/presentation/speech_bloc.dart';
 import 'package:intake/worker/worker_screen.dart';
@@ -13,8 +15,11 @@ class WorkerRoute extends GoRouteData with $WorkerRoute {
   const WorkerRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) => BlocProvider(
-    create: (context) => SpeechBloc(context.read<SpeechEngine>(), context.read<IdGenerator>()),
+  Widget build(BuildContext context, GoRouterState state) => MultiBlocProvider(
+    providers: [
+      BlocProvider(create: (context) => SpeechBloc(context.read<SpeechEngine>(), context.read<IdGenerator>())),
+      BlocProvider(create: (context) => ConversationBloc(context.read<ChatRepository>(), context.read<IdGenerator>())),
+    ],
     child: const WorkerScreen(),
   );
 }

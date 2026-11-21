@@ -4,6 +4,8 @@ import 'package:intake/app/app.dart';
 import 'package:intake/app/app_mode.dart';
 import 'package:intake/app/router.dart';
 import 'package:intake/shared/core/ids.dart';
+import 'package:intake/worker/features/conversation/data/demo_chat_repository.dart';
+import 'package:intake/worker/features/conversation/domain/chat_repository.dart';
 import 'package:intake/worker/features/speech/data/web_speech_engine.dart';
 import 'package:intake/worker/features/speech/domain/speech_engine.dart';
 
@@ -19,6 +21,8 @@ void bootstrap() {
         RepositoryProvider<AppMode>.value(value: mode),
         RepositoryProvider<IdGenerator>(create: (_) => IdGenerator()),
         RepositoryProvider<SpeechEngine>(create: (_) => WebSpeechEngine()),
+        // Live mode swaps in the proxy repositories (block 3).
+        RepositoryProvider<ChatRepository>(create: (_) => DemoChatRepository()),
       ],
       child: IntakeApp(router: createRouter()),
     ),

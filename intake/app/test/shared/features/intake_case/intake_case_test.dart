@@ -157,4 +157,48 @@ void main() {
     expect(s.medications, ['co-codamol', "st john's wort"]);
     expect(s.symptoms, isNot(contains('dizziness')));
   });
+
+  group('DemoSummaryRepository reads speech the way people talk', () {
+    const transcript =
+        'Worker: hi my name is Jordan and my stomach hurts\n'
+        'Assistant: Thanks for telling me. How long has this been going on?\n'
+        'Worker: this is me going on for 2 days\n'
+        'Assistant: Got it, thank you. On a scale of 1 to 10, how bad is it right now?\n'
+        'Worker: seven seven just just a seven\n'
+        'Assistant: Got it, thank you. Is anything else bothering you, like a fever or a cough?\n'
+        'Worker: no cough no fever';
+
+    test('the answer to the 1–10 question is the severity', () {
+      final s = DemoSummaryRepository.summarizeText(transcript, Language.en);
+      expect(s.severity, 7);
+      expect(s.duration, '2 days');
+    });
+
+    test('the complaint drops the greeting and the name; stomach pain is a symptom; denials stay out', () {
+      final s = DemoSummaryRepository.summarizeText(transcript, Language.en);
+      expect(s.chiefComplaint, 'My stomach hurts');
+      expect(s.symptoms, ['stomach pain']);
+    });
+
+    test('Spanish: "siete" answers "del 1 al 10"', () {
+      final s = DemoSummaryRepository.summarizeText(
+        'Worker: Hola, me llamo Ana. Me duele el estómago.\n'
+        'Assistant: Del 1 al 10, ¿qué tan fuerte es ahora?\n'
+        'Worker: mmm siete',
+        Language.es,
+      );
+      expect(s.severity, 7);
+      expect(s.chiefComplaint, 'Me duele el estómago.');
+      expect(s.symptoms, contains('stomach pain'));
+    });
+
+    test('an answer without a number on the scale stays unsaid', () {
+      final s = DemoSummaryRepository.summarizeText(
+        'Worker: my ear hurts\nAssistant: On a scale of 1 to 10, how bad is it right now?\nWorker: pretty bad',
+        Language.en,
+      );
+      expect(s.severity, isNull);
+      expect(s.symptoms, ['ear pain']);
+    });
+  });
 }

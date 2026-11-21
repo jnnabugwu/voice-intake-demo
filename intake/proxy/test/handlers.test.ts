@@ -112,6 +112,13 @@ describe("POST /api/chat", () => {
     expect(again).toContain("event: done");
   });
 
+  it("a reused turn ID with a new emergency message is checked, not replayed", async () => {
+    const handler = createChatHandler(deps());
+    await (await handler(post(chatBody))).text();
+    const res = await handler(post({ ...chatBody, messages: [{ role: "user", text: "I have chest pain" }] }));
+    expect(await res.text()).toContain("event: red_flag");
+  });
+
   it("an answered turn still replays after the cap closes", async () => {
     const meter = new SpendMeter(0.0001);
     const handler = createChatHandler(deps({ meter }));

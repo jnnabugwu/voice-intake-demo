@@ -26,6 +26,8 @@ describe("detectRedFlag over the bench script", () => {
       expect(detectRedFlag(t), t).toBeNull();
     }
     expect(detectRedFlag("No chest pain, but I can't breathe")).toBe("emergency");
+    expect(detectRedFlag("I have no fever and can't breathe")).toBe("emergency");
+    expect(detectRedFlag("No tengo fiebre y me falta el aire")).toBe("emergency");
   });
 
   it("works without Spanish accents and with lay stroke words", () => {

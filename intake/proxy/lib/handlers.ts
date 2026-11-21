@@ -73,16 +73,12 @@ export function createChatHandler(deps: Deps) {
     const parsed = ChatRequest.safeParse(await readJson(request));
     if (!parsed.success) return json(400, { code: "bad_request" }, g.cors);
     const body = parsed.data;
-    // Serialized, so IDs that contain the delimiter can't collide.
-    const key = JSON.stringify([body.conversationId, body.turnId]);
+    // The whole request, serialized: a reused turn ID with different messages
+    // is a different request, and IDs containing a delimiter can't collide.
+    const key = JSON.stringify([body.conversationId, body.turnId, body.messages]);
     const headers = { ...sseHeaders, ...g.cors };
 
-    const cached = answered.get(key);
-    if (cached !== undefined) {
-      logRequest({ route: "chat", status: 200, replayed: true });
-      return new Response(sseEvent("delta", { text: cached }) + sseEvent("done"), { headers });
-    }
-    // Red flags stop the chat before any model call, and before the spend cap:
+    // Red flags stop the chat before any model call, a replay or the spend cap:
     // this path costs nothing, so an emergency is never answered with a 429.
     const flag = detectRedFlag(body.messages.at(-1)!.text);
     if (flag) {
@@ -90,6 +86,11 @@ export function createChatHandler(deps: Deps) {
       return new Response(sseEvent("red_flag", { kind: flag }), { headers });
     }
 
+    const cached = answered.get(key);
+    if (cached !== undefined) {
+      logRequest({ route: "chat", status: 200, replayed: true });
+      return new Response(sseEvent("delta", { text: cached }) + sseEvent("done"), { headers });
+    }
     const capped = overCap(deps, g.cors, "chat");
     if (capped) return capped;
 

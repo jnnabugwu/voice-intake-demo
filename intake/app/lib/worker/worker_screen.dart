@@ -1,10 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intake/shared/core/failure.dart';
+import 'package:intake/shared/core/language.dart';
+import 'package:intake/shared/features/safety/presentation/escalation_card.dart';
 import 'package:intake/shared/ui/ui.dart';
 import 'package:intake/worker/features/conversation/presentation/chat_list.dart';
 import 'package:intake/worker/features/conversation/presentation/conversation_bloc.dart';
 import 'package:intake/worker/features/conversation/presentation/conversation_strings.dart';
+import 'package:intake/worker/features/next_step/presentation/next_step_bloc.dart';
+import 'package:intake/worker/features/next_step/presentation/next_step_card.dart';
 import 'package:intake/worker/features/speech/presentation/language_toggle.dart';
 import 'package:intake/worker/features/speech/presentation/live_transcript.dart';
 import 'package:intake/worker/features/speech/presentation/mic_button.dart';
@@ -57,6 +61,11 @@ class WorkerScreen extends StatelessWidget {
             );
           },
         ),
+        // A red flag stops the chat, so the mic stops too.
+        BlocListener<ConversationBloc, ConversationState>(
+          listenWhen: (previous, current) => previous.phase is! RedFlagRaised && current.phase is RedFlagRaised,
+          listener: (context, state) => context.read<SpeechBloc>().add(const SpeechStopped()),
+        ),
       ],
       child: const _WorkerBody(),
     );
@@ -78,11 +87,24 @@ class _WorkerBody extends StatelessWidget {
     final spendCapped = phase is ReplyFailed && phase.failure is SpendCapFailure;
     final canSend = phase is Gathering || (phase is ReplyFailed && !spendCapped);
     final micLive = speech.phase is SpeechStarting || speech.phase is SpeechListening;
-    final finished = phase is Finished;
+    final nextStep = context.watch<NextStepBloc>().state;
+    // An approved next step replaces the red-flag card; the help lines stay under it.
+    final approved = nextStep is NextStepUnlocked && nextStep.caseId == conversation.conversationId;
+    final finished = phase is Finished || (phase is RedFlagRaised && approved);
     final speechFailure = switch (speech.phase) {
       SpeechUnavailable(:final failure) => failure,
       _ => null,
     };
+
+    // Safety is state, not a route: nothing on this page can dismiss the card.
+    final flag = switch ((phase, nextStep)) {
+      // Only an approval for this conversation's case replaces its card.
+      (_, NextStepUnlocked(:final caseId)) when caseId == conversation.conversationId => null,
+      (RedFlagRaised(:final flag), _) => flag,
+      (_, NextStepEscalated(:final flag)) => flag,
+      _ => null,
+    };
+    if (flag != null) return EscalationCard(flag: flag, language: language);
 
     return Align(
       alignment: Alignment.topCenter,
@@ -101,14 +123,35 @@ class _WorkerBody extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ChatList(state: conversation, language: language),
+            if (conversation.clinicianOffered) ...[const SizedBox(height: 12), HelpLines(language: language)],
             if (spendCapped) ...[
               const SizedBox(height: 16),
               AppAlert.info(icon: LucideIcons.pause, title: strings.spendCapTitle, description: strings.spendCapBody),
             ],
             const SizedBox(height: 24),
-            if (finished)
-              AppAlert.info(icon: LucideIcons.clock, title: strings.finished)
-            else ...[
+            if (phase is SubmitFailed) ...[
+              AppAlert.danger(title: strings.submitFailed),
+              const SizedBox(height: 12),
+              AppButton.primary(
+                label: strings.tryAgain,
+                icon: LucideIcons.refreshCw,
+                expand: true,
+                onPressed: () => conversationBloc.add(const FinishRequested()),
+              ),
+            ] else if (finished) ...[
+              AppAlert.info(icon: LucideIcons.send, title: strings.finished),
+              const SizedBox(height: 16),
+              NextStepCard(state: nextStep, language: language),
+              if (nextStep case NextStepUnlocked(flag: _?)) ...[
+                const SizedBox(height: 16),
+                Text(
+                  language == Language.es ? '¿Necesita ayuda ahora mismo?' : 'Still need help right now?',
+                  style: context.type.small,
+                ),
+                const SizedBox(height: 8),
+                HelpLines(language: language),
+              ],
+            ] else ...[
               LiveTranscript(phase: speech.phase, language: language),
               const SizedBox(height: 16),
               Center(
@@ -133,7 +176,7 @@ class _WorkerBody extends StatelessWidget {
                   label: strings.finish,
                   icon: LucideIcons.check,
                   expand: true,
-                  onPressed: phase is Gathering && !micLive
+                  onPressed: (phase is Gathering || phase is ReplyFailed) && !micLive
                       ? () => conversationBloc.add(const FinishRequested())
                       : null,
                 ),

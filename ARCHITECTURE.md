@@ -163,7 +163,7 @@ grep -rlE "package:intake/[a-z_]+/features/[a-z_]+/data/" lib --include='*.dart'
   | grep -vE "^lib/bootstrap\.dart$|^lib/[a-z_]+/features/[a-z_]+/data/"
 ```
 
-CI runs the script and fails on any output (`.circleci/config.yml`, job `intake-app`).
+Run the script before each commit; any output is a violation.
 
 ## Features and Blocs
 
@@ -465,8 +465,8 @@ The kit has no published accessibility audit, so the app owns accessibility and 
   | Bloc | State shape |
   |---|---|
   | `SpeechBloc` | `language` and `lastUtterance` plus a sealed `phase`: idle, starting, listening(partial), unavailable(failure) |
-  | `NextStepBloc` | Sealed: locked, unlocked(nextStep), escalated(flag) |
-  | `ReviewBloc` | Sealed: loading, noCase, ready(case, draft, approving) |
+  | `NextStepBloc` | Sealed: none (nothing submitted yet), locked, unlocked(nextStep), escalated(flag), where escalated wins whenever the case has a red flag |
+  | `ReviewBloc` | Sealed: loading, noCase, ready(case, draft, approving, approveFailure) |
   | `ConversationBloc` | `turns` plus a sealed `phase` |
   | `BenchBloc` | One class: line index and timestamps, with no exclusive phases |
 
@@ -483,7 +483,6 @@ The kit has no published accessibility audit, so the app owns accessibility and 
   sealed class CaseStatus with _$CaseStatus {
     const factory CaseStatus.awaitingReview() = AwaitingReview;
     const factory CaseStatus.approved({required String nextStep}) = Approved;
-    const factory CaseStatus.escalated({required RedFlag flag}) = Escalated;
   }
   ```
 - **Events are plain sealed classes**, hand-written with no codegen. They are named after what happened (`UtteranceSubmitted`, `ApproveRequested`), one class per event, so the event vocabulary is greppable. Bloc never compares events, so they don't need generated equality the way states do.
@@ -517,18 +516,21 @@ Bloc processes events of the same type concurrently by default. Every handler th
 |---|---|---|---|
 | `SpeechBloc` | `SpeechStarted` | `droppable` | A second tap while the mic starts does nothing |
 | `ConversationBloc` | `UtteranceSubmitted`, `TypedMessageSubmitted` | `droppable` | One reply at a time; the UI disables input while a reply streams, so nothing is dropped silently |
-| `ConversationBloc` | `ReplyRetryRequested` | `restartable` | A retry replaces a failed attempt |
+| `ConversationBloc` | `ReplyRetryRequested` | `droppable` | A second tap is ignored while the retry runs. `restartable` would cancel the retry in flight and strand the phase on `streaming` |
 | `ReviewBloc` | `ApproveRequested` | `droppable` | A double tap can't approve twice |
 
 **Stable IDs make retries safe.** Each utterance and each turn has an ID created once, when it is first submitted. A retry reuses the turn ID, and the proxy and `ConversationBloc` ignore a turn ID they have already answered.
 
 ## Safety path
 
-1. **Before any model call**, `ConversationBloc` runs `RedFlagDetector` on the new text in the conversation's language. A hit stops the chat, moves the case to `Escalated`, and shows the full-screen card: 911 for emergencies and 988 for crisis, in the worker's language.
+1. **Before any model call**, `ConversationBloc` runs `RedFlagDetector` on the new text in the conversation's language. A hit stops the chat, submits the case with `IntakeCase.redFlag` set, and shows the full-screen card: 911 for emergencies and 988 for crisis, in the worker's language.
 2. **After the summary**, a non-empty `red_flags` list in the summary also escalates.
-3. **A refusal** from the model (`ChatChunk.refused`) shows "Let me connect you with a clinician" and offers the same card.
+3. **A refusal** from the model (`ChatChunk.refused`) shows "Let me connect you with a clinician" and offers the 911 and 988 lines as buttons (`HelpLines`). The chat continues; a refusal isn't an emergency.
+4. **The proxy checks again.** It runs the same EN/ES patterns on the newest message before calling the model and answers with a `red_flag` event (`ChatChunk.redFlag`), which escalates like step 1. This covers any client that skips the app's check.
 
-`RedFlagDetector` is pure Dart with English and Spanish phrase lists. It has no network and no model, so it works in demo mode and offline.
+An escalated case reaches the physician at once with `IntakeCase.redFlag` set, and the review page says what the worker was shown and what triggered it. The flag is a record, separate from `status`, so approving a follow-up keeps it for the physician. On the worker's side the card holds until a clinician approves a next step for that case; the approved step then replaces the card, with the 911 and 988 buttons still offered under it. Both pattern lists are tested against every line of `bench/references.json` in both languages: lines 20 (chest pain) and 21 (new confusion in an older adult with diabetes, asking about the ER) escalate, and 1–19 don't.
+
+`RedFlagDetector` is pure Dart with English and Spanish phrase lists, checked in both languages on every message because workers mix them. It has no network and no model, so it works in demo mode and offline.
 
 ## Demo mode and live mode
 

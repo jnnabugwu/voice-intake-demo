@@ -58,7 +58,7 @@ void main() {
       await pumpAt(tester, '/worker');
       await tester.tap(find.text('Physician').first);
       await tester.pumpAndSettle();
-      expect(find.text('Physician'), findsNWidgets(2)); // switch label + placeholder page
+      expect(find.text('No intake waiting for review'), findsOneWidget);
     });
   });
 }

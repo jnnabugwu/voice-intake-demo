@@ -4,6 +4,10 @@ import 'package:intake/app/app.dart';
 import 'package:intake/app/app_mode.dart';
 import 'package:intake/app/router.dart';
 import 'package:intake/shared/core/ids.dart';
+import 'package:intake/shared/features/intake_case/data/demo_summary_repository.dart';
+import 'package:intake/shared/features/intake_case/data/in_memory_case_repository.dart';
+import 'package:intake/shared/features/intake_case/domain/case_repository.dart';
+import 'package:intake/shared/features/intake_case/domain/summary_repository.dart';
 import 'package:intake/worker/features/conversation/data/demo_chat_repository.dart';
 import 'package:intake/worker/features/conversation/domain/chat_repository.dart';
 import 'package:intake/worker/features/speech/data/web_speech_engine.dart';
@@ -23,6 +27,9 @@ void bootstrap() {
         RepositoryProvider<SpeechEngine>(create: (_) => WebSpeechEngine()),
         // Live mode swaps in the proxy repositories (block 3).
         RepositoryProvider<ChatRepository>(create: (_) => DemoChatRepository()),
+        RepositoryProvider<SummaryRepository>(create: (_) => const DemoSummaryRepository()),
+        // Both sides read this one store, in both modes.
+        RepositoryProvider<CaseRepository>(create: (_) => InMemoryCaseRepository()),
       ],
       child: IntakeApp(router: createRouter()),
     ),

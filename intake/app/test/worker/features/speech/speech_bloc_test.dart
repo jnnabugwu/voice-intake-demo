@@ -2,7 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intake/shared/core/failure.dart';
 import 'package:intake/shared/core/language.dart';
-import 'package:intake/worker/features/speech/domain/speech_engine.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 import 'package:intake/worker/features/speech/domain/utterance.dart';
 import 'package:intake/worker/features/speech/presentation/speech_bloc.dart';
 

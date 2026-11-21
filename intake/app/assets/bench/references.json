@@ -1,0 +1,570 @@
+{
+  "version": 1,
+  "created": "2026-11-20",
+  "scoring": "Lowercase, strip punctuation, convert spoken numbers to digits in both reference and hypothesis before WER. A key term counts as found if any '|' variant appears in the normalized hypothesis.",
+  "speakers": [
+    {
+      "id": "en_jn",
+      "lang": "en-US",
+      "who": "Jordan (native English)"
+    },
+    {
+      "id": "es_cu",
+      "lang": "es-US",
+      "who": "Cuban friend (native Spanish)"
+    },
+    {
+      "id": "es_mx",
+      "lang": "es-MX",
+      "who": "Mexico City friend (learning Spanish)"
+    }
+  ],
+  "lines": [
+    {
+      "n": 1,
+      "category": "Asking for care",
+      "en": {
+        "text": "Hi, I need to see a doctor today. My throat has been sore for three days, and it hurts to swallow.",
+        "key_terms": [
+          "doctor",
+          "sore throat|throat",
+          "three days|3 days",
+          "swallow"
+        ]
+      },
+      "es": {
+        "text": "Hola, necesito ver a un médico hoy. Me duele la garganta desde hace tres días, y me duele al tragar.",
+        "key_terms": [
+          "médico",
+          "garganta",
+          "tres días|3 días",
+          "tragar"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_01.m4a",
+        "es_cu": "es_cu_01.m4a",
+        "es_mx": "es_mx_01.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 2,
+      "category": "Asking for care",
+      "en": {
+        "text": "Is there a clinic near me that takes cash, and how much is a visit?",
+        "key_terms": [
+          "clinic",
+          "cash",
+          "visit"
+        ]
+      },
+      "es": {
+        "text": "¿Hay una clínica cerca de mí que acepte pago en efectivo, y cuánto cuesta la consulta?",
+        "key_terms": [
+          "clínica",
+          "efectivo",
+          "consulta"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_02.m4a",
+        "es_cu": "es_cu_02.m4a",
+        "es_mx": "es_mx_02.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 3,
+      "category": "Asking for care",
+      "en": {
+        "text": "Can I talk to a doctor who speaks Spanish?",
+        "key_terms": [
+          "doctor",
+          "Spanish"
+        ]
+      },
+      "es": {
+        "text": "¿Puedo hablar con un médico que hable español?",
+        "key_terms": [
+          "médico",
+          "español"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_03.m4a",
+        "es_cu": "es_cu_03.m4a",
+        "es_mx": "es_mx_03.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 4,
+      "category": "Asking for care",
+      "en": {
+        "text": "I need a refill of my metformin, five hundred milligrams, twice a day.",
+        "key_terms": [
+          "refill",
+          "metformin",
+          "500 milligrams|five hundred milligrams|500 mg",
+          "twice a day|2 times a day"
+        ]
+      },
+      "es": {
+        "text": "Necesito renovar mi receta de metformina, quinientos miligramos, dos veces al día.",
+        "key_terms": [
+          "receta",
+          "metformina",
+          "500 miligramos|quinientos miligramos|500 mg",
+          "dos veces al día|2 veces al día"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_04.m4a",
+        "es_cu": "es_cu_04.m4a",
+        "es_mx": "es_mx_04.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 5,
+      "category": "Symptoms",
+      "en": {
+        "text": "I've had a fever of one hundred and two since last night, and my whole body aches.",
+        "key_terms": [
+          "fever",
+          "102|one hundred and two|a hundred and two",
+          "body aches|body ache"
+        ]
+      },
+      "es": {
+        "text": "Tengo fiebre de ciento dos desde anoche, y me duele todo el cuerpo.",
+        "key_terms": [
+          "fiebre",
+          "102|ciento dos",
+          "cuerpo"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_05.m4a",
+        "es_cu": "es_cu_05.m4a",
+        "es_mx": "es_mx_05.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 6,
+      "category": "Symptoms",
+      "en": {
+        "text": "My lower back started hurting after I lifted boxes at work on Monday.",
+        "key_terms": [
+          "lower back",
+          "lifted",
+          "Monday"
+        ]
+      },
+      "es": {
+        "text": "Me empezó a doler la parte baja de la espalda después de cargar cajas en el trabajo el lunes.",
+        "key_terms": [
+          "espalda",
+          "cargar",
+          "lunes"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_06.m4a",
+        "es_cu": "es_cu_06.m4a",
+        "es_mx": "es_mx_06.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 7,
+      "category": "Symptoms",
+      "en": {
+        "text": "I get dizzy when I stand up, and sometimes my vision goes blurry.",
+        "key_terms": [
+          "dizzy",
+          "blurry"
+        ]
+      },
+      "es": {
+        "text": "Me mareo cuando me levanto, y a veces veo borroso.",
+        "key_terms": [
+          "mareo",
+          "borroso"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_07.m4a",
+        "es_cu": "es_cu_07.m4a",
+        "es_mx": "es_mx_07.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 8,
+      "category": "Symptoms",
+      "en": {
+        "text": "My son has another ear infection. He's four, and he keeps touching his left ear.",
+        "key_terms": [
+          "ear infection",
+          "four|4",
+          "left ear"
+        ]
+      },
+      "es": {
+        "text": "Mi hijo tiene otra infección de oído. Tiene cuatro años, y se toca mucho la oreja izquierda.",
+        "key_terms": [
+          "infección de oído",
+          "cuatro años|4 años",
+          "oreja izquierda"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_08.m4a",
+        "es_cu": "es_cu_08.m4a",
+        "es_mx": "es_mx_08.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 9,
+      "category": "Medications and allergies",
+      "en": {
+        "text": "I take lisinopril, ten milligrams, in the morning for my blood pressure.",
+        "key_terms": [
+          "lisinopril",
+          "10 milligrams|ten milligrams|10 mg",
+          "blood pressure"
+        ]
+      },
+      "es": {
+        "text": "Tomo lisinopril de diez miligramos en la mañana para la presión arterial.",
+        "key_terms": [
+          "lisinopril",
+          "10 miligramos|diez miligramos|10 mg",
+          "presión arterial"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_09.m4a",
+        "es_cu": "es_cu_09.m4a",
+        "es_mx": "es_mx_09.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 10,
+      "category": "Medications and allergies",
+      "en": {
+        "text": "I'm allergic to penicillin. It gives me hives.",
+        "key_terms": [
+          "allergic",
+          "penicillin",
+          "hives"
+        ]
+      },
+      "es": {
+        "text": "Tengo alergia a la penicilina. Me salen ronchas.",
+        "key_terms": [
+          "alergia",
+          "penicilina",
+          "ronchas"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_10.m4a",
+        "es_cu": "es_cu_10.m4a",
+        "es_mx": "es_mx_10.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 11,
+      "category": "Medications and allergies",
+      "en": {
+        "text": "Can I take ibuprofen with my blood thinner, warfarin?",
+        "key_terms": [
+          "ibuprofen",
+          "blood thinner",
+          "warfarin"
+        ]
+      },
+      "es": {
+        "text": "¿Puedo tomar ibuprofeno con mi anticoagulante, la warfarina?",
+        "key_terms": [
+          "ibuprofeno",
+          "anticoagulante",
+          "warfarina"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_11.m4a",
+        "es_cu": "es_cu_11.m4a",
+        "es_mx": "es_mx_11.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 12,
+      "category": "Medications and allergies",
+      "en": {
+        "text": "The pharmacy said my amoxicillin prescription ran out.",
+        "key_terms": [
+          "pharmacy",
+          "amoxicillin",
+          "prescription"
+        ]
+      },
+      "es": {
+        "text": "En la farmacia me dijeron que se acabó mi receta de amoxicilina.",
+        "key_terms": [
+          "farmacia",
+          "receta",
+          "amoxicilina"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_12.m4a",
+        "es_cu": "es_cu_12.m4a",
+        "es_mx": "es_mx_12.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 13,
+      "category": "Numbers",
+      "en": {
+        "text": "My blood pressure this morning was one fifty over ninety-five.",
+        "key_terms": [
+          "blood pressure",
+          "150/95|150 over 95|one fifty over ninety-five|one fifty over ninety five"
+        ]
+      },
+      "es": {
+        "text": "Esta mañana tenía la presión en ciento cincuenta sobre noventa y cinco.",
+        "key_terms": [
+          "presión",
+          "150/95|150 sobre 95|ciento cincuenta sobre noventa y cinco"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_13.m4a",
+        "es_cu": "es_cu_13.m4a",
+        "es_mx": "es_mx_13.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 14,
+      "category": "Numbers",
+      "en": {
+        "text": "My blood sugar was two hundred and ten after lunch.",
+        "key_terms": [
+          "blood sugar",
+          "210|two hundred and ten|two hundred ten"
+        ]
+      },
+      "es": {
+        "text": "Tenía el azúcar en doscientos diez después del almuerzo.",
+        "key_terms": [
+          "azúcar",
+          "210|doscientos diez"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_14.m4a",
+        "es_cu": "es_cu_14.m4a",
+        "es_mx": "es_mx_14.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 15,
+      "category": "Numbers",
+      "en": {
+        "text": "I'm thirty-four years old, and I weigh about one hundred and eighty pounds.",
+        "key_terms": [
+          "34|thirty-four|thirty four",
+          "180 pounds|one hundred and eighty pounds|180 lbs"
+        ]
+      },
+      "es": {
+        "text": "Tengo treinta y cuatro años, y peso unas ciento ochenta libras.",
+        "key_terms": [
+          "34 años|treinta y cuatro años",
+          "180 libras|ciento ochenta libras"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_15.m4a",
+        "es_cu": "es_cu_15.m4a",
+        "es_mx": "es_mx_15.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 16,
+      "category": "Paying for care",
+      "en": {
+        "text": "I paid forty-five dollars at urgent care. Can I upload the receipt to get reimbursed?",
+        "key_terms": [
+          "$45|45 dollars|forty-five dollars|forty five dollars",
+          "urgent care",
+          "receipt",
+          "reimbursed"
+        ]
+      },
+      "es": {
+        "text": "Pagué cuarenta y cinco dólares en urgencias. ¿Puedo subir el recibo para que me lo reembolsen?",
+        "key_terms": [
+          "45 dólares|cuarenta y cinco dólares|$45",
+          "urgencias",
+          "recibo",
+          "reembolsen"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_16.m4a",
+        "es_cu": "es_cu_16.m4a",
+        "es_mx": "es_mx_16.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 17,
+      "category": "Paying for care",
+      "en": {
+        "text": "Does this visit count toward my deductible?",
+        "key_terms": [
+          "visit",
+          "deductible"
+        ]
+      },
+      "es": {
+        "text": "¿Esta consulta cuenta para mi deducible?",
+        "key_terms": [
+          "consulta",
+          "deducible"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_17.m4a",
+        "es_cu": "es_cu_17.m4a",
+        "es_mx": "es_mx_17.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 18,
+      "category": "Follow-up",
+      "en": {
+        "text": "The doctor said to come back in two weeks if the rash doesn't go away.",
+        "key_terms": [
+          "two weeks|2 weeks",
+          "rash"
+        ]
+      },
+      "es": {
+        "text": "El médico me dijo que regresara en dos semanas si no se me quita el sarpullido.",
+        "key_terms": [
+          "dos semanas|2 semanas",
+          "sarpullido"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_18.m4a",
+        "es_cu": "es_cu_18.m4a",
+        "es_mx": "es_mx_18.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 19,
+      "category": "Follow-up",
+      "en": {
+        "text": "I'm feeling better, but I still have a cough at night.",
+        "key_terms": [
+          "better",
+          "cough",
+          "night"
+        ]
+      },
+      "es": {
+        "text": "Me siento mejor, pero todavía tengo tos en la noche.",
+        "key_terms": [
+          "mejor",
+          "tos",
+          "noche"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_19.m4a",
+        "es_cu": "es_cu_19.m4a",
+        "es_mx": "es_mx_19.m4a"
+      },
+      "expect_red_flag": false
+    },
+    {
+      "n": 20,
+      "category": "Red flag (should trigger 911)",
+      "en": {
+        "text": "I have chest pain that goes down my left arm, and I'm short of breath.",
+        "key_terms": [
+          "chest pain",
+          "left arm",
+          "short of breath"
+        ]
+      },
+      "es": {
+        "text": "Tengo un dolor en el pecho que me baja por el brazo izquierdo, y me falta el aire.",
+        "key_terms": [
+          "dolor en el pecho",
+          "brazo izquierdo",
+          "falta el aire"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_20.m4a",
+        "es_cu": "es_cu_20.m4a",
+        "es_mx": "es_mx_20.m4a"
+      },
+      "expect_red_flag": true
+    },
+    {
+      "n": 21,
+      "category": "Long turn (about 30 seconds; tests cut-offs)",
+      "en": {
+        "text": "Hi, I'm calling about my mom. She's sixty-eight and has type two diabetes. Since yesterday she's been very tired and confused, and she hasn't eaten much. Her sugar was three hundred this morning. She takes metformin, and insulin at night. Should I take her to the emergency room, or can a doctor see her today?",
+        "key_terms": [
+          "68|sixty-eight|sixty eight",
+          "type 2 diabetes|type two diabetes",
+          "confused",
+          "300|three hundred",
+          "metformin",
+          "insulin",
+          "emergency room"
+        ]
+      },
+      "es": {
+        "text": "Hola, llamo por mi mamá. Tiene sesenta y ocho años y tiene diabetes tipo dos. Desde ayer está muy cansada y confundida, y casi no ha comido. Esta mañana tenía el azúcar en trescientos. Toma metformina, e insulina en la noche. ¿La llevo a la sala de emergencias, o la puede ver un médico hoy?",
+        "key_terms": [
+          "68 años|sesenta y ocho años",
+          "diabetes tipo 2|diabetes tipo dos",
+          "confundida",
+          "300|trescientos",
+          "metformina",
+          "insulina",
+          "sala de emergencias|emergencias"
+        ]
+      },
+      "files": {
+        "en_jn": "en_jn_21.m4a",
+        "es_cu": "es_cu_21.m4a",
+        "es_mx": "es_mx_21.m4a"
+      },
+      "expect_red_flag": true
+    }
+  ]
+}

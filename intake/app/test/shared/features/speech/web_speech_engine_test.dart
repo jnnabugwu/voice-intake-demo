@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intake/shared/core/failure.dart';
-import 'package:intake/worker/features/speech/data/web_speech_engine.dart';
-import 'package:intake/worker/features/speech/domain/speech_engine.dart';
+import 'package:intake/shared/features/speech/data/web_speech_engine.dart';
+import 'package:intake/shared/features/speech/domain/speech_engine.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';

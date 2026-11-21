@@ -26,10 +26,11 @@ const HUNDREDS: Record<string, number> = {
   cuatrocientos: 400, quinientos: 500, seiscientos: 600, setecientos: 700, ochocientos: 800, novecientos: 900,
 };
 
-const isUnit = (w?: string) => w !== undefined && w in UNITS;
-const isTens = (w?: string) => w !== undefined && w in TENS;
+const has = (map: Record<string, number>, w?: string) => w !== undefined && Object.hasOwn(map, w);
+const isUnit = (w?: string) => has(UNITS, w);
+const isTens = (w?: string) => has(TENS, w);
 const isNumberWord = (w?: string) =>
-  w !== undefined && (isUnit(w) || isTens(w) || w in HUNDREDS || w === "hundred" || w === "thousand" || w === "mil");
+  w !== undefined && (isUnit(w) || isTens(w) || has(HUNDREDS, w) || w === "hundred" || w === "thousand" || w === "mil");
 
 /** Replaces each run of number words in [tokens] with its digits. */
 export function wordsToDigits(tokens: string[]): string[] {
@@ -48,7 +49,7 @@ export function wordsToDigits(tokens: string[]): string[] {
     while (i < tokens.length) {
       const w = tokens[i]!;
       const next = tokens[i + 1];
-      if (w in HUNDREDS) {
+      if (has(HUNDREDS, w)) {
         current += HUNDREDS[w]!;
       } else if (w === "hundred" && (used || current > 0)) {
         current = (current || 1) * 100;
@@ -57,7 +58,7 @@ export function wordsToDigits(tokens: string[]): string[] {
         current = 0;
       } else if (isTens(w)) {
         // "one fifty" (spoken 150): a unit followed straight by tens reads as hundreds.
-        current = current > 0 && current < 10 && !tokens.slice(start, i).some((t) => t === "hundred" || t in HUNDREDS)
+        current = current > 0 && current < 10 && !tokens.slice(start, i).some((t) => t === "hundred" || has(HUNDREDS, t))
           ? current * 100 + TENS[w]!
           : current + TENS[w]!;
       } else if (isUnit(w)) {

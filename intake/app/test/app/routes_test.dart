@@ -4,6 +4,7 @@ import 'package:intake/app/app.dart';
 import 'package:intake/app/app_mode.dart';
 import 'package:intake/app/router.dart';
 import 'package:intake/internal/routes.dart';
+import 'package:intake/physician/features/case_review/presentation/review_page.dart';
 import 'package:intake/physician/routes.dart';
 import 'package:intake/worker/routes.dart';
 
@@ -43,7 +44,8 @@ void main() {
 
     testWidgets('a case link parses back to the case', (tester) async {
       await pumpAt(tester, const CaseRoute(caseId: 'c_1').location);
-      expect(find.text('Physician'), findsWidgets);
+      final page = tester.widget<ReviewPage>(find.byType(ReviewPage));
+      expect(page.caseId, 'c_1');
     });
 
     testWidgets('/bench?line=abc falls back to line 1', (tester) async {

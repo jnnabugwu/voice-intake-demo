@@ -32,7 +32,7 @@ The product has two kinds of user, and the code is split the same way.
 
 **Workers come through their employer.** Employers offer the app to their workers, so every worker and every case belongs to an employer, and the backend scopes access by it. Employers have no side in the app; the employer is a field on the account and the case, not a screen.
 
-Both sides depend on `shared/`: the case entities and repository contracts, the safety detector, `Result` and `Failure`, and the design system. The sides never import each other. The case is the only thing they exchange, and they exchange it through `CaseRepository`: the worker side submits it, and the physician side approves it. A third folder, `internal/`, holds the speech bench. It ships in the demo build only.
+Both sides depend on `shared/`: the case entities and repository contracts, the safety detector, `Result` and `Failure`, and the design system. The sides never import each other. The case is the only thing they exchange, and they exchange it through `CaseRepository`: the worker side submits it, and the physician side approves it. A third folder, `internal/`, holds the speech bench. It ships in the demo build only. ("Demo build" means this demo app, as opposed to a production build. It is not demo *mode*: the deployed demo runs in live mode and keeps the bench and the side switch.)
 
 To decide where code goes, ask: if the physician side were deleted, would this code go dead? If yes, it belongs to the physician side. If it would still be used, it belongs to the worker side or to `shared/`.
 

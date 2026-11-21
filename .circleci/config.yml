@@ -45,8 +45,9 @@ jobs:
           command: |
             cd intake/app
             dart run build_runner build -d
-            dart format lib test
+            find lib -name '*.g.dart' -o -name '*.freezed.dart' | xargs dart format
             git diff --exit-code -- lib
+            test -z "$(git ls-files --others --exclude-standard -- lib)"
       - run:
           name: Format
           command: cd intake/app && dart format --output=none --set-exit-if-changed lib test

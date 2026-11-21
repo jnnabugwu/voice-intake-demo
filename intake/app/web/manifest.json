@@ -1,12 +1,11 @@
 {
-    "name": "intake",
-    "short_name": "intake",
+    "name": "Voice intake (demo)",
+    "short_name": "Voice intake",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "description": "Voice-first care intake demo (worker and physician sides).",
     "prefer_related_applications": false,
     "icons": [
         {

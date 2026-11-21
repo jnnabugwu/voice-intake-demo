@@ -203,7 +203,7 @@ class AppBadge extends StatelessWidget {
     return switch (_kind) {
       _BadgeKind.neutral => ShadBadge.secondary(foregroundColor: color, child: child),
       _BadgeKind.outline => ShadBadge.outline(foregroundColor: color, child: child),
-      _BadgeKind.danger => ShadBadge.destructive(child: child),
+      _BadgeKind.danger => ShadBadge.destructive(foregroundColor: color, child: child),
     };
   }
 }
@@ -317,7 +317,7 @@ void showAppToast(BuildContext context, String message, {String? retryLabel, Voi
       action: onRetry == null
           ? null
           : ShadButton.outline(
-              size: ShadButtonSize.sm,
+              height: 48,
               onPressed: () {
                 sonner.hide(id);
                 onRetry();

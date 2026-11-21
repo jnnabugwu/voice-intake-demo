@@ -1,6 +1,7 @@
 #!/bin/sh
 # Prints every boundary violation. No output means clean. See ARCHITECTURE.md.
 cd "$(dirname "$0")/.."
+exec 2>&1   # errors count as violations, so a renamed folder fails CI
 
 # Sides
 grep -rlE "package:intake/(physician|internal)/" lib/worker

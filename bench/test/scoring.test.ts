@@ -42,6 +42,10 @@ describe("normalize", () => {
     expect(normalize(input).join(" ")).toBe(expected);
   });
 
+  it("inherited object keys are not number words", () => {
+    expect(normalize("constructor toString two").join(" ")).toBe("constructor tostring 2");
+  });
+
   it("joining words only join numbers", () => {
     expect(normalize("pain and two days").join(" ")).toBe("pain and 2 days");
     expect(normalize("ella y tres").join(" ")).toBe("ella y 3");

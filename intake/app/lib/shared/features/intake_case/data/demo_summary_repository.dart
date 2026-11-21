@@ -35,7 +35,7 @@ class DemoSummaryRepository implements SummaryRepository {
     ];
     final medications = [
       for (final m in _medication.allMatches(lower))
-        if (!_negated(lower, m.start)) ..._items(m.group(2)!),
+        if (!_negated(lower, m.start)) ..._items(m.group(2)!).where(_looksLikeMedication),
     ];
     final allergies = [
       for (final m in _allergy.allMatches(lower))
@@ -89,11 +89,54 @@ class DemoSummaryRepository implements SummaryRepository {
       r"(?=[.;!?]| \n |,?\s+(?:and|but)\s+(?:i|i'm|my)\b|,?\s+(?:y|pero)\s+(?:yo|soy|tengo|me|mi)\b|$)";
 
   static final _medication = RegExp(
-    r"\b(i take|i'm taking|i am taking|tomo|estoy tomando)\s+([a-záéíóúñ0-9 ,]+?)" + _listEnd,
+    r"\b(i take|i'm taking|i am taking|tomo|estoy tomando)\s+([a-záéíóúñ0-9 ,'-]+?)" + _listEnd,
   );
   static final _allergy = RegExp(
-    r"\b(allergic to|alérgic[oa] (?:a(?: la| el| los| las)?|al))\s+([a-záéíóúñ0-9 ,]+?)" + _listEnd,
+    r"\b(allergic to|alérgic[oa] (?:a(?: la| el| los| las)?|al))\s+([a-záéíóúñ0-9 ,'-]+?)" + _listEnd,
   );
+
+  /// "I take the bus", "I take care of my mom", "I take a break": ordinary
+  /// phrases, not medications. A dose always counts.
+  static bool _looksLikeMedication(String item) {
+    if (RegExp(r'\d+\s*(mg|milligrams?|miligramos|ml|units?|unidades)\b').hasMatch(item)) return true;
+    final first = item.split(' ').first;
+    return !_notMedication.contains(first) && item.split(' ').length <= 4;
+  }
+
+  static const _notMedication = {
+    'a',
+    'an',
+    'the',
+    'my',
+    'this',
+    'that',
+    'it',
+    'care',
+    'time',
+    'off',
+    'out',
+    'up',
+    'over',
+    'some',
+    'any',
+    'nothing',
+    'everything',
+    'him',
+    'her',
+    'them',
+    'el',
+    'la',
+    'los',
+    'las',
+    'mi',
+    'un',
+    'una',
+    'agua',
+    'cafe',
+    'café',
+    'nada',
+    'todo',
+  };
 
   /// "aspirin and ibuprofen", "aspirina, ibuprofeno y metformina" → each item.
   static List<String> _items(String list) => list
@@ -124,7 +167,7 @@ class DemoSummaryRepository implements SummaryRepository {
     (RegExp(r'\bcough|\btos\b'), 'cough'),
     (RegExp(r'headache|dolor de cabeza'), 'headache'),
     (RegExp(r'nause|náusea|vomit|vómit'), 'nausea or vomiting'),
-    (RegExp(r'dizz|mare'), 'dizziness'),
+    (RegExp(r'dizz|\bmare'), 'dizziness'),
     (RegExp(r'swollen|swelling|hinchad'), 'swelling'),
     (RegExp(r'\brash\b|sarpullido|erupción'), 'rash'),
     (RegExp(r'back pain|dolor de espalda'), 'back pain'),

@@ -148,4 +148,13 @@ void main() {
     final es = DemoSummaryRepository.summarizeText('Worker: Soy alérgico al ibuprofeno.', Language.es);
     expect(es.allergies, ['ibuprofeno']);
   });
+
+  test('ordinary "I take" phrases are not medications; names with hyphens and apostrophes are kept', () {
+    final s = DemoSummaryRepository.summarizeText(
+      "Worker: I take the bus to work and I take care of my mom.\nWorker: I take co-codamol and st john's wort.\nWorker: I had nightmares.",
+      Language.en,
+    );
+    expect(s.medications, ['co-codamol', "st john's wort"]);
+    expect(s.symptoms, isNot(contains('dizziness')));
+  });
 }

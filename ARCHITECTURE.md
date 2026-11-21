@@ -464,7 +464,7 @@ The kit has no published accessibility audit, so the app owns accessibility and 
 
   | Bloc | State shape |
   |---|---|
-  | `SpeechBloc` | Sealed: idle, starting, listening(partial), unavailable(failure) |
+  | `SpeechBloc` | `language` and `lastUtterance` plus a sealed `phase`: idle, starting, listening(partial), unavailable(failure) |
   | `NextStepBloc` | Sealed: locked, unlocked(nextStep), escalated(flag) |
   | `ReviewBloc` | Sealed: loading, noCase, ready(case, draft, approving) |
   | `ConversationBloc` | `turns` plus a sealed `phase` |

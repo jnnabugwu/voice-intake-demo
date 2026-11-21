@@ -31,7 +31,8 @@ Before using a real key, set a monthly **spend limit** and a usage alert on its 
 cd intake/proxy
 npm ci
 cp .env.example .env        # ANTHROPIC_API_KEY=...
-npm run dev                 # vercel dev on :3000, needs the Vercel CLI
+npm i -g vercel             # once: the Vercel CLI
+npm run dev                 # vercel dev on :3000
 
 # Terminal 2: the app
 cd intake/app

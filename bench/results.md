@@ -26,7 +26,7 @@ Latency columns are medians and measure different things. **Live** (Chrome Web S
 
 - 21 scripted care-request lines per speaker, read aloud: one speaker per accent (en_jn: en-US, es_cu: es-US, es_mx: es-MX). Read speech is easier than real conversations. Treat these numbers as directional, not definitive.
 - WER and term matching follow the `scoring` rule in `references.json`: lowercase, punctuation stripped, spoken numbers as digits, accents folded. A key term counts as found if any accepted variant appears.
-- Every engine is scored against the script. Readers sometimes added words (a greeting, an "um") or dropped a few, which raises WER by the same amount for every engine.
+- Every engine is scored against the script. Readers sometimes added words (a greeting, an "um") or dropped a few. That adds noise to WER, and not evenly: an ad-lib counts against an engine only if it transcribes it.
 - Scores only. The recordings stay private and are never published.
 - en_jn_19 is 0.7 s long, an empty take, so it isn't scored. Re-record it.
 - AssemblyAI (cloud) didn't run: `ASSEMBLYAI_API_KEY` isn't set in `bench/.env`.

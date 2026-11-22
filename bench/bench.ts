@@ -64,7 +64,10 @@ const engines: FileEngine[] = [
 const ran = await runFileEngines(engines, refs, clips, cacheRoot);
 hyps.push(...ran.hyps);
 notes.push(...ran.notes);
-notes.push(`Local engines ran on ${cpus()[0]?.model ?? "this machine"} (${platform()} ${arch()}).`);
+const local = new Set(engines.filter((e) => !(e instanceof AssemblyAIEngine)).map((e) => e.name));
+if (ran.hyps.some((h) => local.has(h.engine))) {
+  notes.push(`Local engines ran on ${cpus()[0]?.model ?? "this machine"} (${platform()} ${arch()}).`);
+}
 
 const noise = [...clips.keys()].filter((k) => k.endsWith("_noise"));
 if (noise.length) notes.push(`${noise.length} background-noise clip(s) (\`_noise\`) were found and not scored; the table is the quiet reads.`);

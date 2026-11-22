@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { FileEngine, Speaker } from "../lib/engines.js";
+import { WhisperEngine, type FileEngine, type Speaker } from "../lib/engines.js";
 import type { References } from "../lib/report.js";
 import { dropEmptyTakes, missingClipNotes, runFileEngines } from "../lib/run.js";
 
@@ -97,5 +97,14 @@ describe("dropEmptyTakes", () => {
     const { clips: kept, notes } = await dropEmptyTakes(clips, async (p) => lengths[p]!);
     expect([...kept.keys()]).toEqual(["en_jn_20", "en_jn_21"]);
     expect(notes).toEqual(["en_jn_19 is 0.7 s long, an empty take, so it isn't scored. Re-record it."]);
+  });
+});
+
+describe("WhisperEngine", () => {
+  it("takes its row name and cache folder from the model file", () => {
+    const turbo = new WhisperEngine("/m/ggml-large-v3-turbo.bin", "/tmp");
+    const small = new WhisperEngine("/m/ggml-small.bin", "/tmp");
+    expect([turbo.name, turbo.id]).toEqual(["Whisper large-v3-turbo (self-hosted)", "whisper-large-v3-turbo"]);
+    expect([small.name, small.id]).toEqual(["Whisper small (self-hosted)", "whisper-small"]);
   });
 });

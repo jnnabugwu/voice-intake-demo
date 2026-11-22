@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { promisify } from "node:util";
 import { AssemblyAI, type FileTranscript } from "./assemblyai.js";
 
@@ -69,8 +69,9 @@ export class AssemblyAIEngine implements FileEngine {
 
 /**
  * Apple's on-device engine (SpeechAnalyzer), the one an iPhone build uses, run on
- * macOS through a small Swift CLI compiled on first use. The time measured is the
- * transcription only: the WAV conversion and the one-time model download happen first.
+ * macOS through a small Swift CLI compiled on first use. The time measured covers
+ * launching the CLI and setting up the transcriber for each clip, then transcribing;
+ * the WAV conversion and the one-time model download happen before it.
  */
 export class AppleEngine implements FileEngine {
   readonly name = "Apple SpeechAnalyzer (on-device)";
@@ -94,7 +95,10 @@ export class AppleEngine implements FileEngine {
       try {
         await run("xcrun", ["swiftc", "-parse-as-library", "-O", this.source, "-o", this.binary]);
       } catch (error) {
-        return `the Swift CLI didn't build (needs Xcode with the macOS 26+ SDK): ${(error as Error).message.split("\n")[0]}`;
+        // execFile's message starts with the command; the compiler's reason is in stderr.
+        const stderr = String((error as { stderr?: unknown }).stderr ?? "");
+        const reason = stderr.split("\n").find((l) => l.includes("error:")) ?? (error as Error).message.split("\n")[0];
+        return `the Swift CLI didn't build (needs Xcode with the macOS 26+ SDK): ${reason.trim()}`;
       }
     }
     return null;
@@ -115,17 +119,22 @@ export class AppleEngine implements FileEngine {
 export const defaultWhisperModel = join(homedir(), ".cache", "whisper-models", "ggml-large-v3-turbo.bin");
 
 /**
- * Whisper large-v3-turbo, self-hosted with whisper.cpp (`brew install whisper-cpp`).
+ * Whisper (large-v3-turbo by default), self-hosted with whisper.cpp (`brew install whisper-cpp`).
  * Open weights on our own hardware: no vendor, no per-minute bill. The time measured
  * includes loading the model, which a long-running server would do once.
  */
 export class WhisperEngine implements FileEngine {
-  readonly name = "Whisper large-v3-turbo (self-hosted)";
-  readonly id = "whisper-large-v3-turbo";
+  readonly name: string;
+  /** Named after the model file, so another `WHISPER_MODEL` gets its own row and cache. */
+  readonly id: string;
   constructor(
     private readonly model: string,
     private readonly tmpDir: string,
-  ) {}
+  ) {
+    const variant = basename(model).replace(/\.bin$/, "").replace(/^ggml-/, "");
+    this.name = `Whisper ${variant} (self-hosted)`;
+    this.id = `whisper-${variant}`;
+  }
 
   async unavailable() {
     if (!(await has("whisper-cli"))) return "`whisper-cli` isn't installed (`brew install whisper-cpp`)";

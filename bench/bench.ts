@@ -1,19 +1,21 @@
 /**
  * npm run bench: reads audio/ (repo root, gitignored), runs each file engine
- * on every clip it finds, merges the Chrome exports in bench/chrome/, and
- * writes bench/results.md.
+ * (AssemblyAI in the cloud, Apple's on-device engine, self-hosted Whisper) on
+ * every clip it finds, merges the Chrome exports in bench/chrome/, and writes
+ * bench/results.md. An engine that can't run here is skipped with a note.
  *
  * File-engine transcripts are cached in bench/.cache/ (gitignored), so a rerun
  * only pays for new clips. Delete the cache to re-transcribe.
  */
-import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { arch, cpus, platform } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { AssemblyAI } from "./lib/assemblyai.js";
 import { isChromeExport } from "./lib/chrome.js";
 import { findClips, stem } from "./lib/clips.js";
+import { AppleEngine, AssemblyAIEngine, clipSeconds, defaultWhisperModel, WhisperEngine, type FileEngine } from "./lib/engines.js";
 import { renderResults, score, type Hypothesis, type References } from "./lib/report.js";
+import { dropEmptyTakes, missingClipNotes, runFileEngines } from "./lib/run.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const refs = JSON.parse(readFileSync(join(here, "references.json"), "utf8")) as References;
@@ -47,45 +49,24 @@ for (const file of existsSync(chromeDir) ? readdirSync(chromeDir).filter((f) => 
   notes.push(`Chrome: ${data.browser}, ${data.locale}, ${data.date}.`);
 }
 
-// AssemblyAI on the recorded clips.
-const clips = findClips(join(here, "..", "audio"));
-const key = process.env.ASSEMBLYAI_API_KEY;
-if (!key) {
-  notes.push("AssemblyAI didn't run: `ASSEMBLYAI_API_KEY` isn't set in `bench/.env`.");
-} else {
-  const engine = new AssemblyAI(key);
-  const cacheDir = join(here, ".cache", "assemblyai");
-  mkdirSync(cacheDir, { recursive: true });
-  for (const speaker of refs.speakers) {
-    const lang = speaker.lang.startsWith("es") ? "es" : "en";
-    for (const line of refs.lines) {
-      const clip = clips.get(stem(speaker.id, line.n));
-      if (!clip) {
-        // Partial recordings: say which lines are missing so the scores are read in context.
-        if (refs.lines.some((l) => clips.has(stem(speaker.id, l.n)))) notes.push(`No clip for ${stem(speaker.id, line.n)}.`);
-        continue;
-      }
-      // Keyed on the clip's bytes: pull-audio rewrites files, and a re-recorded clip must be re-transcribed.
-      const digest = createHash("sha256").update(readFileSync(clip)).digest("hex").slice(0, 16);
-      const cached = join(cacheDir, `${stem(speaker.id, line.n)}.${digest}.json`);
-      let result: { text: string; processingMs: number };
-      if (existsSync(cached)) {
-        result = JSON.parse(readFileSync(cached, "utf8"));
-      } else {
-        process.stdout.write(`AssemblyAI ${stem(speaker.id, line.n)}… `);
-        try {
-          result = await engine.transcribe(clip, lang);
-        } catch (error) {
-          console.log(`failed: ${(error as Error).message}`);
-          notes.push(`AssemblyAI failed on ${stem(speaker.id, line.n)}: ${(error as Error).message}`);
-          continue;
-        }
-        writeFileSync(cached, JSON.stringify(result));
-        console.log(`${(result.processingMs / 1000).toFixed(1)} s`);
-      }
-      hyps.push({ engine: "AssemblyAI (batch)", speaker: speaker.id, n: line.n, text: result.text, processingMs: result.processingMs });
-    }
-  }
+// File engines on the recorded clips: cloud, Apple on-device, and self-hosted Whisper.
+const recorded = findClips(join(here, "..", "audio"));
+const found = await dropEmptyTakes(recorded, clipSeconds);
+const clips = found.clips;
+// Gaps are counted on what was recorded; an empty take already has its own note.
+notes.push(...found.notes, ...missingClipNotes(refs, recorded));
+const cacheRoot = join(here, ".cache");
+const engines: FileEngine[] = [
+  new AssemblyAIEngine(process.env.ASSEMBLYAI_API_KEY),
+  new AppleEngine(join(here, "apple", "transcribe.swift"), join(cacheRoot, "bin"), join(cacheRoot, "wav")),
+  new WhisperEngine(process.env.WHISPER_MODEL || defaultWhisperModel, join(cacheRoot, "wav")),
+];
+const ran = await runFileEngines(engines, refs, clips, cacheRoot);
+hyps.push(...ran.hyps);
+notes.push(...ran.notes);
+const local = new Set(engines.filter((e) => !(e instanceof AssemblyAIEngine)).map((e) => e.name));
+if (ran.hyps.some((h) => local.has(h.engine))) {
+  notes.push(`Local engines ran on ${cpus()[0]?.model ?? "this machine"} (${platform()} ${arch()}).`);
 }
 
 const noise = [...clips.keys()].filter((k) => k.endsWith("_noise"));

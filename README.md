@@ -87,4 +87,22 @@ Git auto-deploy is off on purpose. Vercel's builders have no Flutter, and a prox
 
 Accuracy comes from the recognition engine, not the UI framework: Flutter, native and React Native all wrap the same system recognizers. So the bench scores engines on a 21-line care-request script ([`bench/references.json`](bench/references.json)), read by three speakers: native English, native Spanish, and Spanish as a second language. It measures word error rate, the **medical-term miss rate** (drug names, doses, numbers, symptoms), and latency.
 
-Results: [`bench/results.md`](bench/results.md) _(table coming with block 6)_. Chrome Web Speech is scored live on `/bench`; file engines (AssemblyAI first) run with `npm run bench` in `bench/`. Live latency and batch processing time are reported separately. The sample is small and read aloud, so treat it as directional. Scores are published; the recordings are not.
+Results: [`bench/results.md`](bench/results.md). Live latency and batch processing time are reported separately. The sample is small and read aloud, so treat it as directional. Scores are published; the recordings are not.
+
+| Engine | Where it runs | How it's scored |
+|---|---|---|
+| Chrome Web Speech | Google's servers, through the browser | Live, read aloud on the app's `/bench` page |
+| Apple SpeechAnalyzer | On the device (the engine an iPhone build uses) | On the recorded clips, through a Swift CLI on macOS |
+| Whisper large-v3-turbo | Self-hosted with whisper.cpp | On the recorded clips |
+| AssemblyAI | Cloud, with a BAA available | On the recorded clips |
+
+```sh
+cd bench && npm ci
+npm run pull-audio          # clips from the recorder's bucket into audio/ (needs bench/.env)
+brew install whisper-cpp ffmpeg
+curl -L --create-dirs -o ~/.cache/whisper-models/ggml-large-v3-turbo.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
+npm run bench               # writes bench/results.md; engines that can't run here are skipped with a note
+```
+
+Apple's engine needs macOS 26 or later with Xcode. AssemblyAI needs `ASSEMBLYAI_API_KEY` in `bench/.env`.

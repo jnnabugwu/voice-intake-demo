@@ -59,7 +59,7 @@ const cacheRoot = join(here, ".cache");
 const engines: FileEngine[] = [
   new AssemblyAIEngine(process.env.ASSEMBLYAI_API_KEY),
   new AppleEngine(join(here, "apple", "transcribe.swift"), join(cacheRoot, "bin"), join(cacheRoot, "wav")),
-  new WhisperEngine(process.env.WHISPER_MODEL ?? defaultWhisperModel, join(cacheRoot, "wav")),
+  new WhisperEngine(process.env.WHISPER_MODEL || defaultWhisperModel, join(cacheRoot, "wav")),
 ];
 const ran = await runFileEngines(engines, refs, clips, cacheRoot);
 hyps.push(...ran.hyps);

@@ -92,9 +92,11 @@ Results: [`bench/results.md`](bench/results.md). Live latency and batch processi
 | Engine | Where it runs | How it's scored |
 |---|---|---|
 | Chrome Web Speech | Google's servers, through the browser | Live, read aloud on the app's `/bench` page |
-| Apple SpeechAnalyzer | On the device (the engine an iPhone build uses) | On the recorded clips, through a Swift CLI on macOS |
+| Apple SpeechAnalyzer | On the device (Apple's newest engine, iOS 26 and macOS 26) | On the recorded clips, through a Swift CLI on macOS |
 | Whisper large-v3-turbo | Self-hosted with whisper.cpp | On the recorded clips |
 | AssemblyAI | Cloud, with a BAA available | On the recorded clips |
+
+The Apple row isn't the engine today's iPhone apps get. Flutter's `speech_to_text` (the package this app uses) and React Native's `expo-speech-recognition` both call Apple's older `SFSpeechRecognizer`. That engine sends audio to Apple's servers unless the app asks for on-device recognition. Reaching SpeechAnalyzer takes a small native plugin, in either framework. The bench hasn't scored `SFSpeechRecognizer` yet.
 
 ```sh
 cd bench && npm ci

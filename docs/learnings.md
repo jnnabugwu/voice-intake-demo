@@ -17,7 +17,7 @@ _Updated at the end of each session. Newest session first._
 | Whisper | 9.3% / 10.0% | 9.8% / 20.6% |
 | Apple | 14.6% / 13.3% | 11.5% / 28.6% |
 
-- **Word error rate hides the gap that matters.** In English, Whisper's WER beats AssemblyAI's, but it misses more medical terms. In Spanish, AssemblyAI misses 3 terms where Whisper misses 15 and Apple 21.
+- **Word error rate hides the gap that matters.** In English, Whisper's WER beats AssemblyAI's, but it misses more medical terms. In Spanish, AssemblyAI misses 3 of 63 terms where Whisper misses 13 and Apple 18.
 - **Drug names are hard in English for every engine.** All three missed lisinopril and amoxicillin. All three also lost "blood sugar" on line 14: AssemblyAI wrote "blood pressure was 210", a reading attached to the wrong vital sign.
 - **Every Spanish miss changes the meaning.** "ronchas" (hives) became "manchas" (spots), "urgencias" became "herencias" (inheritance), and "al tragar" became "el tráqueo".
 - **Quiet audio was fine.** The `es_mx` clips average about -56 dB, roughly 25 dB below typical phone speech. Even so, they gave the best scores in the table.
@@ -26,7 +26,7 @@ _Updated at the end of each session. Newest session first._
 
 | Problem | Root cause | Fix / rule |
 |---|---|---|
-| The bench ran and scored nothing | The key was saved as `ASSEMBLY_API_KEY`; the bench reads `ASSEMBLYAI_API_KEY` and only leaves a note in `results.md` | Check the key name with `grep -o '^[A-Z_]*=' bench/.env` before running. The values never get printed |
+| AssemblyAI produced no scores (Apple and Whisper still ran) | The key was saved as `ASSEMBLY_API_KEY`; the bench reads `ASSEMBLYAI_API_KEY` and only leaves a note in `results.md` | Check the key name with `grep -o '^[A-Z_]*=' bench/.env` before running. The values never get printed |
 | A rename of the key line in `.env` didn't stick | The file was open in the editor, which saved its older copy over the shell edit | Jordan edits `.env` files by hand. To run once without editing the file, `set -a; . ./.env` and pass the key under the right name for that one command |
 | `git pull` refused to run | A local, untracked `results.md` clashed with the one another session had committed | When another session is working on the bench, pull before running it. Set a local file aside instead of deleting it |
 

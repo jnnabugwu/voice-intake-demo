@@ -49,5 +49,5 @@ Latency columns are medians and measure different things. **Live** (Chrome Web S
 - en_jn_19 is 0.7 s long, an empty take, so it isn't scored. Re-record it.
 - Local engines ran on Apple M4 Pro (darwin arm64).
 - SFSpeechRecognizer, en_jn: the default mode returned the same transcripts as on-device mode. Apple doesn't report which backend it used, so this doesn't show where the default ran.
-- SFSpeechRecognizer on-device resets after a pause, and its final result keeps only the last stretch of speech. On a long answer that loses most of it (on es_mx_21 it kept only the last sentence). It's scored as returned: an app that uses the final result gets the same.
+- SFSpeechRecognizer on-device returned under half the words of a long answer on es_mx_21. It resets after a pause, and its final result keeps only the last stretch of speech. It's scored as returned: an app that uses the final result gets the same.
 - No clips yet for: es_cu.

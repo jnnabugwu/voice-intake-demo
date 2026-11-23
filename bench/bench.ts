@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { isChromeExport } from "./lib/chrome.js";
 import { findClips, stem } from "./lib/clips.js";
 import { AppleEngine, AssemblyAIEngine, clipSeconds, defaultWhisperModel, SFSpeechEngine, WhisperEngine, type FileEngine } from "./lib/engines.js";
-import { renderResults, score, type Hypothesis, type References } from "./lib/report.js";
+import { cutShort, renderResults, score, type Hypothesis, type References } from "./lib/report.js";
 import { dropEmptyTakes, missingClipNotes, runFileEngines } from "./lib/run.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -82,9 +82,10 @@ for (const speaker of refs.speakers) {
     notes.push(`SFSpeechRecognizer, ${speaker.id}: the default mode returned the same transcripts as on-device mode. Apple doesn't report which backend it used, so this doesn't show where the default ran.`);
   }
 }
-if (hyps.some((h) => h.engine === sfOnDevice)) {
+const short = sfOnDevice ? cutShort(refs, hyps, sfOnDevice) : [];
+if (short.length) {
   notes.push(
-    "SFSpeechRecognizer on-device resets after a pause, and its final result keeps only the last stretch of speech. On a long answer that loses most of it (on es_mx_21 it kept only the last sentence). It's scored as returned: an app that uses the final result gets the same.",
+    `SFSpeechRecognizer on-device returned under half the words of a long answer on ${short.join(", ")}. It resets after a pause, and its final result keeps only the last stretch of speech. It's scored as returned: an app that uses the final result gets the same.`,
   );
 }
 

@@ -144,3 +144,21 @@ export function renderResults(refs: References, rows: Row[], notes: string[], da
   ];
   return out.join("\n");
 }
+
+/**
+ * Long scripted lines (at least [minWords]) where [engine] returned under [ratio] of the
+ * words: the transcript was cut short, not misheard. Stems like `es_mx_21`.
+ */
+export function cutShort(refs: References, hyps: Hypothesis[], engine: string, minWords = 25, ratio = 0.5): string[] {
+  const words = (t: string) => t.split(/\s+/).filter(Boolean).length;
+  const out: string[] = [];
+  for (const h of hyps) {
+    if (h.engine !== engine) continue;
+    const speaker = refs.speakers.find((s) => s.id === h.speaker);
+    const line = refs.lines.find((l) => l.n === h.n);
+    if (!speaker || !line) continue;
+    const ref = words((speaker.lang.startsWith("es") ? line.es : line.en).text);
+    if (ref >= minWords && words(h.text) < ref * ratio) out.push(`${h.speaker}_${String(h.n).padStart(2, "0")}`);
+  }
+  return out;
+}

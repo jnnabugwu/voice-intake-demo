@@ -119,7 +119,7 @@ export function renderResults(refs: References, rows: Row[], notes: string[], da
         `| ${r.engine} | ${r.speaker} (${who(r.speaker)?.lang ?? "?"}) | ${r.lines} | ${pct(r.wer)} | ${pct(r.termMissRate)} | ${secs(r.medianFirstWordMs)} | ${secs(r.medianFinalMs)} | ${secs(r.medianProcessingMs)} |`,
     ),
     "",
-    "Latency columns are medians and measure different things. **Live** (Chrome Web Speech, read aloud on `/bench`): time from mic on to the first partial word, and to the final text. **Batch** (file engines): wall-clock time per clip. For AssemblyAI that is upload, queue and transcription. For Apple and Whisper it is compute on the bench machine (named below), and Whisper's includes loading the model each time. Don't compare live and batch numbers with each other.",
+    "Latency columns are medians and measure different things. **Live** (Chrome Web Speech, read aloud on `/bench`): time from mic on to the first partial word, and to the final text. **Batch** (file engines): wall-clock time per clip. For AssemblyAI that is upload, queue and transcription. For SFSpeechRecognizer's default mode it is end-to-end elapsed time, which may include a round trip to Apple's servers. For the on-device engines and Whisper it is compute on the bench machine (named below), plus launching the Apple CLI or app; Whisper's includes loading the model each time. Don't compare live and batch numbers with each other.",
     "",
     "## Missed medical terms",
     "",
@@ -143,4 +143,22 @@ export function renderResults(refs: References, rows: Row[], notes: string[], da
     "",
   ];
   return out.join("\n");
+}
+
+/**
+ * Long scripted lines (at least [minWords]) where [engine] returned under [ratio] of the
+ * words: the transcript was cut short, not misheard. Stems like `es_mx_21`.
+ */
+export function cutShort(refs: References, hyps: Hypothesis[], engine: string, minWords = 25, ratio = 0.5): string[] {
+  const words = (t: string) => t.split(/\s+/).filter(Boolean).length;
+  const out: string[] = [];
+  for (const h of hyps) {
+    if (h.engine !== engine) continue;
+    const speaker = refs.speakers.find((s) => s.id === h.speaker);
+    const line = refs.lines.find((l) => l.n === h.n);
+    if (!speaker || !line) continue;
+    const ref = words((speaker.lang.startsWith("es") ? line.es : line.en).text);
+    if (ref >= minWords && words(h.text) < ref * ratio) out.push(`${h.speaker}_${String(h.n).padStart(2, "0")}`);
+  }
+  return out;
 }

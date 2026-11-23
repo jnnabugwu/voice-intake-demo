@@ -1,11 +1,10 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { AssemblyAI } from "../lib/assemblyai.js";
 import { isChromeExport } from "../lib/chrome.js";
-import { renderResults, score, type References } from "../lib/report.js";
+import { cutShort, renderResults, score, type References } from "../lib/report.js";
 
 const refs = JSON.parse(readFileSync(new URL("../references.json", import.meta.url), "utf8")) as References;
 
@@ -113,5 +112,20 @@ describe("Chrome exports", () => {
         lines: [{ n: 1, transcript: "hi", micOnMs: 0, firstPartialMs: null, finalMs: 900 }],
       }),
     ).toBe(true);
+  });
+});
+
+describe("cutShort", () => {
+  const h = (n: number, text: string, speaker = "es_mx", engine = "E") => ({ engine, speaker, n, text });
+
+  it("flags a long line that came back with under half its words", () => {
+    const hyps = [h(21, "La llevo a la sala de emergencias o la puede ver un médico hoy"), h(21, refs.lines[20].en.text, "en_jn")];
+    expect(cutShort(refs, hyps, "E")).toEqual(["es_mx_21"]);
+  });
+
+  it("ignores short lines, other engines, and runs without the long line", () => {
+    expect(cutShort(refs, [h(9, "")], "E")).toEqual([]);
+    expect(cutShort(refs, [h(21, "hola", "es_mx", "Other")], "E")).toEqual([]);
+    expect(cutShort(refs, [], "E")).toEqual([]);
   });
 });

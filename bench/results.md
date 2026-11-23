@@ -4,22 +4,34 @@ _Generated 2026-11-23 by `npm run bench` from `bench/references.json`._
 
 | Engine | Speaker | Lines | WER | Medical-term miss rate | Live: first word | Live: final text | Batch: processing |
 |---|---|---|---|---|---|---|---|
+| Apple SFSpeechRecognizer (default, may use Apple's servers) | en_jn (en-US) | 20 | 15.3% | 13.3% | n/a | n/a | 0.29 s |
+| Apple SFSpeechRecognizer (on-device) | en_jn (en-US) | 20 | 15.3% | 13.3% | n/a | n/a | 0.29 s |
 | Apple SpeechAnalyzer (on-device) | en_jn (en-US) | 20 | 14.6% | 13.3% | n/a | n/a | 0.16 s |
 | AssemblyAI (cloud) | en_jn (en-US) | 20 | 10.3% | 6.7% | n/a | n/a | 3.78 s |
 | Whisper large-v3-turbo (self-hosted) | en_jn (en-US) | 20 | 9.3% | 10.0% | n/a | n/a | 1.11 s |
+| Apple SFSpeechRecognizer (default, may use Apple's servers) | es_mx (es-MX) | 21 | 12.2% | 19.0% | n/a | n/a | 0.37 s |
+| Apple SFSpeechRecognizer (on-device) | es_mx (es-MX) | 21 | 23.3% | 27.0% | n/a | n/a | 0.38 s |
 | Apple SpeechAnalyzer (on-device) | es_mx (es-MX) | 21 | 11.5% | 28.6% | n/a | n/a | 0.18 s |
 | AssemblyAI (cloud) | es_mx (es-MX) | 21 | 3.7% | 4.8% | n/a | n/a | 3.91 s |
 | Whisper large-v3-turbo (self-hosted) | es_mx (es-MX) | 21 | 9.8% | 20.6% | n/a | n/a | 1.15 s |
 
-Latency columns are medians and measure different things. **Live** (Chrome Web Speech, read aloud on `/bench`): time from mic on to the first partial word, and to the final text. **Batch** (file engines): wall-clock time per clip. For AssemblyAI that is upload, queue and transcription. For Apple and Whisper it is compute on the bench machine (named below), and Whisper's includes loading the model each time. Don't compare live and batch numbers with each other.
+Latency columns are medians and measure different things. **Live** (Chrome Web Speech, read aloud on `/bench`): time from mic on to the first partial word, and to the final text. **Batch** (file engines): wall-clock time per clip. For AssemblyAI that is upload, queue and transcription. For SFSpeechRecognizer's default mode it is end-to-end elapsed time, which may include a round trip to Apple's servers. For the on-device engines and Whisper it is compute on the bench machine (named below), plus launching the Apple CLI or app; Whisper's includes loading the model each time. Don't compare live and batch numbers with each other.
 
 ## Missed medical terms
+
+**Apple SFSpeechRecognizer (default, may use Apple's servers), en_jn:** line 1 (swallow); line 6 (lower back); line 9 (lisinopril); line 14 (blood sugar); line 16 (reimbursed); line 21 (type 2 diabetes, 300, metformin)
+
+**Apple SFSpeechRecognizer (on-device), en_jn:** line 1 (swallow); line 6 (lower back); line 9 (lisinopril); line 14 (blood sugar); line 16 (reimbursed); line 21 (type 2 diabetes, 300, metformin)
 
 **Apple SpeechAnalyzer (on-device), en_jn:** line 1 (swallow); line 4 (metformin); line 6 (lower back); line 9 (lisinopril); line 11 (warfarin); line 12 (amoxicillin); line 14 (blood sugar); line 21 (metformin)
 
 **AssemblyAI (cloud), en_jn:** line 1 (swallow); line 9 (lisinopril); line 12 (amoxicillin); line 14 (blood sugar)
 
 **Whisper large-v3-turbo (self-hosted), en_jn:** line 1 (swallow); line 4 (metformin); line 9 (lisinopril); line 11 (warfarin); line 12 (amoxicillin); line 14 (blood sugar)
+
+**Apple SFSpeechRecognizer (default, may use Apple's servers), es_mx:** line 6 (cargar); line 8 (infección de oído); line 9 (lisinopril); line 10 (alergia, ronchas); line 11 (warfarina); line 16 (45 dólares, urgencias); line 18 (sarpullido); line 19 (tos); line 20 (falta el aire); line 21 (diabetes tipo 2)
+
+**Apple SFSpeechRecognizer (on-device), es_mx:** line 6 (cargar); line 8 (infección de oído); line 9 (lisinopril); line 10 (alergia, ronchas); line 11 (warfarina); line 16 (45 dólares, urgencias); line 18 (sarpullido); line 19 (tos); line 20 (falta el aire); line 21 (68 años, diabetes tipo 2, confundida, 300, metformina, insulina)
 
 **Apple SpeechAnalyzer (on-device), es_mx:** line 4 (metformina, 500 miligramos); line 6 (cargar); line 8 (infección de oído); line 9 (lisinopril); line 10 (alergia, ronchas); line 11 (ibuprofeno, anticoagulante, warfarina); line 12 (farmacia, amoxicilina); line 13 (150/95); line 16 (45 dólares, urgencias); line 19 (tos); line 21 (diabetes tipo 2, metformina)
 
@@ -36,4 +48,6 @@ Latency columns are medians and measure different things. **Live** (Chrome Web S
 - Scores only. The recordings stay private and are never published.
 - en_jn_19 is 0.7 s long, an empty take, so it isn't scored. Re-record it.
 - Local engines ran on Apple M4 Pro (darwin arm64).
+- SFSpeechRecognizer, en_jn: the default mode returned the same transcripts as on-device mode. Apple doesn't report which backend it used, so this doesn't show where the default ran.
+- SFSpeechRecognizer on-device returned under half the words of a long answer on es_mx_21. It resets after a pause, and its final result keeps only the last stretch of speech. It's scored as returned: an app that uses the final result gets the same.
 - No clips yet for: es_cu.

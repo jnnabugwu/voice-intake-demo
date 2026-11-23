@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
-import { existsSync, mkdirSync, statSync } from "node:fs";
-import { homedir } from "node:os";
-import { basename, join } from "node:path";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
+import { basename, dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { AssemblyAI, type FileTranscript } from "./assemblyai.js";
 
@@ -21,6 +21,8 @@ export interface FileEngine {
   readonly id: string;
   /** Null when the engine can run here; otherwise the reason it was skipped. */
   unavailable(): Promise<string | null>;
+  /** Null when the engine can run for this speaker's locale; otherwise why not. Optional. */
+  unsupported?(speaker: Speaker): Promise<string | null>;
   transcribe(clip: string, speaker: Speaker): Promise<FileTranscript>;
 }
 
@@ -68,7 +70,7 @@ export class AssemblyAIEngine implements FileEngine {
 }
 
 /**
- * Apple's on-device engine (SpeechAnalyzer), the one an iPhone build uses, run on
+ * Apple's newest on-device engine (SpeechAnalyzer, iOS 26 and macOS 26), run on
  * macOS through a small Swift CLI compiled on first use. The time measured covers
  * launching the CLI and setting up the transcriber for each clip, then transcribing;
  * the WAV conversion and the one-time model download happen before it.
@@ -95,10 +97,7 @@ export class AppleEngine implements FileEngine {
       try {
         await run("xcrun", ["swiftc", "-parse-as-library", "-O", this.source, "-o", this.binary]);
       } catch (error) {
-        // execFile's message starts with the command; the compiler's reason is in stderr.
-        const stderr = String((error as { stderr?: unknown }).stderr ?? "");
-        const reason = stderr.split("\n").find((l) => l.includes("error:")) ?? (error as Error).message.split("\n")[0];
-        return `the Swift CLI didn't build (needs Xcode with the macOS 26+ SDK): ${reason.trim()}`;
+        return `the Swift CLI didn't build (needs Xcode with the macOS 26+ SDK): ${compilerError(error)}`;
       }
     }
     return null;
@@ -113,6 +112,110 @@ export class AppleEngine implements FileEngine {
     const started = Date.now();
     const { stdout } = await run(this.binary, [speaker.lang, wav]);
     return { text: stdout.trim(), processingMs: Date.now() - started };
+  }
+}
+
+/** execFile's message starts with the command; the compiler's reason is in stderr. */
+function compilerError(error: unknown): string {
+  const stderr = String((error as { stderr?: unknown }).stderr ?? "");
+  return (stderr.split("\n").find((l) => l.includes("error:")) ?? (error as Error).message.split("\n")[0]).trim();
+}
+
+/** One JSON line from the sfspeech app: {"text"} or {"ok"} on success, {"error"} otherwise. */
+export function parseSfspeech(stdout: string): { text?: string; ok?: boolean } {
+  const line = stdout.trim().split("\n").pop() ?? "";
+  let parsed: { text?: unknown; ok?: unknown; error?: unknown };
+  try {
+    parsed = JSON.parse(line);
+  } catch {
+    throw new Error(line ? `unexpected output: ${line.slice(0, 120)}` : "no output (did the app start?)");
+  }
+  if (typeof parsed.error === "string") throw new Error(parsed.error);
+  if (typeof parsed.text === "string") return { text: parsed.text };
+  if (parsed.ok === true) return { ok: true };
+  throw new Error(`unexpected output: ${line.slice(0, 120)}`);
+}
+
+/**
+ * Apple's older engine (SFSpeechRecognizer), the one Flutter's `speech_to_text` and
+ * React Native's `expo-speech-recognition` call on iOS today. Two rows: the packages'
+ * default, where Apple picks server or on-device (so audio may go to Apple), and
+ * on-device only (`onDevice: true`). Runs on macOS as a small app built on first use,
+ * because macOS checks the launching app for a speech-recognition usage description;
+ * the first run asks once for permission. The time measured includes launching it.
+ */
+export class SFSpeechEngine implements FileEngine {
+  readonly name: string;
+  readonly id: string;
+  private readonly checked = new Map<string, string | null>();
+  constructor(
+    private readonly onDevice: boolean,
+    private readonly source: string,
+    private readonly plist: string,
+    private readonly binDir: string,
+    private readonly tmpDir: string,
+  ) {
+    this.name = onDevice ? "Apple SFSpeechRecognizer (on-device)" : "Apple SFSpeechRecognizer (default, may use Apple's servers)";
+    this.id = onDevice ? "sfspeech-on-device" : "sfspeech-default";
+  }
+
+  private get app() {
+    return join(this.binDir, "SFSpeech.app");
+  }
+
+  private get binary() {
+    return join(this.app, "Contents", "MacOS", "sfspeech");
+  }
+
+  async unavailable() {
+    if (process.platform !== "darwin") return "Apple's engines run on macOS only";
+    if (!(await has("ffmpeg"))) return "`ffmpeg` isn't installed";
+    const stale = (input: string) => !existsSync(this.binary) || statSync(this.binary).mtimeMs < statSync(input).mtimeMs;
+    if (stale(this.source) || stale(this.plist)) {
+      rmSync(this.app, { recursive: true, force: true });
+      mkdirSync(dirname(this.binary), { recursive: true });
+      cpSync(this.plist, join(this.app, "Contents", "Info.plist"));
+      try {
+        await run("xcrun", ["swiftc", "-parse-as-library", "-O", this.source, "-o", this.binary]);
+        await run("codesign", ["--sign", "-", "--force", this.app]);
+      } catch (error) {
+        rmSync(this.app, { recursive: true, force: true });
+        return `the Swift app didn't build (needs Xcode): ${compilerError(error)}`;
+      }
+    }
+    return null;
+  }
+
+  async unsupported(speaker: Speaker) {
+    if (!this.checked.has(speaker.lang)) {
+      try {
+        parseSfspeech(await this.launch(["check", speaker.lang]));
+        this.checked.set(speaker.lang, null);
+      } catch (error) {
+        this.checked.set(speaker.lang, (error as Error).message);
+      }
+    }
+    return this.checked.get(speaker.lang)!;
+  }
+
+  async transcribe(clip: string, speaker: Speaker): Promise<FileTranscript> {
+    const wav = await toWav(clip, this.tmpDir);
+    const started = Date.now();
+    const { text } = parseSfspeech(await this.launch([speaker.lang, wav]));
+    return { text: (text ?? "").trim(), processingMs: Date.now() - started };
+  }
+
+  /** `open -W` waits for the app; its exit code isn't the app's, so the result is read from stdout. */
+  private async launch(args: string[]): Promise<string> {
+    const dir = mkdtempSync(join(tmpdir(), "sfspeech-"));
+    try {
+      const out = join(dir, "out");
+      const all = this.onDevice ? [...args, "--on-device"] : args;
+      await run("open", ["-W", "-n", this.app, "--stdout", out, "--stderr", join(dir, "err"), "--args", ...all]);
+      return existsSync(out) ? readFileSync(out, "utf8") : "";
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   }
 }
 

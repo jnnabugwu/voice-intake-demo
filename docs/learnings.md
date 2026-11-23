@@ -30,6 +30,14 @@ _Updated at the end of each session. Newest session first._
 | A rename of the key line in `.env` didn't stick | The file was open in the editor, which saved its older copy over the shell edit | Jordan edits `.env` files by hand. To run once without editing the file, `set -a; . ./.env` and pass the key under the right name for that one command |
 | `git pull` refused to run | A local, untracked `results.md` clashed with the one another session had committed | When another session is working on the bench, pull before running it. Set a local file aside instead of deleting it |
 
+### SFSpeechRecognizer, the engine iPhone apps actually call
+
+- `speech_to_text` 7.5.0 creates an `SFSpeechRecognizer`, not SpeechAnalyzer, so the bench now scores it in two modes: the packages' default, and on-device only.
+- **On the device it resets after a pause, and the final result keeps only the last stretch of speech.** On `es_mx_21`, a 34 s answer, the partial results grew through her age, diabetes, "confundida", the sugar reading of 300 and the medications. Then they reset, and the final result was "La llevo a la sala de emergencias o la puede ver un médico hoy". The rest of that answer was lost. Without line 21, the two modes score the same in Spanish (12.3% WER, 19.6% term misses). For a mobile intake, long answers need their segments stitched together, or the engine changed.
+- Both modes missed "falta el aire" (shortness of breath, a red-flag phrase) on line 20; they heard "me falta hablar".
+- **A bare CLI can't use speech recognition from a terminal.** macOS checks the *launching* app (VS Code) for `NSSpeechRecognitionUsageDescription` and kills the process (exit 134, a TCC crash report). Fix: wrap the binary in a minimal `.app` with that key in its `Info.plist`, sign it ad hoc, and launch it with `open -W -n --stdout … --args`. `open` doesn't pass the exit code through, so the app prints one JSON line and the bench reads that.
+- Spanish (es-MX) on-device first failed with "No Assistant asset for language es-MX". An hour later the check passed, so macOS seems to download the model in the background after the first request.
+
 ### Red-flag paraphrases the keywords miss
 
 A quick run through the proxy's detector missed every one of these: "an elephant is sitting on my chest", "I can't catch my breath", "half my face isn't working", "everyone would be better off without me", "me aprieta el pecho", "siento que me ahogo". It also escalated "I had a heat stroke last summer". Keywords hold up on the script they were tested against, not on how people actually describe an emergency. Next step: a model-based check running in shadow mode next to the keywords, with a clinician reviewing every case where the two disagree.

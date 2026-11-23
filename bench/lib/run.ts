@@ -29,6 +29,16 @@ export async function runFileEngines(
     const cacheDir = join(cacheRoot, engine.id);
     mkdirSync(cacheDir, { recursive: true });
     for (const speaker of refs.speakers) {
+      // Failures for this speaker; if every clip failed the same way, it's one note.
+      const failed: { clip: string; message: string }[] = [];
+      let attempted = 0;
+      if (engine.unsupported && refs.lines.some((l) => clips.has(stem(speaker.id, l.n)))) {
+        const why = await engine.unsupported(speaker);
+        if (why) {
+          notes.push(`${engine.name} didn't run for ${speaker.id} (${speaker.lang}): ${why}.`);
+          continue;
+        }
+      }
       for (const line of refs.lines) {
         const clip = clips.get(stem(speaker.id, line.n));
         if (!clip) continue;
@@ -39,18 +49,25 @@ export async function runFileEngines(
           result = JSON.parse(readFileSync(cached, "utf8"));
         } else {
           log(`${engine.name} ${stem(speaker.id, line.n)}… `);
+          attempted++;
           try {
             result = await engine.transcribe(clip, speaker);
           } catch (error) {
             const message = (error as Error).message.split("\n")[0];
             log(`failed: ${message}\n`);
-            notes.push(`${engine.name} failed on ${stem(speaker.id, line.n)}: ${message}`);
+            failed.push({ clip: stem(speaker.id, line.n), message });
             continue;
           }
           writeFileSync(cached, JSON.stringify(result));
           log(`${(result.processingMs / 1000).toFixed(1)} s\n`);
         }
         hyps.push({ engine: engine.name, speaker: speaker.id, n: line.n, text: result.text, processingMs: result.processingMs });
+      }
+      // A missing model or permission fails every clip the same way: say it once.
+      if (failed.length > 1 && failed.length === attempted && failed.every((f) => f.message === failed[0].message)) {
+        notes.push(`${engine.name} failed on all ${failed.length} clips for ${speaker.id}: ${failed[0].message}`);
+      } else {
+        for (const f of failed) notes.push(`${engine.name} failed on ${f.clip}: ${f.message}`);
       }
     }
   }

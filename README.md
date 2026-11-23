@@ -93,10 +93,11 @@ Results: [`bench/results.md`](bench/results.md). Live latency and batch processi
 |---|---|---|
 | Chrome Web Speech | Google's servers, through the browser | Live, read aloud on the app's `/bench` page |
 | Apple SpeechAnalyzer | On the device (Apple's newest engine, iOS 26 and macOS 26) | On the recorded clips, through a Swift CLI on macOS |
+| Apple SFSpeechRecognizer | Apple's older engine: by default Apple picks the device or its servers; also scored on-device only | On the recorded clips, through a small Swift app on macOS |
 | Whisper large-v3-turbo | Self-hosted with whisper.cpp | On the recorded clips |
 | AssemblyAI | Cloud, with a BAA available | On the recorded clips |
 
-The Apple row isn't the engine today's iPhone apps get. Flutter's `speech_to_text` (the package this app uses) and React Native's `expo-speech-recognition` both call Apple's older `SFSpeechRecognizer`. That engine sends audio to Apple's servers unless the app asks for on-device recognition. Reaching SpeechAnalyzer takes a small native plugin, in either framework. The bench hasn't scored `SFSpeechRecognizer` yet.
+SpeechAnalyzer isn't the engine today's iPhone apps get. Flutter's `speech_to_text` (the package this app uses) and React Native's `expo-speech-recognition` both call Apple's older `SFSpeechRecognizer`. That engine can send audio to Apple's servers unless the app asks for on-device recognition. Reaching SpeechAnalyzer takes a small native plugin, in either framework. The bench scores `SFSpeechRecognizer` in both modes: the packages' default, and on-device only (`onDevice: true`).
 
 ```sh
 cd bench && npm ci
@@ -107,4 +108,4 @@ curl -L --create-dirs -o ~/.cache/whisper-models/ggml-large-v3-turbo.bin \
 npm run bench               # writes bench/results.md; engines that can't run here are skipped with a note
 ```
 
-Apple's engine needs macOS 26 or later with Xcode. AssemblyAI needs `ASSEMBLYAI_API_KEY` in `bench/.env`.
+SpeechAnalyzer needs macOS 26 or later with Xcode. `SFSpeechRecognizer` needs macOS 10.15 or later with Xcode. It runs as a small app (`bench/.cache/bin/SFSpeech.app`), because macOS checks the launching app for a speech-recognition usage description. If macOS asks, allow "Speech bench" to use speech recognition. AssemblyAI needs `ASSEMBLYAI_API_KEY` in `bench/.env`.

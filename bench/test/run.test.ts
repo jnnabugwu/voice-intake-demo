@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { WhisperEngine, type FileEngine, type Speaker } from "../lib/engines.js";
+import { parseSfspeech, SFSpeechEngine, WhisperEngine, type FileEngine, type Speaker } from "../lib/engines.js";
 import type { References } from "../lib/report.js";
 import { dropEmptyTakes, missingClipNotes, runFileEngines } from "../lib/run.js";
 
@@ -20,6 +20,7 @@ function clipsFor(dir: string, stems: string[]) {
 
 class Fake implements FileEngine {
   readonly id: string;
+  unsupported?: (speaker: Speaker) => Promise<string | null>;
   calls: string[] = [];
   constructor(
     readonly name: string,
@@ -47,6 +48,22 @@ describe("runFileEngines", () => {
     expect(hyps.map((h) => `${h.engine}/${h.speaker}/${h.n}`)).toEqual(["Engine A/en_jn/1", "Engine A/es_mx/1"]);
     expect(a.calls).toEqual(["en_jn:en-US", "es_mx:es-MX"]);
     expect(notes).toEqual([]);
+  });
+
+  it("a locale the engine can't run is one note per speaker; other speakers still run", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "bench-"));
+    const clips = clipsFor(dir, ["en_jn_01", "en_jn_02", "es_mx_01", "es_mx_02"]);
+    const a = new Fake("On device");
+    const asked: string[] = [];
+    a.unsupported = async (s: Speaker) => {
+      asked.push(s.id);
+      return s.lang === "es-MX" ? "no on-device model for es-MX on this Mac" : null;
+    };
+    const { hyps, notes } = await runFileEngines([a], refs, clips, join(dir, "cache"), () => {});
+    expect(hyps.map((h) => `${h.speaker}/${h.n}`)).toEqual(["en_jn/1", "en_jn/2"]);
+    expect(notes).toEqual(["On device didn't run for es_mx (es-MX): no on-device model for es-MX on this Mac."]);
+    // Speakers with no clips aren't checked.
+    expect(asked).toEqual(["en_jn", "es_mx"]);
   });
 
   it("an unavailable engine is a note, not a row", async () => {
@@ -106,5 +123,29 @@ describe("WhisperEngine", () => {
     const small = new WhisperEngine("/m/ggml-small.bin", "/tmp");
     expect([turbo.name, turbo.id]).toEqual(["Whisper large-v3-turbo (self-hosted)", "whisper-large-v3-turbo"]);
     expect([small.name, small.id]).toEqual(["Whisper small (self-hosted)", "whisper-small"]);
+  });
+});
+
+describe("SFSpeechEngine", () => {
+  it("is two rows with their own caches: the packages' default and on-device only", () => {
+    const def = new SFSpeechEngine(false, "/s.swift", "/s.plist", "/bin", "/tmp");
+    const dev = new SFSpeechEngine(true, "/s.swift", "/s.plist", "/bin", "/tmp");
+    expect([def.name, def.id]).toEqual(["Apple SFSpeechRecognizer (default, may use Apple's servers)", "sfspeech-default"]);
+    expect([dev.name, dev.id]).toEqual(["Apple SFSpeechRecognizer (on-device)", "sfspeech-on-device"]);
+  });
+});
+
+describe("parseSfspeech", () => {
+  it("reads the last JSON line; log lines before it are ignored", () => {
+    expect(parseSfspeech('{"text":"I take lisinopril"}\n')).toEqual({ text: "I take lisinopril" });
+    expect(parseSfspeech('noise\n{"ok":true}')).toEqual({ ok: true });
+    expect(parseSfspeech('{"text":""}')).toEqual({ text: "" });
+  });
+
+  it("an error, no output, or anything else throws with a readable reason", () => {
+    expect(() => parseSfspeech('{"error":"no on-device model for es-MX on this Mac"}')).toThrow("no on-device model for es-MX on this Mac");
+    expect(() => parseSfspeech("")).toThrow("no output (did the app start?)");
+    expect(() => parseSfspeech("Segmentation fault")).toThrow("unexpected output: Segmentation fault");
+    expect(() => parseSfspeech('{"text":3}')).toThrow("unexpected output");
   });
 });

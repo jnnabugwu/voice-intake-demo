@@ -13,7 +13,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isChromeExport } from "./lib/chrome.js";
 import { findClips, stem } from "./lib/clips.js";
-import { AppleEngine, AssemblyAIEngine, clipSeconds, defaultWhisperModel, WhisperEngine, type FileEngine } from "./lib/engines.js";
+import { AppleEngine, AssemblyAIEngine, clipSeconds, defaultWhisperModel, SFSpeechEngine, WhisperEngine, type FileEngine } from "./lib/engines.js";
 import { renderResults, score, type Hypothesis, type References } from "./lib/report.js";
 import { dropEmptyTakes, missingClipNotes, runFileEngines } from "./lib/run.js";
 
@@ -49,7 +49,7 @@ for (const file of existsSync(chromeDir) ? readdirSync(chromeDir).filter((f) => 
   notes.push(`Chrome: ${data.browser}, ${data.locale}, ${data.date}.`);
 }
 
-// File engines on the recorded clips: cloud, Apple on-device, and self-hosted Whisper.
+// File engines on the recorded clips: cloud, Apple (newest and older engines), and self-hosted Whisper.
 const recorded = findClips(join(here, "..", "audio"));
 const found = await dropEmptyTakes(recorded, clipSeconds);
 const clips = found.clips;
@@ -59,6 +59,8 @@ const cacheRoot = join(here, ".cache");
 const engines: FileEngine[] = [
   new AssemblyAIEngine(process.env.ASSEMBLYAI_API_KEY),
   new AppleEngine(join(here, "apple", "transcribe.swift"), join(cacheRoot, "bin"), join(cacheRoot, "wav")),
+  new SFSpeechEngine(false, join(here, "apple", "sfspeech.swift"), join(here, "apple", "sfspeech.plist"), join(cacheRoot, "bin"), join(cacheRoot, "wav")),
+  new SFSpeechEngine(true, join(here, "apple", "sfspeech.swift"), join(here, "apple", "sfspeech.plist"), join(cacheRoot, "bin"), join(cacheRoot, "wav")),
   new WhisperEngine(process.env.WHISPER_MODEL || defaultWhisperModel, join(cacheRoot, "wav")),
 ];
 const ran = await runFileEngines(engines, refs, clips, cacheRoot);
@@ -67,6 +69,23 @@ notes.push(...ran.notes);
 const local = new Set(engines.filter((e) => !(e instanceof AssemblyAIEngine)).map((e) => e.name));
 if (ran.hyps.some((h) => local.has(h.engine))) {
   notes.push(`Local engines ran on ${cpus()[0]?.model ?? "this machine"} (${platform()} ${arch()}).`);
+}
+
+// SFSpeechRecognizer: what its two modes did, read from the transcripts themselves.
+const sfDefault = engines.find((e) => e instanceof SFSpeechEngine && e.id === "sfspeech-default")?.name;
+const sfOnDevice = engines.find((e) => e instanceof SFSpeechEngine && e.id === "sfspeech-on-device")?.name;
+for (const speaker of refs.speakers) {
+  const texts = (engine: string | undefined) =>
+    hyps.filter((h) => h.engine === engine && h.speaker === speaker.id).map((h) => `${h.n}:${h.text}`).join("\n");
+  const a = texts(sfDefault);
+  if (a && a === texts(sfOnDevice)) {
+    notes.push(`SFSpeechRecognizer, ${speaker.id}: the default mode returned exactly the on-device transcripts, so Apple likely ran it on the device.`);
+  }
+}
+if (hyps.some((h) => h.engine === sfOnDevice)) {
+  notes.push(
+    "SFSpeechRecognizer on-device resets after a pause, and its final result keeps only the last stretch of speech. On a long answer that loses most of it (on es_mx_21 it kept only the last sentence). It's scored as returned: an app that uses the final result gets the same.",
+  );
 }
 
 const noise = [...clips.keys()].filter((k) => k.endsWith("_noise"));

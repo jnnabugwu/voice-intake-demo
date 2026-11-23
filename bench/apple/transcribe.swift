@@ -1,5 +1,5 @@
-// Apple's on-device speech engine (SpeechAnalyzer + SpeechTranscriber), the one an
-// iPhone build would use, run on a recorded clip. Built and called by `npm run bench`.
+// Apple's newest on-device speech engine (SpeechAnalyzer + SpeechTranscriber, iOS 26 and
+// macOS 26), run on a recorded clip. Built and called by `npm run bench`.
 //
 //   transcribe prepare <locale>        download the on-device model for <locale> if needed
 //   transcribe <locale> <file.wav>     print the final transcript

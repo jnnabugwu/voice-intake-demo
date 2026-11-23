@@ -29,6 +29,13 @@ export async function runFileEngines(
     const cacheDir = join(cacheRoot, engine.id);
     mkdirSync(cacheDir, { recursive: true });
     for (const speaker of refs.speakers) {
+      if (engine.unsupported && refs.lines.some((l) => clips.has(stem(speaker.id, l.n)))) {
+        const why = await engine.unsupported(speaker);
+        if (why) {
+          notes.push(`${engine.name} didn't run for ${speaker.id} (${speaker.lang}): ${why}.`);
+          continue;
+        }
+      }
       for (const line of refs.lines) {
         const clip = clips.get(stem(speaker.id, line.n));
         if (!clip) continue;

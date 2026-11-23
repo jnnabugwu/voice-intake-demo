@@ -79,7 +79,7 @@ for (const speaker of refs.speakers) {
     hyps.filter((h) => h.engine === engine && h.speaker === speaker.id).map((h) => `${h.n}:${h.text}`).join("\n");
   const a = texts(sfDefault);
   if (a && a === texts(sfOnDevice)) {
-    notes.push(`SFSpeechRecognizer, ${speaker.id}: the default mode returned exactly the on-device transcripts, so Apple likely ran it on the device.`);
+    notes.push(`SFSpeechRecognizer, ${speaker.id}: the default mode returned the same transcripts as on-device mode. Apple doesn't report which backend it used, so this doesn't show where the default ran.`);
   }
 }
 if (hyps.some((h) => h.engine === sfOnDevice)) {

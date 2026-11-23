@@ -15,7 +15,7 @@ _Generated 2026-11-23 by `npm run bench` from `bench/references.json`._
 | AssemblyAI (cloud) | es_mx (es-MX) | 21 | 3.7% | 4.8% | n/a | n/a | 3.91 s |
 | Whisper large-v3-turbo (self-hosted) | es_mx (es-MX) | 21 | 9.8% | 20.6% | n/a | n/a | 1.15 s |
 
-Latency columns are medians and measure different things. **Live** (Chrome Web Speech, read aloud on `/bench`): time from mic on to the first partial word, and to the final text. **Batch** (file engines): wall-clock time per clip. For AssemblyAI that is upload, queue and transcription. For Apple and Whisper it is compute on the bench machine (named below), and Whisper's includes loading the model each time. Don't compare live and batch numbers with each other.
+Latency columns are medians and measure different things. **Live** (Chrome Web Speech, read aloud on `/bench`): time from mic on to the first partial word, and to the final text. **Batch** (file engines): wall-clock time per clip. For AssemblyAI that is upload, queue and transcription. For SFSpeechRecognizer's default mode it is end-to-end elapsed time, which may include a round trip to Apple's servers. For the on-device engines and Whisper it is compute on the bench machine (named below), plus launching the Apple CLI or app; Whisper's includes loading the model each time. Don't compare live and batch numbers with each other.
 
 ## Missed medical terms
 
@@ -48,6 +48,6 @@ Latency columns are medians and measure different things. **Live** (Chrome Web S
 - Scores only. The recordings stay private and are never published.
 - en_jn_19 is 0.7 s long, an empty take, so it isn't scored. Re-record it.
 - Local engines ran on Apple M4 Pro (darwin arm64).
-- SFSpeechRecognizer, en_jn: the default mode returned exactly the on-device transcripts, so Apple likely ran it on the device.
+- SFSpeechRecognizer, en_jn: the default mode returned the same transcripts as on-device mode. Apple doesn't report which backend it used, so this doesn't show where the default ran.
 - SFSpeechRecognizer on-device resets after a pause, and its final result keeps only the last stretch of speech. On a long answer that loses most of it (on es_mx_21 it kept only the last sentence). It's scored as returned: an app that uses the final result gets the same.
 - No clips yet for: es_cu.

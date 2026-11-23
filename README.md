@@ -108,4 +108,4 @@ curl -L --create-dirs -o ~/.cache/whisper-models/ggml-large-v3-turbo.bin \
 npm run bench               # writes bench/results.md; engines that can't run here are skipped with a note
 ```
 
-Apple's engines need macOS 26 or later with Xcode. `SFSpeechRecognizer` runs as a small app (`bench/.cache/bin/SFSpeech.app`), because macOS checks the launching app for a speech-recognition usage description. If macOS asks, allow "Speech bench" to use speech recognition. AssemblyAI needs `ASSEMBLYAI_API_KEY` in `bench/.env`.
+SpeechAnalyzer needs macOS 26 or later with Xcode. `SFSpeechRecognizer` needs macOS 10.15 or later with Xcode. It runs as a small app (`bench/.cache/bin/SFSpeech.app`), because macOS checks the launching app for a speech-recognition usage description. If macOS asks, allow "Speech bench" to use speech recognition. AssemblyAI needs `ASSEMBLYAI_API_KEY` in `bench/.env`.

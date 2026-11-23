@@ -66,6 +66,15 @@ describe("runFileEngines", () => {
     expect(asked).toEqual(["en_jn", "es_mx"]);
   });
 
+  it("every clip for a speaker failing the same way is one note; mixed failures stay per clip", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "bench-"));
+    const clips = clipsFor(dir, ["en_jn_01", "en_jn_02", "es_mx_01", "es_mx_02"]);
+    const a = new Fake("On device", null, new Set(["es_mx_01.webm", "es_mx_02.webm", "en_jn_02.webm"]));
+    const { hyps, notes } = await runFileEngines([a], refs, clips, join(dir, "cache"), () => {});
+    expect(hyps.map((h) => `${h.speaker}/${h.n}`)).toEqual(["en_jn/1"]);
+    expect(notes).toEqual(["On device failed on en_jn_02: boom", "On device failed on all 2 clips for es_mx: boom"]);
+  });
+
   it("an unavailable engine is a note, not a row", async () => {
     const dir = mkdtempSync(join(tmpdir(), "bench-"));
     const { hyps, notes } = await runFileEngines([new Fake("Cloud", "no key")], refs, clipsFor(dir, ["en_jn_01"]), dir, () => {});

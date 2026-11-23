@@ -119,7 +119,7 @@ export function renderResults(refs: References, rows: Row[], notes: string[], da
         `| ${r.engine} | ${r.speaker} (${who(r.speaker)?.lang ?? "?"}) | ${r.lines} | ${pct(r.wer)} | ${pct(r.termMissRate)} | ${secs(r.medianFirstWordMs)} | ${secs(r.medianFinalMs)} | ${secs(r.medianProcessingMs)} |`,
     ),
     "",
-    "Latency columns are medians and measure different things. **Live** (Chrome Web Speech, read aloud on `/bench`): time from mic on to the first partial word, and to the final text. **Batch** (file engines): wall-clock time per clip. For AssemblyAI that is upload, queue and transcription. For Apple and Whisper it is compute on the bench machine (named below), and Whisper's includes loading the model each time. Don't compare live and batch numbers with each other.",
+    "Latency columns are medians and measure different things. **Live** (Chrome Web Speech, read aloud on `/bench`): time from mic on to the first partial word, and to the final text. **Batch** (file engines): wall-clock time per clip. For AssemblyAI that is upload, queue and transcription. For SFSpeechRecognizer's default mode it is end-to-end elapsed time, which may include a round trip to Apple's servers. For the on-device engines and Whisper it is compute on the bench machine (named below), plus launching the Apple CLI or app; Whisper's includes loading the model each time. Don't compare live and batch numbers with each other.",
     "",
     "## Missed medical terms",
     "",

@@ -2,6 +2,38 @@
 
 _Updated at the end of each session. Newest session first._
 
+## 2026-11-23: AssemblyAI joins the bench
+
+### Where it ended
+
+- `bench/results.md` now scores all three file engines on `en_jn` and `es_mx`: AssemblyAI (cloud), Whisper large-v3-turbo (self-hosted) and Apple SpeechAnalyzer (on-device). Apple's and Whisper's numbers came out exactly as in the 11-22 run, so the local engines are reproducible.
+- `es_cu` has no clips: the bucket holds only `en_jn/` and `es_mx/`. Chrome Web Speech still needs a live read on `/bench`.
+
+### What the numbers say
+
+| | English WER / term misses | Spanish WER / term misses |
+|---|---|---|
+| AssemblyAI | 10.3% / 6.7% | 3.7% / 4.8% |
+| Whisper | 9.3% / 10.0% | 9.8% / 20.6% |
+| Apple | 14.6% / 13.3% | 11.5% / 28.6% |
+
+- **Word error rate hides the gap that matters.** In English, Whisper's WER beats AssemblyAI's, but it misses more medical terms. In Spanish, AssemblyAI misses 3 terms where Whisper misses 15 and Apple 21.
+- **Drug names are hard in English for every engine.** All three missed lisinopril and amoxicillin. All three also lost "blood sugar" on line 14: AssemblyAI wrote "blood pressure was 210", a reading attached to the wrong vital sign.
+- **Every Spanish miss changes the meaning.** "ronchas" (hives) became "manchas" (spots), "urgencias" became "herencias" (inheritance), and "al tragar" became "el tráqueo".
+- **Quiet audio was fine.** The `es_mx` clips average about -56 dB, roughly 25 dB below typical phone speech. Even so, they gave the best scores in the table.
+
+### What went wrong, and the fix
+
+| Problem | Root cause | Fix / rule |
+|---|---|---|
+| The bench ran and scored nothing | The key was saved as `ASSEMBLY_API_KEY`; the bench reads `ASSEMBLYAI_API_KEY` and only leaves a note in `results.md` | Check the key name with `grep -o '^[A-Z_]*=' bench/.env` before running. The values never get printed |
+| A rename of the key line in `.env` didn't stick | The file was open in the editor, which saved its older copy over the shell edit | Jordan edits `.env` files by hand. To run once without editing the file, `set -a; . ./.env` and pass the key under the right name for that one command |
+| `git pull` refused to run | A local, untracked `results.md` clashed with the one another session had committed | When another session is working on the bench, pull before running it. Set a local file aside instead of deleting it |
+
+### Red-flag paraphrases the keywords miss
+
+A quick run through the proxy's detector missed every one of these: "an elephant is sitting on my chest", "I can't catch my breath", "half my face isn't working", "everyone would be better off without me", "me aprieta el pecho", "siento que me ahogo". It also escalated "I had a heat stroke last summer". Keywords hold up on the script they were tested against, not on how people actually describe an emergency. Next step: a model-based check running in shadow mode next to the keywords, with a clinician reviewing every case where the two disagree.
+
 ## 2026-11-21: shipping it (block 5)
 
 ### Where it ended
